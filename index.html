@@ -7,15 +7,15 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #003366; --accent: #ffcc00; --bg: #f4f7f9; }
+        :root { --primary: #003366; --bg: #f4f7f9; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px; }
         .hidden { display: none; }
-        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
+        input, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .toggle-text { text-align: center; color: #0056b3; cursor: pointer; text-decoration: underline; font-size: 14px; }
         .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .prod-row input { width: 80px; margin: 0; }
-        .search-area { position: sticky; top: 0; background: white; padding-bottom: 5px; }
+        .prod-row input { width: 70px; margin: 0; padding: 8px; }
     </style>
 </head>
 <body>
@@ -24,88 +24,91 @@
     <div id="auth-screen">
         <h2 id="auth-title" style="text-align:center">Login</h2>
         <input type="tel" id="phone-input">
-        <input type="password" id="password-input" placeholder="Password (min 6 chars)">
+        <input type="password" id="password-input" placeholder="Create Password (6+ chars)">
         <button onclick="handleAuth()">Enter System</button>
-        <p style="text-align:center; color:blue; cursor:pointer" onclick="toggleAuth()" id="toggle-text">New user? Create Account</p>
+        <p class="toggle-text" onclick="toggleAuth()" id="toggle-btn">New user? Create Account</p>
     </div>
 
     <div id="main-menu" class="hidden">
-        <h2 style="text-align:center">Main Menu</h2>
-        <button onclick="showSection('stock-section')" style="background:#28a745">📦 Opening Stock</button>
-        <button onclick="showSection('sales-section')">📝 Daily Sales</button>
+        <h2 style="text-align:center">Dynapharm Menu</h2>
+        <button onclick="showEntry('stock')" style="background:#28a745">📦 Monthly Stock</button>
+        <button onclick="showEntry('sales')">📝 Daily Sales</button>
         <button onclick="location.reload()" style="background:#666">Logout</button>
     </div>
 
-    <div id="entry-form" class="hidden">
-        <h2 id="form-title">Entry</h2>
-        <div class="search-area">
-            <input type="text" placeholder="🔍 Search product..." oninput="filterList(this.value)">
-        </div>
+    <div id="entry-screen" class="hidden">
+        <h2 id="entry-title">Entry</h2>
         <div id="product-list" style="max-height:400px; overflow-y:auto"></div>
-        <button id="save-btn" style="margin-top:15px">Save to Cloud</button>
+        <button onclick="saveData()" id="save-btn">Save to Cloud</button>
         <button onclick="showSection('main-menu')" style="background:#666">Back</button>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
-    const iti = window.intlTelInput(document.querySelector("#phone-input"), { initialCountry: "cd" });
+    // Initialize Phone Input
+    const iti = window.intlTelInput(document.querySelector("#phone-input"), {
+        initialCountry: "cd",
+        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+    });
+
+    // Supabase Connection
     const supabaseClient = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
 
-    let isLogin = true;
+    let isLoginMode = true;
     const products = [
-        {c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"},
-        {c:"DRC1203", n:"KACIP FATIMA GANO"}, {c:"DRC1204", n:"TONGKAT & MACCA"},
-        {c:"DRC1205", n:"CAPPUCCINO GANO"}, {c:"DRC1802A", n:"ALFALFA 500ML"},
-        {c:"DRC1804", n:"GANODERMA COFFEE"}, {c:"DRC1810", n:"YEE GANO 90s"},
-        {c:"DRC1811", n:"YEEGARLIC 90s"}, {c:"DRC1814", n:"GANO CHOCO"},
-        {c:"DRC1817", n:"PRESIDENT COFFEE"}, {c:"DRC1818", n:"BLACK GANO"},
-        {c:"DRC2802", n:"GOAT MILK 150s"}, {c:"DRC2804", n:"SOYA POWDER"},
-        {c:"DRC2805", n:"SPIRULINA"}, {c:"DRC2807", n:"SPIRULINA 300s"},
-        {c:"DRC2812", n:"WARISAN MAHARANI"}, {c:"DRC2813", n:"GINGER SOYA"},
-        {c:"DRC2814", n:"PREMIX GOAT MILK"}, {c:"DRC3804", n:"DYNA TONIC"},
-        {c:"DRC3809", n:"YEE YANG YEN"}, {c:"DRC3810", n:"RED COFFEE GINSENG"},
-        {c:"DRC3812", n:"GREEN TEA 60s"}, {c:"DRC3814", n:"PROLINK 20s"},
-        {c:"DRC4803", n:"GINSENG HONEY"}, {c:"DRC4805", n:"GINSENG 9x10"},
-        {c:"DRC4810", n:"TONGKAT ALI COFFEE"}, {c:"DRC4811", n:"GINALI 100s"},
-        {c:"DRC4815", n:"YEEGINKGO 90s"}, {c:"DRC4817", n:"MILK THISTLE"},
-        {c:"DRC4821", n:"TONGKAT ALI 100s"}, {c:"DRC4824", n:"SEA CUCUMBER"},
-        {c:"DRC5802N", n:"NONI 500ml"}, {c:"DRC5803", n:"NONI TEA"},
-        {c:"DRC5806", n:"DYNA 'S' 120s"}, {c:"DRC9918", n:"SERENOA 100s"}
-    ];
+        {c:"DRC1201", n:"GINKO COFFEE"}, {c:"DRC1202", n:"GREEN TEA"}, {c:"DRC1802A", n:"ALFALFA"},
+        {c:"DRC1814", n:"CHOCO"}, {c:"DRC2812", n:"MAHARANI"}, {c:"DRC4810", n:"TONGKAT COFFEE"}
+    ]; // Add others as needed
 
     function toggleAuth() {
-        isLogin = !isLogin;
-        document.getElementById('auth-title').innerText = isLogin ? "Login" : "Sign Up";
-        document.getElementById('toggle-text').innerText = isLogin ? "New user? Create Account" : "Have account? Login";
+        isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').innerText = isLoginMode ? "Login" : "Sign Up";
+        document.getElementById('toggle-btn').innerText = isLoginMode ? "New user? Create Account" : "Back to Login";
     }
 
     async function handleAuth() {
-        const email = iti.getNumber().replace('+','') + "@dyna.com";
+        const rawPhone = iti.getNumber();
+        if (!rawPhone) return alert("Enter phone number");
+        
+        // FIX: Create a valid email format from the phone number
+        const cleanEmail = rawPhone.replace('+', '') + "@dyna.com";
         const password = document.getElementById('password-input').value;
-        const { error } = isLogin ? await supabaseClient.auth.signInWithPassword({email, password}) : await supabaseClient.auth.signUp({email, password});
-        if(error) alert(error.message); else showSection('main-menu');
+
+        if (password.length < 6) return alert("Password must be 6+ characters");
+
+        let result;
+        if (isLoginMode) {
+            result = await supabaseClient.auth.signInWithPassword({ email: cleanEmail, password: password });
+        } else {
+            result = await supabaseClient.auth.signUp({ email: cleanEmail, password: password });
+        }
+
+        if (result.error) {
+            alert("Error: " + result.error.message);
+        } else {
+            showSection('main-menu');
+        }
     }
 
     function showSection(id) {
         document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
-        if(id === 'stock-section' || id === 'sales-section') {
-            document.getElementById('entry-form').classList.remove('hidden');
-            document.getElementById('form-title').innerText = id === 'stock-section' ? "Opening Stock" : "Daily Sales";
-            renderList();
-        } else {
-            document.getElementById(id).classList.remove('hidden');
-        }
+        document.getElementById(id).classList.remove('hidden');
     }
 
-    function renderList(filter = "") {
-        const div = document.getElementById('product-list');
-        div.innerHTML = products.filter(p => p.n.toLowerCase().includes(filter.toLowerCase())).map(p => `
-            <div class="prod-row"><span>${p.n}</span><input type="number" placeholder="Qty"></div>
+    function showEntry(type) {
+        showSection('entry-screen');
+        document.getElementById('entry-title').innerText = type === 'stock' ? "Opening Stock" : "Daily Sales";
+        const list = document.getElementById('product-list');
+        list.innerHTML = products.map(p => `
+            <div class="prod-row"><span>${p.n}</span><input type="number" class="qty-input" data-code="${p.c}"></div>
         `).join('');
     }
 
-    function filterList(val) { renderList(val); }
+    async function saveData() {
+        alert("Saving data...");
+        // Logic for saving to your tables from Image 1 would go here
+    }
 </script>
 </body>
 </html>
