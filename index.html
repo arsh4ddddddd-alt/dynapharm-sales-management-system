@@ -3,205 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynapharm Cloud System</title>
+    <title>Dynapharm Cloud</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #003366; --accent: #ffcc00; --error: #dc3545; --bg: #f4f7f9; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        :root { --primary: #003366; --accent: #ffcc00; --bg: #f4f7f9; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .hidden { display: none; }
         input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
-        .iti { width: 100%; margin-bottom: 8px; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:active { transform: scale(0.98); }
-        .error-text { color: var(--error); font-size: 14px; font-weight: bold; text-align: center; margin-bottom: 10px; }
-        .stock-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
-        .stock-row input { width: 80px; margin: 0; padding: 5px; }
-        .card { background: #f9f9f9; padding: 12px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid var(--primary); }
-        h2 { text-align: center; color: var(--primary); border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
-        .scroll-area { max-height: 400px; overflow-y: auto; margin: 10px 0; border: 1px solid #eee; padding: 5px; border-radius: 5px; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .prod-row input { width: 80px; margin: 0; }
+        .search-area { position: sticky; top: 0; background: white; padding-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="login-screen">
-        <h2>Dynapharm Login</h2>
-        <p style="text-align:center; color:#666;">Enter your mobile number to start</p>
+    <div id="auth-screen">
+        <h2 id="auth-title" style="text-align:center">Login</h2>
         <input type="tel" id="phone-input">
-        <div id="login-error" class="error-text hidden">❌ Wrong number! Please check your format.</div>
-        <button onclick="processLogin()">Login to Cloud</button>
+        <input type="password" id="password-input" placeholder="Password (min 6 chars)">
+        <button onclick="handleAuth()">Enter System</button>
+        <p style="text-align:center; color:blue; cursor:pointer" onclick="toggleAuth()" id="toggle-text">New user? Create Account</p>
     </div>
 
     <div id="main-menu" class="hidden">
-        <h2 id="welcome-msg">Main Menu</h2>
-        <button onclick="showSection('stock-section')" style="background:#28a745;">📦 Initial Stock (Start of Month)</button>
-        <button onclick="showSection('sales-section')">📝 New Sales Report</button>
-        <button onclick="showSection('history-section')">📅 View Cloud History</button>
-        <button onclick="location.reload()" style="background:#dc3545; margin-top:20px;">Logout</button>
+        <h2 style="text-align:center">Main Menu</h2>
+        <button onclick="showSection('stock-section')" style="background:#28a745">📦 Opening Stock</button>
+        <button onclick="showSection('sales-section')">📝 Daily Sales</button>
+        <button onclick="location.reload()" style="background:#666">Logout</button>
     </div>
 
-    <div id="stock-section" class="hidden">
-        <h2>Initial Inventory</h2>
-        <label>Select Month:</label>
-        <input type="month" id="stock-month" value="2026-03">
-        <div class="scroll-area" id="stock-list"></div>
-        <button onclick="saveStock()">Save Opening Stock</button>
-        <button onclick="showSection('main-menu')" style="background:#666">Back</button>
-    </div>
-
-    <div id="sales-section" class="hidden">
-        <h2>Daily Sales Report</h2>
-        <input type="date" id="report-date">
-        <select id="shop-name">
-            <option>KAPENDA 1</option><option>KAPENDA 2</option>
-            <option>GECAMINES</option><option>LIPAMU</option>
-            <option>KOLWEZI</option><option>LIKASI</option>
-        </select>
-        <div class="scroll-area" id="sales-list"></div>
-        <div class="card"><strong>TOTAL SALES: $<span id="live-total">0.00</span></strong></div>
-        <button onclick="saveSales()">Submit Report to Cloud</button>
-        <button onclick="showSection('main-menu')" style="background:#666">Back</button>
-    </div>
-
-    <div id="history-section" class="hidden">
-        <h2>Cloud History</h2>
-        <div class="scroll-area" id="history-display">Loading...</div>
+    <div id="entry-form" class="hidden">
+        <h2 id="form-title">Entry</h2>
+        <div class="search-area">
+            <input type="text" placeholder="🔍 Search product..." oninput="filterList(this.value)">
+        </div>
+        <div id="product-list" style="max-height:400px; overflow-y:auto"></div>
+        <button id="save-btn" style="margin-top:15px">Save to Cloud</button>
         <button onclick="showSection('main-menu')" style="background:#666">Back</button>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
-    const phoneElement = document.querySelector("#phone-input");
-    const iti = window.intlTelInput(phoneElement, {
-        initialCountry: "cd",
-        preferredCountries: ["cd", "zm", "ao"],
-        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
-    });
+    const iti = window.intlTelInput(document.querySelector("#phone-input"), { initialCountry: "cd" });
+    const supabaseClient = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
 
-    const SUPABASE_URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let currentUser = "";
-
+    let isLogin = true;
     const products = [
-        { c: "DRC1201", n: "GINKO & GINSENG COFFEE", p: 13 },
-        { c: "DRC1202", n: "GANODERMA GREEN TEA COFFEE", p: 14 },
-        { c: "DRC1203", n: "KACIP FATIMA GANO COFFEE", p: 14 },
-        { c: "DRC1204", n: "TONGKAT & MACCA COFFEE", p: 14 },
-        { c: "DRC1205", n: "CAPPUCCINO GANO COFFEE", p: 15 },
-        { c: "DRC1802A", n: "LIQUID ALFALFA 500ML", p: 20 },
-        { c: "DRC1804", n: "GANODERMA COFFEE (20x21g)", p: 11 },
-        { c: "DRC1810", n: "YEE GANO CAPSULE 90s", p: 23 },
-        { c: "DRC1811", n: "YEEGARLIC CAPSULE 90s", p: 23 },
-        { c: "DRC1814", n: "GANODERMA CHOCO (30s)", p: 19 },
-        { c: "DRC1817", n: "PRESIDENT CHOICE COFFEE", p: 15 },
-        { c: "DRC1818", n: "BLACK GANO/TONGKAT COFFEE", p: 14 },
-        { c: "DRC2802", n: "GOAT MILK 150s", p: 16 },
-        { c: "DRC2804", n: "SOYA POWDER", p: 17 },
-        { c: "DRC2805", n: "MARINE SPIRULINA", p: 17 },
-        { c: "DRC2807", n: "SPIRULINA (300s)", p: 22 },
-        { c: "DRC2812", n: "WARISAN MAHARANI", p: 36 },
-        { c: "DRC2813", n: "GINGER SOYA", p: 14 },
-        { c: "DRC2814", n: "PREMIX GOAT MILK", p: 15 },
-        { c: "DRC3804", n: "DYNA TONIC 780ml", p: 33 },
-        { c: "DRC3809", n: "YEE YANG YEN 90s", p: 23 },
-        { c: "DRC3810", n: "RED COFFEE GINSENG", p: 13 },
-        { c: "DRC3812", n: "GREEN TEA CAPSULE 60s", p: 23 },
-        { c: "DRC3814", n: "PROLINK 20s", p: 36 },
-        { c: "DRC4803", n: "GINSENG HONEY GINGER", p: 17 },
-        { c: "DRC4805", n: "GINSENG CAPSULE 9x10", p: 31 },
-        { c: "DRC4810", n: "TONGKAT ALI COFFEE (20x21)", p: 11 },
-        { c: "DRC4811", n: "GINALI CAPSULE 100s", p: 27 },
-        { c: "DRC4815", n: "YEEGINKGO TABLET 90s", p: 23 },
-        { c: "DRC4817", n: "MILK THISTLE 120s", p: 36 },
-        { c: "DRC4821", n: "TONGKAT ALI CAPS 100s", p: 21 },
-        { c: "DRC4824", n: "SEA CUCUMBER JELLY", p: 31 },
-        { c: "DRC5802N", n: "NONI 500ml", p: 26 },
-        { c: "DRC5803", n: "NONI PLUS TEA", p: 19 },
-        { c: "DRC5806", n: "DYNA 'S' TABLET 120s", p: 21 },
-        { c: "DRC9918", n: "SERENOA TABLET 100s", p: 32 }
+        {c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"},
+        {c:"DRC1203", n:"KACIP FATIMA GANO"}, {c:"DRC1204", n:"TONGKAT & MACCA"},
+        {c:"DRC1205", n:"CAPPUCCINO GANO"}, {c:"DRC1802A", n:"ALFALFA 500ML"},
+        {c:"DRC1804", n:"GANODERMA COFFEE"}, {c:"DRC1810", n:"YEE GANO 90s"},
+        {c:"DRC1811", n:"YEEGARLIC 90s"}, {c:"DRC1814", n:"GANO CHOCO"},
+        {c:"DRC1817", n:"PRESIDENT COFFEE"}, {c:"DRC1818", n:"BLACK GANO"},
+        {c:"DRC2802", n:"GOAT MILK 150s"}, {c:"DRC2804", n:"SOYA POWDER"},
+        {c:"DRC2805", n:"SPIRULINA"}, {c:"DRC2807", n:"SPIRULINA 300s"},
+        {c:"DRC2812", n:"WARISAN MAHARANI"}, {c:"DRC2813", n:"GINGER SOYA"},
+        {c:"DRC2814", n:"PREMIX GOAT MILK"}, {c:"DRC3804", n:"DYNA TONIC"},
+        {c:"DRC3809", n:"YEE YANG YEN"}, {c:"DRC3810", n:"RED COFFEE GINSENG"},
+        {c:"DRC3812", n:"GREEN TEA 60s"}, {c:"DRC3814", n:"PROLINK 20s"},
+        {c:"DRC4803", n:"GINSENG HONEY"}, {c:"DRC4805", n:"GINSENG 9x10"},
+        {c:"DRC4810", n:"TONGKAT ALI COFFEE"}, {c:"DRC4811", n:"GINALI 100s"},
+        {c:"DRC4815", n:"YEEGINKGO 90s"}, {c:"DRC4817", n:"MILK THISTLE"},
+        {c:"DRC4821", n:"TONGKAT ALI 100s"}, {c:"DRC4824", n:"SEA CUCUMBER"},
+        {c:"DRC5802N", n:"NONI 500ml"}, {c:"DRC5803", n:"NONI TEA"},
+        {c:"DRC5806", n:"DYNA 'S' 120s"}, {c:"DRC9918", n:"SERENOA 100s"}
     ];
 
-    function processLogin() {
-        const errorMsg = document.getElementById('login-error');
-        if (iti.isValidNumber()) {
-            currentUser = iti.getNumber();
-            errorMsg.classList.add('hidden');
-            document.getElementById('welcome-msg').innerText = "Session: " + currentUser;
-            showSection('main-menu');
-        } else {
-            errorMsg.classList.remove('hidden');
-        }
+    function toggleAuth() {
+        isLogin = !isLogin;
+        document.getElementById('auth-title').innerText = isLogin ? "Login" : "Sign Up";
+        document.getElementById('toggle-text').innerText = isLogin ? "New user? Create Account" : "Have account? Login";
+    }
+
+    async function handleAuth() {
+        const email = iti.getNumber().replace('+','') + "@dyna.com";
+        const password = document.getElementById('password-input').value;
+        const { error } = isLogin ? await supabaseClient.auth.signInWithPassword({email, password}) : await supabaseClient.auth.signUp({email, password});
+        if(error) alert(error.message); else showSection('main-menu');
     }
 
     function showSection(id) {
         document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
-        if(id === 'stock-section') renderStock();
-        if(id === 'sales-section') renderSales();
-        if(id === 'history-section') fetchHistory();
+        if(id === 'stock-section' || id === 'sales-section') {
+            document.getElementById('entry-form').classList.remove('hidden');
+            document.getElementById('form-title').innerText = id === 'stock-section' ? "Opening Stock" : "Daily Sales";
+            renderList();
+        } else {
+            document.getElementById(id).classList.remove('hidden');
+        }
     }
 
-    function renderStock() {
-        document.getElementById('stock-list').innerHTML = products.map(p => `
-            <div class="stock-row"><span>${p.n}</span><input type="number" id="st-${p.c}"></div>
+    function renderList(filter = "") {
+        const div = document.getElementById('product-list');
+        div.innerHTML = products.filter(p => p.n.toLowerCase().includes(filter.toLowerCase())).map(p => `
+            <div class="prod-row"><span>${p.n}</span><input type="number" placeholder="Qty"></div>
         `).join('');
     }
 
-    async function saveStock() {
-        const month = document.getElementById('stock-month').value;
-        const data = products.map(p => ({
-            month_year: month, product_code: p.c, 
-            opening_quantity: parseInt(document.getElementById(`st-${p.c}`).value) || 0
-        })).filter(x => x.opening_quantity > 0);
-        
-        const { error } = await supabaseClient.from('monthly_stock').upsert(data);
-        alert(error ? "Error saving stock" : "Stock saved to Cloud!");
-    }
-
-    function renderSales() {
-        document.getElementById('sales-list').innerHTML = products.map(p => `
-            <div class="stock-row">
-                <span>${p.n} ($${p.p})</span>
-                <input type="number" class="sale-in" data-p="${p.p}" id="sl-${p.c}" oninput="calcTotal()">
-            </div>
-        `).join('');
-    }
-
-    function calcTotal() {
-        let t = 0;
-        document.querySelectorAll('.sale-in').forEach(i => t += (parseInt(i.value) || 0) * parseFloat(i.getAttribute('data-p')));
-        document.getElementById('live-total').innerText = t.toFixed(2);
-    }
-
-    async function saveSales() {
-        const date = document.getElementById('report-date').value;
-        const shop = document.getElementById('shop-name').value;
-        if(!date) return alert("Select a date");
-
-        let details = {};
-        let total = 0;
-        products.forEach(p => {
-            let q = parseInt(document.getElementById(`sl-${p.c}`).value) || 0;
-            if(q > 0) { details[p.c] = q; total += (q * p.p); }
-        });
-
-        const { error } = await supabaseClient.from('sales_reports').insert([{
-            report_date: date, shop_name: shop, total_sales: total, details: details, submitted_by: currentUser
-        }]);
-        if(!error) { alert("Report Sent!"); showSection('main-menu'); }
-    }
-
-    async function fetchHistory() {
-        const { data } = await supabaseClient.from('sales_reports').select('*').order('report_date', {ascending:false});
-        document.getElementById('history-display').innerHTML = data ? data.map(r => `
-            <div class="card"><b>${r.report_date} - ${r.shop_name}</b><br>Total: $${r.total_sales}</div>
-        `).join('') : "No reports found.";
-    }
+    function filterList(val) { renderList(val); }
 </script>
 </body>
 </html>
