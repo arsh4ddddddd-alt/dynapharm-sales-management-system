@@ -3,112 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynapharm Cloud Portal</title>
+    <title>Dynapharm Cloud</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #003366; --accent: #ffcc00; --bg: #f8fafc; --success: #059669; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .card { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        :root { --p: #003366; --bg: #f8fafc; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         .hidden { display: none; }
-        h2 { color: var(--primary); text-align: center; margin-bottom: 20px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
-        input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { opacity: 0.9; }
-        .menu-btn { background: #fff; color: var(--primary); border: 2px solid var(--primary); margin: 10px 0; padding: 15px; font-size: 18px; }
-        .menu-btn:hover { background: var(--primary); color: white; }
-        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
-        .prod-row input { width: 80px; margin: 0; text-align: center; }
-        .sticky-header { position: sticky; top: 0; background: white; z-index: 10; padding-bottom: 10px; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { background: var(--p); color: white; font-weight: bold; cursor: pointer; border: none; }
+        .prod-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .prod-row input { width: 70px; margin: 0; }
     </style>
 </head>
 <body>
-
 <div class="card">
-    <div id="auth-section">
-        <h2>Cloud Login</h2>
-        <input type="tel" id="phone-input">
-        <input type="password" id="password-input" placeholder="Password">
-        <button onclick="handleAuth()">Enter System</button>
-        <p style="text-align:center; font-size:14px;">New user? <b onclick="toggleMode()" style="color:blue; cursor:pointer">Create Account</b></p>
+    <div id="auth-box">
+        <h2 id="t" style="text-align:center">Cloud Login</h2>
+        <input type="tel" id="phone">
+        <input type="password" id="pass" placeholder="Password (6+ chars)">
+        <button onclick="runAuth()">Enter System</button>
+        <p style="text-align:center; font-size:14px">New? <b onclick="tMode()" style="color:blue; cursor:pointer">Create Account</b></p>
     </div>
 
     <div id="main-menu" class="hidden">
-        <h2>Main Menu</h2>
-        <button class="menu-btn" onclick="openSection('stock')">📦 Monthly Stock Entry</button>
-        <button class="menu-btn" onclick="openSection('sales')">📝 Daily Sales Report</button>
-        <button onclick="location.reload()" style="background:#64748b; margin-top:20px;">Logout</button>
+        <h2 style="text-align:center">Main Menu</h2>
+        <button onclick="showUI('entry-box')" style="background:#059669">📦 Monthly Stock Entry</button>
+        <button onclick="location.reload()" style="background:#64748b; margin-top:20px">Logout</button>
     </div>
 
-    <div id="entry-section" class="hidden">
-        <div class="sticky-header">
-            <h2 id="entry-title">Stock Entry</h2>
-            <input type="text" id="search-bar" placeholder="🔍 Search product..." oninput="filterProducts(this.value)">
-        </div>
-        <div id="product-list" style="max-height: 450px; overflow-y: auto;"></div>
-        <button id="save-btn" style="background: var(--success); margin-top:15px;">Save to Cloud</button>
-        <button onclick="showUI('main-menu')" style="background:#64748b">Back to Menu</button>
+    <div id="entry-box" class="hidden">
+        <h2 style="text-align:center">Stock Entry</h2>
+        <div id="list" style="max-height: 400px; overflow-y: auto;"></div>
+        <button onclick="saveData()" style="background:#059669; margin-top:10px">Save to Cloud</button>
+        <button onclick="showUI('main-menu')" style="background:#64748b">Back</button>
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
-    const iti = window.intlTelInput(document.querySelector("#phone-input"), { initialCountry: "cd", separateDialCode: true });
+    const iti = window.intlTelInput(document.querySelector("#phone"), { initialCountry: "cd", separateDialCode: true });
     const sb = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
-
+    
     let isLogin = true;
-    const products = [
-        {c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"},
-        {c:"DRC1203", n:"KACIP FATIMA GANO"}, {c:"DRC1204", n:"TONGKAT & MACCA"},
-        {c:"DRC1205", n:"CAPPUCCINO GANO"}, {c:"DRC1802A", n:"LIQUID ALFALFA 500ML"},
-        {c:"DRC1804", n:"GANODERMA COFFEE"}, {c:"DRC1810", n:"YEE GANO 90s"},
-        {c:"DRC1811", n:"YEEGARLIC 90s"}, {c:"DRC1814", n:"GANO CHOCO"},
-        {c:"DRC1817", n:"PRESIDENT COFFEE"}, {c:"DRC1818", n:"BLACK GANO"},
-        {c:"DRC2802", n:"GOAT MILK 150s"}, {c:"DRC2804", n:"SOYA POWDER"},
-        {c:"DRC2805", n:"SPIRULINA"}, {c:"DRC2807", n:"SPIRULINA 300s"},
-        {c:"DRC2812", n:"WARISAN MAHARANI"}, {c:"DRC2813", n:"GINGER SOYA"},
-        {c:"DRC2814", n:"PREMIX GOAT MILK"}, {c:"DRC3804", n:"DYNA TONIC"},
-        {c:"DRC3809", n:"YEE YANG YEN"}, {c:"DRC3810", n:"RED COFFEE GINSENG"},
-        {c:"DRC3812", n:"GREEN TEA 60s"}, {c:"DRC3814", n:"PROLINK 20s"},
-        {c:"DRC4803", n:"GINSENG HONEY"}, {c:"DRC4805", n:"GINSENG 9x10"},
-        {c:"DRC4810", n:"TONGKAT ALI COFFEE"}, {c:"DRC4811", n:"GINALI 100s"},
-        {c:"DRC4815", n:"YEEGINKGO 90s"}, {c:"DRC4817", n:"MILK THISTLE"},
-        {c:"DRC4821", n:"TONGKAT ALI 100s"}, {c:"DRC4824", n:"SEA CUCUMBER"}
-    ];
+    const prods = [{c:"DRC1201", n:"GINKO COFFEE"}, {c:"DRC1202", n:"GREEN TEA"}, {c:"DRC1802A", n:"ALFALFA"}, {c:"DRC2812", n:"MAHARANI"}];
 
-    async function handleAuth() {
-        const email = iti.getNumber().replace('+','') + "@dynapharm.cloud";
-        const password = document.getElementById('password-input').value;
-        const { error } = isLogin ? await sb.auth.signInWithPassword({email, password}) : await sb.auth.signUp({email, password});
-        if(error) alert(error.message); else showUI('main-menu');
+    function tMode() { 
+        isLogin = !isLogin; 
+        document.getElementById('t').innerText = isLogin ? "Cloud Login" : "Create Account"; 
+    }
+
+    async function runAuth() {
+        const fullNumber = iti.getNumber();
+        if(!fullNumber) return alert("Enter phone number");
+
+        // The Fix: Ensure the email format is perfect
+        const email = fullNumber.replace('+', '') + "@dynapharm.cloud";
+        const password = document.getElementById('pass').value;
+
+        const { error } = isLogin 
+            ? await sb.auth.signInWithPassword({email, password}) 
+            : await sb.auth.signUp({email, password});
+
+        if(error) alert(error.message); 
+        else {
+            if(!isLogin) alert("Account created! Now please Login.");
+            showUI('main-menu');
+        }
     }
 
     function showUI(id) {
-        document.querySelectorAll('.card > div').forEach(d => d.classList.add('hidden'));
+        document.getElementById('auth-box').classList.add('hidden');
+        document.getElementById('main-menu').classList.add('hidden');
+        document.getElementById('entry-box').classList.add('hidden');
         document.getElementById(id).classList.remove('hidden');
+        if(id === 'entry-box') loadProds();
     }
 
-    function openSection(type) {
-        showUI('entry-section');
-        document.getElementById('entry-title').innerText = type === 'stock' ? "Monthly Stock" : "Daily Sales";
-        renderProducts();
-    }
-
-    function renderProducts(filter = "") {
-        const list = document.getElementById('product-list');
-        list.innerHTML = products.filter(p => p.n.toLowerCase().includes(filter.toLowerCase())).map(p => `
-            <div class="prod-row">
-                <span>${p.n}</span>
-                <input type="number" placeholder="Qty" class="qty-input" data-code="${p.c}">
-            </div>
+    function loadProds() {
+        document.getElementById('list').innerHTML = prods.map(p => `
+            <div class="prod-row"><span>${p.n}</span><input type="number" class="q" data-c="${p.c}" placeholder="0"></div>
         `).join('');
     }
 
-    function filterProducts(val) { renderProducts(val); }
+    async function saveData() {
+        const rows = Array.from(document.querySelectorAll('.q')).map(i => ({ 
+            product_code: i.dataset.c, 
+            opening_quantity: parseInt(i.value)||0, 
+            month_year: "March 2026" 
+        })).filter(r => r.opening_quantity > 0);
 
-    function toggleMode() {
-        isLogin = !isLogin;
-        document.querySelector('#auth-section h2').innerText = isLogin ? "Cloud Login" : "Create Account";
+        const { error } = await sb.from('monthly_stock').upsert(rows);
+        if(error) alert(error.message); else alert("Saved successfully!");
     }
 </script>
 </body>
