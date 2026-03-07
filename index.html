@@ -2,84 +2,75 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynapharm ERP | v14.0 Power Report</title>
+    <title>Dynapharm ERP | Private v15.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    
     <style>
-        :root { --p: #003366; --s: #059669; --bg: #f1f5f9; --w: #ffffff; --red: #dc2626; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
-        .app { width: 100%; max-width: 500px; background: var(--w); min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.1); }
+        :root { --p: #003366; --s: #059669; --bg: #f1f5f9; --w: #ffffff; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; }
+        .app { width: 100%; max-width: 500px; background: var(--w); min-height: 100vh; display: flex; flex-direction: column; }
         .hidden { display: none !important; }
-        .header { background: var(--p); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 25px 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .header { background: var(--p); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 20px 20px; }
         .content { padding: 20px; flex-grow: 1; }
-        input { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #e2e8f0; font-size: 16px; box-sizing: border-box; margin-bottom: 10px; outline: none; }
-        input:focus { border-color: var(--p); }
-        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-size: 14px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); opacity: 0.9; }
+        input { width: 100%; padding: 15px; border-radius: 10px; border: 2px solid #ddd; font-size: 16px; box-sizing: border-box; margin-bottom: 10px; }
+        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-size: 14px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; }
         .btn-p { background: var(--p); color: white; }
         .btn-s { background: var(--s); color: white; }
         .btn-o { background: transparent; border: 2px solid var(--p); color: var(--p); }
-        .btn-pdf { background: var(--red); color: white; }
-        .card { background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid var(--p); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .qty-badge { background: var(--s); color: white; padding: 6px 14px; border-radius: 20px; font-weight: 900; font-size: 14px; }
-        #console { background: #000; color: #0f0; padding: 10px; font-family: monospace; font-size: 11px; border-top: 2px solid #333; }
-        .search-container { position: sticky; top: 0; background: var(--w); z-index: 5; padding-bottom: 10px; }
+        .card { background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid var(--p); display: flex; justify-content: space-between; align-items: center; }
+        .qty-badge { background: var(--s); color: white; padding: 6px 14px; border-radius: 20px; font-weight: 900; }
+        #console { background: #000; color: #0f0; padding: 10px; font-family: monospace; font-size: 11px; }
     </style>
 </head>
 <body>
 <div class="app">
     <div id="v-auth">
-        <div class="header"><h1>DYNAPHARM</h1><p>ERP CLOUD ACCESS</p></div>
+        <div class="header"><h1>DYNAPHARM</h1><p>PRIVATE ACCOUNT LOGIN</p></div>
         <div class="content">
             <input type="text" id="user" placeholder="Username">
             <input type="password" id="pass" placeholder="Password (6+ chars)">
             <button class="btn btn-p" onclick="handleAuth()">Sign In</button>
-            <button class="btn btn-o" onclick="toggleAuth()">Register New Admin</button>
+            <button class="btn btn-o" onclick="toggleAuth()">New Registration</button>
         </div>
     </div>
 
     <div id="v-dash" class="hidden">
-        <div class="header"><h2>COMMAND CENTER</h2><p id="u-tag">Welcome, Operator</p></div>
+        <div class="header"><h2>COMMAND CENTER</h2><p id="u-tag"></p></div>
         <div class="content">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                <button class="btn btn-s" style="height:130px; font-size: 16px;" onclick="showV('v-stock')">📦 ADD<br>STOCK</button>
-                <button class="btn btn-p" style="height:130px; font-size: 16px;" onclick="loadReport()">📊 VIEW<br>REPORTS</button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn btn-s" style="height:120px;" onclick="showV('v-stock')">📦 ADD<br>STOCK</button>
+                <button class="btn btn-p" style="height:120px;" onclick="loadReport()">📊 VIEW<br>REPORTS</button>
             </div>
-            <button class="btn btn-o" style="margin-top: 60px; color:var(--red); border-color:var(--red);" onclick="location.reload()">Logout</button>
+            <button class="btn btn-o" style="margin-top: 50px; color:red; border-color:red;" onclick="location.reload()">Logout</button>
         </div>
     </div>
 
     <div id="v-stock" class="hidden">
         <div class="content">
-            <div class="search-container">
-                <h3 style="margin-top:0;">Inventory Entry</h3>
-                <input type="text" placeholder="🔍 Search product or code..." oninput="draw(this.value)">
-            </div>
+            <h3>Inventory Entry</h3>
+            <input type="text" placeholder="🔍 Search product..." oninput="draw(this.value)">
             <div id="list" style="max-height: 400px; overflow-y: auto; margin-bottom: 15px;"></div>
-            <button class="btn btn-s" id="b-save" onclick="save()">✅ SAVE & SYNC</button>
-            <button class="btn btn-o" onclick="showV('v-dash')">Back to Menu</button>
+            <button class="btn btn-s" id="b-save" onclick="save()">✅ SYNC TO MY CLOUD</button>
+            <button class="btn btn-o" onclick="showV('v-dash')">Back</button>
         </div>
     </div>
 
     <div id="v-rpt" class="hidden">
         <div class="content">
-            <h3>Cloud Inventory Report</h3>
+            <h3>My Private Report</h3>
             <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button class="btn btn-pdf" style="flex: 1;" onclick="exportPDF()">📄 EXPORT PDF</button>
-                <button class="btn btn-o" style="flex: 1;" onclick="loadReport()">🔄 REFRESH</button>
+                <button class="btn btn-p" style="background:#dc2626; flex:1;" onclick="exportPDF()">📄 EXPORT PDF</button>
+                <button class="btn btn-o" style="flex:1;" onclick="loadReport()">🔄 REFRESH</button>
             </div>
             <div id="rpt-list" style="max-height: 450px; overflow-y: auto;"></div>
-            <button class="btn btn-o" style="margin-top: 20px;" onclick="showV('v-dash')">Back to Menu</button>
+            <button class="btn btn-o" onclick="showV('v-dash')">Back</button>
         </div>
     </div>
-
-    <div id="console">> System Online</div>
+    <div id="console">> System Ready</div>
 </div>
 
 <script>
-    const { jsPDF } = window.jspdf;
     const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
     const sb = supabase.createClient(_URL, _KEY);
@@ -106,13 +97,13 @@
     async function handleAuth() {
         const u = document.getElementById('user').value.trim();
         const p = document.getElementById('pass').value;
-        if(!u || p.length < 6) return alert("Enter valid credentials (Pass: 6+ chars)");
-        log("Authenticating...");
+        if(!u || p.length < 6) return alert("Error: Use 6+ chars for password.");
+        log("Logging in...");
         const email = u.toLowerCase() + "@dyna.pro";
-        const { error } = isL ? await sb.auth.signInWithPassword({ email, password: p }) 
+        const { data, error } = isL ? await sb.auth.signInWithPassword({ email, password: p }) 
                              : await sb.auth.signUp({ email, password: p });
         if(error) alert(error.message);
-        else { document.getElementById('u-tag').innerText = "Operator: " + u.toUpperCase(); showV('v-dash'); }
+        else { document.getElementById('u-tag').innerText = "Account: " + u.toUpperCase(); showV('v-dash'); }
     }
 
     function showV(id) {
@@ -124,81 +115,64 @@
     function draw(f = "") {
         document.getElementById('list').innerHTML = items.filter(i => i.n.includes(f.toUpperCase()) || i.c.includes(f.toUpperCase())).map(i => `
             <div class="card">
-                <div><b>${i.n}</b><br><small style="color:#667">${i.c}</small></div>
-                <input type="number" class="qty-in" data-c="${i.c}" style="width:80px; margin:0; text-align:center; font-weight:bold;" placeholder="0">
+                <div><b>${i.n}</b><br><small>${i.c}</small></div>
+                <input type="number" class="qty-in" data-c="${i.c}" style="width:70px; margin:0;" placeholder="0">
             </div>`).join('');
     }
 
     async function save() {
-        const inputs = Array.from(document.querySelectorAll('.qty-in'));
-        const data = inputs.map(i => ({
-            month_year: "March 2026", product_code: i.dataset.c, opening_quantity: parseInt(i.value) || 0
+        // Step 2 Logic: This finds exactly who is logged in right now
+        const { data: { user } } = await sb.auth.getUser();
+        if(!user) return alert("Please log in again.");
+
+        const data = Array.from(document.querySelectorAll('.qty-in')).map(i => ({
+            month_year: "March 2026", 
+            product_code: i.dataset.c, 
+            opening_quantity: parseInt(i.value) || 0,
+            user_id: user.id // <-- This saves the record ONLY to your account
         })).filter(x => x.opening_quantity > 0);
 
-        if(data.length === 0) return alert("Enter stock quantities first!");
-        log("Syncing to cloud...");
+        if(data.length === 0) return alert("Enter quantities!");
+        log("Uploading to your account...");
         
-        const { error } = await sb.from('monthly_stock').upsert(data, { onConflict: 'month_year,product_code' });
+        // Conflict logic updated to include user_id
+        const { error } = await sb.from('monthly_stock').upsert(data, { onConflict: 'month_year,product_code,user_id' });
         
-        if(error) { log("Error: " + error.message); alert(error.message); } 
-        else { alert("✅ CLOUD SYNC COMPLETE!"); inputs.forEach(i => i.value = ""); showV('v-dash'); }
+        if(error) { alert("Save Error: " + error.message); } 
+        else { alert("✅ SUCCESS: Saved to your account!"); showV('v-dash'); }
     }
 
     async function loadReport() {
         showV('v-rpt');
         const rList = document.getElementById('rpt-list');
-        rList.innerHTML = "<p style='text-align:center;'>Fetching Cloud Data...</p>";
+        rList.innerHTML = "<p>Loading your data...</p>";
         
+        // This query automatically only sees YOUR data because of the SQL policy
         const { data, error } = await sb.from('monthly_stock').select('*').eq('month_year', 'March 2026');
         
-        if(error) { rList.innerHTML = "Access Denied."; alert(error.message); }
+        if(error) { alert(error.message); }
         else {
             reportData = data;
-            if(data.length === 0) rList.innerHTML = "<p style='text-align:center;'>No data found for this month.</p>";
-            else {
-                rList.innerHTML = data.map(d => {
-                    const item = items.find(i => i.c === d.product_code);
-                    return `
-                    <div class="card" style="border-left-color: var(--s);">
-                        <div><b>${item ? item.n : d.product_code}</b><br><small>${d.product_code}</small></div>
-                        <div class="qty-badge">${d.opening_quantity}</div>
-                    </div>`;
-                }).join('');
-            }
-            log("Report Synced.");
+            rList.innerHTML = data.length === 0 ? "<p>No private data found.</p>" : data.map(d => {
+                const item = items.find(i => i.c === d.product_code);
+                return `<div class="card" style="border-left-color: var(--s);">
+                    <div><b>${item ? item.n : d.product_code}</b><br><small>${d.product_code}</small></div>
+                    <div class="qty-badge">${d.opening_quantity}</div>
+                </div>`;
+            }).join('');
         }
     }
 
     function exportPDF() {
-        if(reportData.length === 0) return alert("Nothing to export!");
-        log("Generating PDF...");
+        const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFontSize(20); doc.setTextColor(0, 51, 102);
-        doc.text("DYNAPHARM INVENTORY REPORT", 14, 20);
-        
-        doc.setFontSize(10); doc.setTextColor(100);
-        doc.text("Report Date: " + new Date().toLocaleString(), 14, 28);
-        doc.text("Month: March 2026", 14, 33);
-        
-        const rows = reportData.map(d => {
-            const item = items.find(i => i.c === d.product_code);
-            return [d.product_code, item ? item.n : 'N/A', d.opening_quantity];
-        });
-
-        doc.autoTable({
-            head: [['CODE', 'PRODUCT DESCRIPTION', 'QTY']],
-            body: rows,
-            startY: 40,
-            styles: { fontSize: 9 },
-            headStyles: { fillColor: [0, 51, 102], textColor: [255, 255, 255] },
-            alternateRowStyles: { fillColor: [240, 245, 250] }
-        });
-
-        doc.save("DynaReport_March2026.pdf");
-        log("PDF Downloaded.");
+        doc.text("DYNAPHARM PRIVATE REPORT - MARCH 2026", 14, 20);
+        const rows = reportData.map(d => [d.product_code, d.opening_quantity]);
+        doc.autoTable({ head: [['Code', 'Qty']], body: rows, startY: 30 });
+        doc.save("MyReport.pdf");
     }
 
-    function toggleAuth() { isL = !isL; alert(isL ? "Mode: Login" : "Mode: Registration"); }
+    function toggleAuth() { isL = !isL; alert(isL ? "Login Mode" : "Register Mode"); }
 </script>
 </body>
 </html>
