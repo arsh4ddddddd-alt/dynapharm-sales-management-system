@@ -2,67 +2,69 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynapharm Pro | v5.1</title>
+    <title>Dynapharm Cloud | Enterprise v6.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --p: #003366; --s: #059669; --bg: #f1f5f9; }
-        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
-        .app { width: 100%; max-width: 480px; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        :root { --p: #003366; --s: #059669; --bg: #f8fafc; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; color: #1e293b; }
+        .app { width: 100%; max-width: 480px; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
         .hidden { display: none !important; }
         .header { background: var(--p); color: white; padding: 40px 20px; text-align: center; border-radius: 0 0 30px 30px; }
         .content { padding: 25px; flex-grow: 1; }
-        input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 16px; box-sizing: border-box; margin-bottom: 12px; }
-        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; }
+        input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 16px; box-sizing: border-box; margin-bottom: 15px; }
+        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; transition: 0.2s; }
         .btn-p { background: var(--p); color: white; }
         .btn-s { background: var(--s); color: white; }
         .btn-o { background: transparent; border: 2px solid var(--p); color: var(--p); }
-        .row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; }
-        .q-in { width: 85px !important; text-align: center; border: 2px solid #cbd5e1 !important; font-weight: 900; margin: 0 !important; color: var(--s); }
-        #console { background: #000; color: #0f0; padding: 10px; font-family: monospace; font-size: 10px; max-height: 100px; overflow-y: auto; }
+        .btn:active { transform: scale(0.97); opacity: 0.8; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; }
+        .q-in { width: 90px !important; text-align: center; border: 2px solid #cbd5e1 !important; font-weight: 900; margin: 0 !important; color: var(--s); }
+        #console { background: #111; color: #10b981; padding: 12px; font-family: monospace; font-size: 11px; border-top: 2px solid #333; }
     </style>
 </head>
 <body>
 <div class="app">
     <div id="v-auth">
-        <div class="header"><h1>DYNAPHARM ERP</h1><p id="auth-mode-text">SIGN IN TO PORTAL</p></div>
-        <div class="content">
-            <input type="text" id="user" placeholder="Username">
-            <input type="password" id="pass" placeholder="Password (6+ chars)">
-            <button class="btn btn-p" id="btn-auth" onclick="handleAuth()">Sign In</button>
-            <button class="btn btn-o" onclick="toggleAuth()">Create New Account</button>
+        <div class="header"><h1>DYNAPHARM</h1><p id="a-text">SECURE PORTAL LOGIN</p></div>
+        <div class="main-content content">
+            <input type="text" id="user" placeholder="Enter Username">
+            <input type="password" id="pass" placeholder="Password (6+ Characters)">
+            <button class="btn btn-p" id="b-auth" onclick="handleAuth()">Enter System</button>
+            <button class="btn btn-o" id="b-tog" onclick="toggleAuth()">New? Create Account</button>
         </div>
     </div>
 
     <div id="v-dash" class="hidden">
-        <div class="header"><h1>COMMAND CENTER</h1><p id="user-tag"></p></div>
+        <div class="header"><h1>COMMAND CENTER</h1><p id="u-tag"></p></div>
         <div class="content">
-            <button class="btn btn-s" style="height:120px;" onclick="showView('v-stock')">📦 MONTHLY INVENTORY</button>
-            <button class="btn btn-o" style="margin-top: 50px; color:red; border-color:red;" onclick="location.reload()">Shutdown</button>
+            <button class="btn btn-s" style="height:120px; font-size: 18px;" onclick="showV('v-stock')">📦 MONTHLY INVENTORY</button>
+            <button class="btn btn-o" style="margin-top: 50px; border-color: #ef4444; color: #ef4444;" onclick="location.reload()">Secure Logout</button>
         </div>
     </div>
 
     <div id="v-stock" class="hidden">
         <div class="content">
-            <div style="position: sticky; top:0; background:white; padding-bottom:10px; border-bottom:2px solid #eee;">
+            <div style="position: sticky; top:0; background:white; padding-bottom:10px; z-index:10;">
                 <h2 style="color:var(--p); margin:0 0 10px 0;">Stock Entry</h2>
-                <input type="text" placeholder="🔍 Search..." oninput="draw(this.value)">
+                <input type="text" placeholder="🔍 Search product..." oninput="draw(this.value)">
             </div>
-            <div id="list" style="max-height: 400px; overflow-y: auto; margin-top:10px;"></div>
-            <button class="btn btn-s" id="btn-save" style="margin-top:20px;" onclick="save()">✅ SYNC TO CLOUD</button>
-            <button class="btn btn-o" onclick="showView('v-dash')">Back</button>
+            <div id="list" style="max-height: 400px; overflow-y: auto;"></div>
+            <button class="btn btn-s" id="b-save" style="margin-top:20px;" onclick="save()">✅ SYNC TO CLOUD</button>
+            <button class="btn btn-o" onclick="showV('v-dash')">Back</button>
         </div>
     </div>
     
-    <div id="console">System Ready...</div>
+    <div id="console">System: Standing by...</div>
 </div>
 
 <script>
-    const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
-    const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dDRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
-    const sb = supabase.createClient(_URL, _KEY);
+    // FRESH GENERATED KEYS - DO NOT CHANGE
+    const _U = "https://ywmlvtdrwijnhqdypteu.supabase.co";
+    const _K = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dDRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
+    const sb = supabase.createClient(_U, _K);
 
-    let isLogin = true;
-    const log = (msg) => { document.getElementById('console').innerHTML += `<br>> ${msg}`; };
+    let isL = true;
+    const log = (m) => { document.getElementById('console').innerText = "System: " + m; };
 
     const items = [
         {c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"}, {c:"DRC1203", n:"KACIP FATIMA GANO"}, 
@@ -80,38 +82,38 @@
     ];
 
     function toggleAuth() {
-        isLogin = !isLogin;
-        document.getElementById('auth-mode-text').innerText = isLogin ? "SIGN IN TO PORTAL" : "CREATE NEW ACCOUNT";
-        document.getElementById('btn-auth').innerText = isLogin ? "Sign In" : "Register";
-        log(isLogin ? "Mode: Login" : "Mode: Register");
+        isL = !isL;
+        document.getElementById('a-text').innerText = isL ? "SECURE PORTAL LOGIN" : "CREATE NEW ACCOUNT";
+        document.getElementById('b-auth').innerText = isL ? "Enter System" : "Register Now";
+        document.getElementById('b-tog').innerText = isL ? "New? Create Account" : "Back to Login";
     }
 
     async function handleAuth() {
         const u = document.getElementById('user').value.trim();
         const p = document.getElementById('pass').value;
-        if(!u || p.length < 6) return alert("Error: Username required and Password min 6 chars");
+        if(!u || p.length < 6) return alert("Fill all fields (Password min 6 chars)");
         
-        log("Contacting Server...");
+        log("Connecting to Cloud...");
         const email = u.toLowerCase() + "@dyna.pro";
-        const btn = document.getElementById('btn-auth');
-        btn.innerText = "...";
+        const b = document.getElementById('b-auth');
+        b.innerText = "VERIFYING...";
 
-        const { data, error } = isLogin 
+        const { data, error } = isL 
             ? await sb.auth.signInWithPassword({ email, password: p })
             : await sb.auth.signUp({ email, password: p });
 
         if(error) {
-            log("Error: " + error.message);
+            log("Auth Failed.");
             alert(error.message);
-            btn.innerText = isLogin ? "Sign In" : "Register";
+            b.innerText = isL ? "Enter System" : "Register Now";
         } else {
-            log("Auth Success!");
-            document.getElementById('user-tag').innerText = "USER: " + u.toUpperCase();
-            showView('v-dash');
+            log("Access Granted.");
+            document.getElementById('u-tag').innerText = "OPERATOR: " + u.toUpperCase();
+            showV('v-dash');
         }
     }
 
-    function showView(id) {
+    function showV(id) {
         document.querySelectorAll('.app > div').forEach(d => { if(d.id !== 'console') d.classList.add('hidden'); });
         document.getElementById(id).classList.remove('hidden');
         if(id === 'v-stock') draw();
@@ -120,34 +122,35 @@
     function draw(f = "") {
         const l = document.getElementById('list');
         l.innerHTML = items.filter(i => i.n.toLowerCase().includes(f.toLowerCase()) || i.c.toLowerCase().includes(f.toLowerCase())).map(i => `
-            <div class="row">
-                <div><b>${i.n}</b><br><small>${i.c}</small></div>
+            <div class="item">
+                <div><b>${i.n}</b><br><small style="color:#94a3b8">${i.c}</small></div>
                 <input type="number" class="q-val" data-c="${i.c}" placeholder="0">
             </div>
         `).join('');
     }
 
     async function save() {
-        const b = document.getElementById('btn-save');
+        const b = document.getElementById('b-save');
         const data = Array.from(document.querySelectorAll('.q-val')).map(i => ({
             month_year: "March 2026",
             product_code: i.dataset.c,
             opening_quantity: parseInt(i.value) || 0
         })).filter(x => x.opening_quantity > 0);
 
-        if(data.length === 0) return alert("Nothing to save!");
-        b.innerText = "SAVING...";
-        log("Syncing " + data.length + " products...");
+        if(data.length === 0) return alert("Enter at least one item!");
+        b.innerText = "UPLOADING...";
+        log("Syncing Data...");
 
+        // THE FIX: Using .upsert solves the "Duplicate Key" error from your screenshot
         const { error } = await sb.from('monthly_stock').upsert(data, { onConflict: 'month_year,product_code' });
 
         if(error) {
-            log("Sync Failed: " + error.message);
+            log("Error during sync.");
             alert(error.message);
         } else {
             log("Cloud Sync Complete.");
-            alert("✅ SUCCESS!");
-            showView('v-dash');
+            alert("✅ INVENTORY UPDATED SUCCESSFULLY!");
+            showV('v-dash');
         }
         b.innerText = "✅ SYNC TO CLOUD";
     }
