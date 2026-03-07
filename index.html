@@ -3,132 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynapharm Cloud Portal</title>
+    <title>Dynapharm Pro Cloud</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #003366; --accent: #ffcc00; --success: #28a745; --bg: #f0f2f5; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; width: 100%; max-width: 420px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: 0.3s; }
+        :root { --primary: #003366; --accent: #ffcc00; --bg: #f8fafc; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; width: 100%; max-width: 400px; padding: 2rem; border-radius: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
         .hidden { display: none; }
-        h2 { color: var(--primary); text-align: center; margin-bottom: 25px; border-bottom: 3px solid var(--accent); padding-bottom: 10px; }
-        input, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; outline: none; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        button:active { transform: translateY(0); }
-        .toggle-btn { text-align: center; color: var(--primary); font-size: 14px; cursor: pointer; margin-top: 15px; font-weight: 600; }
-        .prod-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-        .prod-item input { width: 80px; margin: 0; padding: 8px; text-align: center; }
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        h2 { color: var(--primary); text-align: center; margin-bottom: 1.5rem; font-weight: 800; letter-spacing: -0.025em; }
+        .input-group { margin-bottom: 1.25rem; }
+        label { display: block; font-size: 0.875rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem; }
+        input { width: 100%; padding: 0.75rem 1rem; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 1rem; transition: all 0.2s; box-sizing: border-box; }
+        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(0,51,102,0.1); }
+        button { width: 100%; padding: 0.75rem; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
+        button:hover { background: #002244; transform: translateY(-1px); }
+        .toggle-link { text-align: center; margin-top: 1rem; font-size: 0.875rem; color: #64748b; }
+        .toggle-link b { color: var(--primary); cursor: pointer; text-decoration: underline; }
+        .iti { width: 100%; }
+        /* Loader */
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid white; width: 20px; height: 20px; animation: spin 0.8s linear infinite; display: inline-block; margin-right: 8px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div id="auth-box">
-        <h2 id="title">Cloud Login</h2>
-        <div id="msg" style="color: red; font-size: 13px; text-align: center;"></div>
-        <input type="tel" id="phone">
-        <input type="password" id="pass" placeholder="Password (min 6 characters)">
-        <button onclick="runAuth()" id="main-btn">Login to System</button>
-        <div class="toggle-btn" onclick="switchMode()" id="switch-text">New user? Create your account</div>
+    <div id="auth-section">
+        <h2 id="auth-title">Welcome Back</h2>
+        
+        <div class="input-group">
+            <label>Phone Number</label>
+            <input type="tel" id="phone-input">
+        </div>
+
+        <div class="input-group">
+            <label>Secure Password</label>
+            <input type="password" id="password-input" placeholder="••••••••">
+        </div>
+
+        <button id="submit-btn" onclick="processAuth()">Login to Cloud</button>
+        
+        <div class="toggle-link" id="toggle-area">
+            New user? <b onclick="toggleMode()">Create Account</b>
+        </div>
     </div>
 
-    <div id="menu-box" class="hidden">
-        <h2 id="user-display">Dashboard</h2>
-        <button onclick="openForm('stock')" style="background: var(--success)">📦 Open Monthly Stock</button>
-        <button onclick="openForm('sales')">📝 New Sales Report</button>
-        <button onclick="location.reload()" style="background: #666">Secure Logout</button>
-    </div>
-
-    <div id="form-box" class="hidden">
-        <h2 id="form-title">Entry</h2>
-        <input type="text" id="search" placeholder="🔍 Search product..." oninput="drawList(this.value)" style="background: #fafafa">
-        <div id="list" style="max-height: 400px; overflow-y: auto;"></div>
-        <button id="save-btn" style="margin-top: 20px;">Save to Cloud</button>
-        <button onclick="showUI('menu-box')" style="background: #666">Cancel</button>
+    <div id="success-section" class="hidden">
+        <h2 style="color: #059669;">✓ Access Granted</h2>
+        <p style="text-align:center; color: #64748b;">Loading your Dynapharm Dashboard...</p>
+        <button onclick="location.reload()" style="background: #64748b;">Logout</button>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
-    const iti = window.intlTelInput(document.querySelector("#phone"), { initialCountry: "cd", preferredCountries: ["cd", "zm"] });
-    const sb = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
+    // Initialize Phone Input with DRC as default
+    const phoneInput = document.querySelector("#phone-input");
+    const iti = window.intlTelInput(phoneInput, {
+        initialCountry: "cd",
+        separateDialCode: true,
+        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
+    });
 
-    let isLogin = true;
-    let mode = "";
-    const items = [
-        {c:"DRC1201", n:"GINKO COFFEE"}, {c:"DRC1202", n:"GREEN TEA"}, {c:"DRC1802A", n:"ALFALFA"},
-        {c:"DRC1814", n:"CHOCO"}, {c:"DRC2812", n:"MAHARANI"}, {c:"DRC4810", n:"TONGKAT COFFEE"}
-        // Add all 32 products here in this format
-    ];
+    // Supabase Setup
+    const supabaseClient = supabase.createClient(
+        "https://ywmlvtdrwijnhqdypteu.supabase.co", 
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg"
+    );
 
-    function switchMode() {
-        isLogin = !isLogin;
-        document.getElementById('title').innerText = isLogin ? "Cloud Login" : "Create Account";
-        document.getElementById('main-btn').innerText = isLogin ? "Login to System" : "Register & Enter";
-        document.getElementById('switch-text').innerText = isLogin ? "New user? Create your account" : "Already have an account? Login";
+    let isLoginMode = true;
+
+    function toggleMode() {
+        isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').innerText = isLoginMode ? "Welcome Back" : "Create Account";
+        document.getElementById('submit-btn').innerText = isLoginMode ? "Login to Cloud" : "Create Account";
+        document.getElementById('toggle-area').innerHTML = isLoginMode ? 
+            'New user? <b onclick="toggleMode()">Create Account</b>' : 
+            'Have an account? <b onclick="toggleMode()">Login</b>';
     }
 
-    async function runAuth() {
-        const btn = document.getElementById('main-btn');
-        const phoneNum = iti.getNumber();
-        if(!phoneNum) return alert("Enter phone number");
+    async function processAuth() {
+        const btn = document.getElementById('submit-btn');
+        const password = document.getElementById('password-input').value;
         
-        const email = phoneNum.replace('+','') + "@dyna.com";
-        const password = document.getElementById('pass').value;
+        // 1. Get the full number correctly
+        const fullNumber = iti.getNumber();
         
-        btn.innerHTML = '<span class="loader"></span> Processing...';
-        
-        const { data, error } = isLogin 
-            ? await sb.auth.signInWithPassword({ email, password }) 
-            : await sb.auth.signUp({ email, password });
-
-        if(error) {
-            alert(error.message);
-            btn.innerText = isLogin ? "Login to System" : "Register & Enter";
-        } else {
-            document.getElementById('user-display').innerText = "Account: " + phoneNum;
-            showUI('menu-box');
+        if (!fullNumber) {
+            alert("Please enter a valid phone number.");
+            return;
         }
-    }
 
-    function showUI(id) {
-        document.querySelectorAll('.card > div').forEach(d => d.classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
-    }
-
-    function openForm(type) {
-        mode = type;
-        showUI('form-box');
-        document.getElementById('form-title').innerText = type === 'stock' ? "Stock Entry" : "Sales Report";
-        drawList();
-        document.getElementById('save-btn').onclick = saveData;
-    }
-
-    function drawList(filter = "") {
-        const list = document.getElementById('list');
-        list.innerHTML = items.filter(i => i.n.toLowerCase().includes(filter.toLowerCase())).map(i => `
-            <div class="prod-item"><span>${i.n}</span><input type="number" class="qty" data-code="${i.c}" placeholder="0"></div>
-        `).join('');
-    }
-
-    async function saveData() {
-        const btn = document.getElementById('save-btn');
-        btn.innerHTML = '<span class="loader"></span> Saving...';
-        
-        const data = Array.from(document.querySelectorAll('.qty')).map(i => ({
-            month_year: "March 2026",
-            product_code: i.dataset.code,
-            opening_quantity: parseInt(i.value) || 0
-        })).filter(r => r.opening_quantity > 0);
-
-        if(mode === 'stock') {
-            const { error } = await sb.from('monthly_stock').upsert(data);
-            if(error) alert(error.message); else { alert("Saved!"); showUI('menu-box'); }
+        if (password.length < 6) {
+            alert("Password must be at least 6 characters.");
+            return;
         }
-        btn.innerText = "Save to Cloud";
+
+        // 2. Create the virtual email (Safe for free Supabase tier)
+        const virtualEmail = fullNumber.replace('+', '') + "@dynapharm.cloud";
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Connecting...';
+
+        try {
+            const { data, error } = isLoginMode 
+                ? await supabaseClient.auth.signInWithPassword({ email: virtualEmail, password: password })
+                : await supabaseClient.auth.signUp({ email: virtualEmail, password: password });
+
+            if (error) throw error;
+
+            // Success
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('success-section').classList.remove('hidden');
+            
+        } catch (err) {
+            alert("Error: " + err.message);
+            btn.disabled = false;
+            btn.innerText = isLoginMode ? "Login to Cloud" : "Create Account";
+        }
     }
 </script>
 </body>
