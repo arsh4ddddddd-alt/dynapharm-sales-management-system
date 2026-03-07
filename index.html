@@ -2,74 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynapharm Cloud Pro | v8.0</title>
+    <title>Dynapharm Cloud | v10.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --p: #003366; --s: #059669; --bg: #f1f5f9; }
-        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
-        .app { width: 100%; max-width: 480px; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.1); }
+        :root { --p: #003366; --s: #059669; --bg: #f8fafc; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
+        .app { width: 100%; max-width: 450px; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.1); }
         .hidden { display: none !important; }
-        .header { background: var(--p); color: white; padding: 40px 20px; text-align: center; border-radius: 0 0 25px 25px; }
-        .content { padding: 25px; flex-grow: 1; }
-        input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 16px; box-sizing: border-box; margin-bottom: 12px; }
-        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; }
-        .btn-p { background: var(--p); color: white; }
-        .btn-s { background: var(--s); color: white; }
+        .header { background: var(--p); color: white; padding: 45px 20px; text-align: center; border-radius: 0 0 30px 30px; }
+        .content { padding: 20px; flex-grow: 1; }
+        input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 16px; box-sizing: border-box; margin-bottom: 12px; transition: 0.3s; }
+        input:focus { border-color: var(--p); outline: none; }
+        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-size: 15px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; }
+        .btn-p { background: var(--p); color: white; box-shadow: 0 4px 12px rgba(0,51,102,0.2); }
+        .btn-s { background: var(--s); color: white; box-shadow: 0 4px 12px rgba(5,150,105,0.2); }
         .btn-o { background: transparent; border: 2px solid var(--p); color: var(--p); }
         .item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; }
-        .q-in { width: 85px !important; text-align: center; border: 2px solid #cbd5e1 !important; font-weight: 900; margin: 0 !important; }
-        #console { background: #000; color: #0f0; padding: 12px; font-family: monospace; font-size: 11px; min-height: 60px; word-break: break-all; }
+        .qty { width: 80px !important; text-align: center; font-weight: 800; color: var(--s); margin: 0 !important; border: 2px solid #cbd5e1 !important; }
+        #log { background: #000; color: #00ff00; padding: 12px; font-family: monospace; font-size: 11px; min-height: 40px; }
     </style>
 </head>
 <body>
 <div class="app">
     <div id="v-auth">
-        <div class="header"><h1>DYNAPHARM</h1><p id="a-status">SYSTEM ACCESS</p></div>
+        <div class="header"><h1>DYNAPHARM</h1><p id="a-mode">SECURE CLOUD PORTAL</p></div>
         <div class="content">
-            <input type="text" id="user" placeholder="Username">
-            <input type="password" id="pass" placeholder="Password (6+ chars)">
+            <input type="text" id="user" placeholder="Enter Username">
+            <input type="password" id="pass" placeholder="Password (6+ characters)">
             <button class="btn btn-p" id="b-auth" onclick="handleAuth()">Sign In</button>
-            <button class="btn btn-o" onclick="toggleAuth()">Create New Account</button>
+            <button class="btn btn-o" id="b-tog" onclick="toggleAuth()">Create New Account</button>
         </div>
     </div>
 
     <div id="v-dash" class="hidden">
-        <div class="header"><h1>DASHBOARD</h1><p id="u-welcome"></p></div>
+        <div class="header"><h1>COMMAND CENTER</h1><p id="u-tag"></p></div>
         <div class="content">
-            <button class="btn btn-s" style="height:120px;" onclick="showV('v-stock')">📦 MONTHLY INVENTORY</button>
-            <button class="btn btn-o" style="margin-top: 50px; color:red; border-color:red;" onclick="location.reload()">Logout</button>
+            <button class="btn btn-s" style="height:120px; font-size: 18px;" onclick="showV('v-stock')">📦 MONTHLY INVENTORY</button>
+            <button class="btn btn-o" style="margin-top: 60px; color:red; border-color:red;" onclick="location.reload()">Secure Logout</button>
         </div>
     </div>
 
     <div id="v-stock" class="hidden">
         <div class="content">
-            <h2 style="color:var(--p); margin:0 0 10px 0;">Stock Entry</h2>
-            <input type="text" placeholder="🔍 Search..." oninput="draw(this.value)">
-            <div id="list" style="max-height: 400px; overflow-y: auto;"></div>
-            <button class="btn btn-s" id="b-save" style="margin-top:20px;" onclick="save()">✅ SAVE TO CLOUD</button>
-            <button class="btn btn-o" onclick="showV('v-dash')">Back</button>
+            <div style="position: sticky; top:0; background:white; z-index:10; padding-bottom:10px; border-bottom: 2px solid #eee;">
+                <h2 style="color:var(--p); margin:0 0 10px 0;">Stock Entry</h2>
+                <input type="text" placeholder="🔍 Search Products..." oninput="draw(this.value)">
+            </div>
+            <div id="list" style="max-height: 420px; overflow-y: auto;"></div>
+            <button class="btn btn-s" id="b-save" style="margin-top:20px;" onclick="save()">✅ SYNC TO CLOUD</button>
+            <button class="btn btn-o" onclick="showV('v-dash')">Back to Menu</button>
         </div>
     </div>
     
-    <div id="console">Initializing System...</div>
+    <div id="log">> System Standing By...</div>
 </div>
 
 <script>
-    // YOUR PROVIDED KEY
-    const _U = "https://ywmlvtdrwijnhqdypteu.supabase.co";
-    const _K = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dDRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
+    // THE EXACT URL AND KEY YOU PROVIDED
+    const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
+    const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
     
-    let sb;
-    const log = (m) => { document.getElementById('console').innerHTML = "> " + m; };
-
-    try {
-        sb = supabase.createClient(_U, _K, { auth: { persistSession: false } });
-        log("Connection established with provided key.");
-    } catch(e) {
-        log("Client Error: " + e.message);
-    }
+    // Create client with Hard Reset to prevent old session errors
+    const sb = supabase.createClient(_URL, _KEY, { auth: { persistSession: false } });
 
     let isL = true;
+    const msg = (t) => { document.getElementById('log').innerText = "> " + t; };
+
     const items = [
         {c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"}, {c:"DRC1203", n:"KACIP FATIMA GANO"}, 
         {c:"DRC1204", n:"TONGKAT & MACCA"}, {c:"DRC1205", n:"CAPPUCCINO GANO"}, {c:"DRC1802A", n:"LIQUID ALFALFA 500ML"},
@@ -87,38 +85,38 @@
 
     function toggleAuth() {
         isL = !isL;
-        document.getElementById('a-status').innerText = isL ? "SYSTEM ACCESS" : "REGISTRATION";
-        document.getElementById('b-auth').innerText = isL ? "Sign In" : "Create Account";
-        log(isL ? "Mode: Sign-In" : "Mode: Sign-Up");
+        document.getElementById('a-mode').innerText = isL ? "SECURE CLOUD PORTAL" : "CREATE NEW ACCOUNT";
+        document.getElementById('b-auth').innerText = isL ? "Sign In" : "Register Now";
+        document.getElementById('b-tog').innerText = isL ? "Create New Account" : "Back to Login";
     }
 
     async function handleAuth() {
         const u = document.getElementById('user').value.trim();
         const p = document.getElementById('pass').value;
-        if(!u || p.length < 6) return alert("Missing info or password too short.");
+        if(!u || p.length < 6) return alert("Fill all fields (Pass: 6+ chars)");
         
-        log("Connecting to Supabase...");
+        msg("Syncing with Supabase...");
         const email = u.toLowerCase() + "@dyna.pro";
-        const b = document.getElementById('b-auth');
-        b.innerText = "...";
+        const btn = document.getElementById('b-auth');
+        btn.innerText = "WAIT...";
 
         const { data, error } = isL 
             ? await sb.auth.signInWithPassword({ email, password: p })
             : await sb.auth.signUp({ email, password: p });
 
         if(error) {
-            log("Auth Error: " + error.message);
-            alert("Error: " + error.message);
-            b.innerText = isL ? "Sign In" : "Create Account";
+            msg("Failed: " + error.message);
+            alert(error.message);
+            btn.innerText = isL ? "Sign In" : "Register Now";
         } else {
-            log("Success.");
-            document.getElementById('u-welcome').innerText = "Hello, " + u.toUpperCase();
+            msg("Connected.");
+            document.getElementById('u-tag').innerText = "OPERATOR: " + u.toUpperCase();
             showV('v-dash');
         }
     }
 
     function showV(id) {
-        document.querySelectorAll('.app > div').forEach(d => { if(d.id !== 'console') d.classList.add('hidden'); });
+        document.querySelectorAll('.app > div').forEach(d => { if(d.id !== 'log') d.classList.add('hidden'); });
         document.getElementById(id).classList.remove('hidden');
         if(id === 'v-stock') draw();
     }
@@ -127,35 +125,36 @@
         const l = document.getElementById('list');
         l.innerHTML = items.filter(i => i.n.toLowerCase().includes(f.toLowerCase()) || i.c.toLowerCase().includes(f.toLowerCase())).map(i => `
             <div class="item">
-                <div><b>${i.n}</b><br><small>${i.c}</small></div>
-                <input type="number" class="q" data-c="${i.c}" placeholder="0">
+                <div><b>${i.n}</b><br><small style="color:#64748b">${i.c}</small></div>
+                <input type="number" class="qty" data-c="${i.c}" placeholder="0">
             </div>
         `).join('');
     }
 
     async function save() {
         const b = document.getElementById('b-save');
-        const data = Array.from(document.querySelectorAll('.q')).map(i => ({
+        const data = Array.from(document.querySelectorAll('.qty')).map(i => ({
             month_year: "March 2026",
             product_code: i.dataset.c,
             opening_quantity: parseInt(i.value) || 0
         })).filter(x => x.opening_quantity > 0);
 
-        if(data.length === 0) return alert("No values entered.");
+        if(data.length === 0) return alert("Enter stock quantities first!");
         b.innerText = "UPLOADING...";
-        log("Upserting " + data.length + " rows...");
+        msg("Saving " + data.length + " entries...");
 
+        // FIX: UPSERT handles that "Unique Constraint" error from your screenshot
         const { error } = await sb.from('monthly_stock').upsert(data, { onConflict: 'month_year,product_code' });
 
         if(error) {
-            log("DB Error: " + error.message);
-            alert(error.message);
+            msg("DB Error: " + error.message);
+            alert("Database Error: " + error.message);
         } else {
-            log("Cloud Sync Complete.");
-            alert("✅ INVENTORY SYNCED!");
+            msg("Cloud Updated.");
+            alert("✅ ALL STOCK SAVED TO CLOUD!");
             showV('v-dash');
         }
-        b.innerText = "✅ SAVE TO CLOUD";
+        b.innerText = "✅ SYNC TO CLOUD";
     }
 </script>
 </body>
