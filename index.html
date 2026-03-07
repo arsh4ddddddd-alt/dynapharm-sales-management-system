@@ -3,91 +3,104 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dynapharm Cloud Pro</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --p: #003366; --s: #059669; --bg: #f0f4f8; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
-        .card { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        :root { --p: #003366; --s: #059669; --bg: #f8fafc; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; width: 100%; max-width: 400px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
         .hidden { display: none; }
-        h2 { color: var(--p); text-align: center; border-bottom: 3px solid #ffcc00; padding-bottom: 10px; }
-        input, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
+        h2 { color: var(--p); border-bottom: 3px solid #ffcc00; padding-bottom: 10px; }
+        input, button { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
         button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-        .qty { width: 80px !important; text-align: center; margin: 0 !important; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
+        .item input { width: 80px; margin: 0; text-align: center; }
     </style>
 </head>
 <body>
 <div class="card">
     <div id="auth-box">
         <h2 id="head">Dynapharm Login</h2>
-        <input type="tel" id="phone">
+        <input type="text" id="userid" placeholder="Enter Username (e.g. John123)">
         <input type="password" id="pass" placeholder="Password (6+ chars)">
-        <button onclick="entry()">Enter Portal</button>
-        <p style="text-align:center">New? <b onclick="toggle()" style="color:blue; cursor:pointer">Create Account</b></p>
+        <button onclick="handleAuth()" id="login-btn">Enter System</button>
+        <p>New? <b onclick="toggle()" id="toggle-text" style="color:blue; cursor:pointer">Create Account</b></p>
     </div>
 
-    <div id="menu-box" class="hidden">
-        <h2>Main Menu</h2>
-        <button onclick="show('stock-box')" style="background:var(--s); height: 80px;">📦 Monthly Stock Entry</button>
+    <div id="main-box" class="hidden">
+        <h2>Access Granted</h2>
+        <button onclick="show('stock-box')" style="background:var(--s); height: 80px;">📦 Monthly Inventory</button>
         <button onclick="location.reload()" style="background:#64748b; margin-top:20px;">Logout</button>
     </div>
 
     <div id="stock-box" class="hidden">
-        <h2 style="position: sticky; top: 0; background: white;">Stock Entry</h2>
+        <h2>Inventory</h2>
         <div id="list" style="max-height: 400px; overflow-y: auto;"></div>
-        <button onclick="save()" id="s-btn" style="background:var(--s); margin-top:10px;">Save to Cloud</button>
-        <button onclick="show('menu-box')" style="background:#64748b">Back</button>
+        <button onclick="saveData()" id="save-btn" style="background:var(--s); margin-top:15px;">Save to Cloud</button>
+        <button onclick="show('main-box')" style="background:#64748b">Back</button>
     </div>
 </div>
 
 <script>
-    const iti = window.intlTelInput(document.querySelector("#phone"), { initialCountry: "cd", separateDialCode: true });
-    const sb = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
+    const sb = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dDRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
     
-    let isL = true;
-    const items = [
-        {c:"DRC1201", n:"GINKO COFFEE"}, {c:"DRC1202", n:"GREEN TEA"}, {c:"DRC1802A", n:"ALFALFA"},
-        {c:"DRC1811", n:"GARLIC 90s"}, {c:"DRC2812", n:"MAHARANI"}, {c:"DRC4824", n:"SEA CUCUMBER"}
+    let isLogin = true;
+    const products = [
+        {c:"DRC1201", n:"GINKO COFFEE"}, {c:"DRC1202", n:"GREEN TEA"}, 
+        {c:"DRC1802A", n:"ALFALFA"}, {c:"DRC2812", n:"MAHARANI"}
     ];
 
-    function toggle() { isL = !isL; document.getElementById('head').innerText = isL ? "Dynapharm Login" : "Create Account"; }
-
-    async function entry() {
-        const p = iti.getNumber();
-        if(!p) return alert("Enter phone!");
-        // Force email format to stop "Invalid Format" error
-        const email = p.replace('+', '') + "@dyna.com";
-        const pass = document.getElementById('pass').value;
-
-        const { error } = isL ? await sb.auth.signInWithPassword({email, password:pass}) : await sb.auth.signUp({email, password:pass});
-        if(error) alert(error.message); else show('menu-box');
+    function toggle() {
+        isLogin = !isLogin;
+        document.getElementById('head').innerText = isLogin ? "Dynapharm Login" : "Create Account";
+        document.getElementById('toggle-text').innerText = isLogin ? "Create Account" : "Back to Login";
     }
 
-    function show(id) {
-        document.getElementById('auth-box').classList.add('hidden');
-        document.getElementById('menu-box').classList.add('hidden');
-        document.getElementById('stock-box').classList.add('hidden');
-        document.getElementById(id).classList.remove('hidden');
-        if(id === 'stock-box') {
-            document.getElementById('list').innerHTML = items.map(i => `
-                <div class="prod-row"><span>${i.n}</span><input type="number" class="v" data-c="${i.c}" placeholder="0"></div>
-            `).join('');
+    async function handleAuth() {
+        const user = document.getElementById('userid').value.trim();
+        const pass = document.getElementById('pass').value;
+        if(!user || !pass) return alert("Fill all fields");
+
+        // Force a valid email format behind the scenes
+        const virtualEmail = user.toLowerCase() + "@dynapharm.cloud";
+        const btn = document.getElementById('login-btn');
+        btn.innerText = "Processing...";
+
+        const { error } = isLogin 
+            ? await sb.auth.signInWithPassword({ email: virtualEmail, password: pass })
+            : await sb.auth.signUp({ email: virtualEmail, password: pass });
+
+        if(error) {
+            alert(error.message);
+            btn.innerText = "Enter System";
+        } else {
+            show('main-box');
         }
     }
 
-    async function save() {
-        const b = document.getElementById('s-btn');
-        b.innerText = "Saving...";
-        const data = Array.from(document.querySelectorAll('.v')).map(i => ({
+    function show(id) {
+        document.querySelectorAll('.card > div').forEach(div => div.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+        if(id === 'stock-box') renderList();
+    }
+
+    function renderList() {
+        document.getElementById('list').innerHTML = products.map(p => `
+            <div class="item"><span>${p.n}</span><input type="number" class="qty" data-c="${p.c}" placeholder="0"></div>
+        `).join('');
+    }
+
+    async function saveData() {
+        const btn = document.getElementById('save-btn');
+        btn.innerText = "Saving...";
+        const data = Array.from(document.querySelectorAll('.qty')).map(i => ({
             month_year: "March 2026",
             product_code: i.dataset.c,
             opening_quantity: parseInt(i.value) || 0
         })).filter(r => r.opening_quantity > 0);
 
         const { error } = await sb.from('monthly_stock').upsert(data);
-        if(error) alert(error.message); else alert("✅ Saved!");
-        b.innerText = "Save to Cloud";
+        if(error) alert(error.message); else alert("✅ Success!");
+        btn.innerText = "Save to Cloud";
     }
 </script>
 </body>
