@@ -6,85 +6,79 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --p: #003366; --s: #059669; --bg: #f8fafc; }
-        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 15px; }
-        .card { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        :root { --p: #003366; --s: #059669; --bg: #f0f4f8; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .card { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .hidden { display: none; }
-        h2 { color: var(--p); text-align: center; border-bottom: 2px solid #ffcc00; padding-bottom: 10px; }
-        input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
+        h2 { color: var(--p); text-align: center; border-bottom: 3px solid #ffcc00; padding-bottom: 10px; }
+        input, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
         button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid #f1f5f9; }
-        .prod-row input { width: 80px; margin: 0; text-align: center; }
+        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
+        .qty { width: 80px !important; text-align: center; margin: 0 !important; }
     </style>
 </head>
 <body>
 <div class="card">
     <div id="auth-box">
-        <h2 id="header">Dynapharm Login</h2>
+        <h2 id="head">Dynapharm Login</h2>
         <input type="tel" id="phone">
         <input type="password" id="pass" placeholder="Password (6+ chars)">
-        <button onclick="handleAuth()">Enter System</button>
-        <p style="text-align:center; font-size:14px">New? <b onclick="toggle()" style="color:blue; cursor:pointer">Create Account</b></p>
+        <button onclick="entry()">Enter Portal</button>
+        <p style="text-align:center">New? <b onclick="toggle()" style="color:blue; cursor:pointer">Create Account</b></p>
     </div>
 
     <div id="menu-box" class="hidden">
         <h2>Main Menu</h2>
-        <button onclick="show('entry-box')" style="background:var(--s); height: 80px;">📦 Monthly Stock Entry</button>
+        <button onclick="show('stock-box')" style="background:var(--s); height: 80px;">📦 Monthly Stock Entry</button>
         <button onclick="location.reload()" style="background:#64748b; margin-top:20px;">Logout</button>
     </div>
 
-    <div id="entry-box" class="hidden">
+    <div id="stock-box" class="hidden">
         <h2 style="position: sticky; top: 0; background: white;">Stock Entry</h2>
         <div id="list" style="max-height: 400px; overflow-y: auto;"></div>
-        <button onclick="save()" style="background:var(--s); margin-top:15px;">Save to Cloud</button>
+        <button onclick="save()" id="s-btn" style="background:var(--s); margin-top:10px;">Save to Cloud</button>
         <button onclick="show('menu-box')" style="background:#64748b">Back</button>
     </div>
 </div>
 
 <script>
     const iti = window.intlTelInput(document.querySelector("#phone"), { initialCountry: "cd", separateDialCode: true });
-    const sb = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dDRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
+    const sb = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
     
-    let isLogin = true;
+    let isL = true;
+    const items = [
+        {c:"DRC1201", n:"GINKO COFFEE"}, {c:"DRC1202", n:"GREEN TEA"}, {c:"DRC1802A", n:"ALFALFA"},
+        {c:"DRC1811", n:"GARLIC 90s"}, {c:"DRC2812", n:"MAHARANI"}, {c:"DRC4824", n:"SEA CUCUMBER"}
+    ];
 
-    function toggle() {
-        isLogin = !isLogin;
-        document.getElementById('header').innerText = isLogin ? "Dynapharm Login" : "Create Account";
-    }
+    function toggle() { isL = !isL; document.getElementById('head').innerText = isL ? "Dynapharm Login" : "Create Account"; }
 
-    async function handleAuth() {
-        const num = iti.getNumber();
-        if(!num) return alert("Please enter your phone number");
+    async function entry() {
+        const p = iti.getNumber();
+        if(!p) return alert("Enter phone!");
+        // Force email format to stop "Invalid Format" error
+        const email = p.replace('+', '') + "@dyna.com";
+        const pass = document.getElementById('pass').value;
 
-        // THIS FIXES THE INVALID FORMAT ERROR:
-        // Converts +243902702275 to 243902702275@dynapharm.cloud
-        const cleanEmail = num.replace('+', '') + "@dynapharm.cloud";
-        const password = document.getElementById('pass').value;
-        
-        const { error } = isLogin 
-            ? await sb.auth.signInWithPassword({ email: cleanEmail, password }) 
-            : await sb.auth.signUp({ email: cleanEmail, password });
-
-        if(error) alert(error.message); 
-        else show('menu-box');
+        const { error } = isL ? await sb.auth.signInWithPassword({email, password:pass}) : await sb.auth.signUp({email, password:pass});
+        if(error) alert(error.message); else show('menu-box');
     }
 
     function show(id) {
         document.getElementById('auth-box').classList.add('hidden');
         document.getElementById('menu-box').classList.add('hidden');
-        document.getElementById('entry-box').classList.add('hidden');
+        document.getElementById('stock-box').classList.add('hidden');
         document.getElementById(id).classList.remove('hidden');
-        if(id === 'entry-box') loadItems();
-    }
-
-    function loadItems() {
-        const prods = [{c:"DRC1201", n:"GINKO COFFEE"}, {c:"DRC1802A", n:"ALFALFA"}, {c:"DRC2812", n:"MAHARANI"}];
-        document.getElementById('list').innerHTML = prods.map(p => `
-            <div class="prod-row"><span>${p.n}</span><input type="number" class="v" data-c="${p.c}" placeholder="0"></div>
-        `).join('');
+        if(id === 'stock-box') {
+            document.getElementById('list').innerHTML = items.map(i => `
+                <div class="prod-row"><span>${i.n}</span><input type="number" class="v" data-c="${i.c}" placeholder="0"></div>
+            `).join('');
+        }
     }
 
     async function save() {
+        const b = document.getElementById('s-btn');
+        b.innerText = "Saving...";
         const data = Array.from(document.querySelectorAll('.v')).map(i => ({
             month_year: "March 2026",
             product_code: i.dataset.c,
@@ -92,7 +86,8 @@
         })).filter(r => r.opening_quantity > 0);
 
         const { error } = await sb.from('monthly_stock').upsert(data);
-        if(error) alert(error.message); else alert("Saved successfully!");
+        if(error) alert(error.message); else alert("✅ Saved!");
+        b.innerText = "Save to Cloud";
     }
 </script>
 </body>
