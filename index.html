@@ -3,101 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynapharm Cloud Pro</title>
+    <title>Dynapharm Cloud Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #003366; --bg: #f4f7f9; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-top: 20px; }
+        :root { --primary: #003366; --accent: #ffcc00; --success: #28a745; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; width: 100%; max-width: 420px; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); transition: 0.3s; }
         .hidden { display: none; }
-        input, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .prod-row input { width: 70px; margin: 0; padding: 8px; }
+        h2 { color: var(--primary); text-align: center; margin-bottom: 25px; border-bottom: 3px solid var(--accent); padding-bottom: 10px; }
+        input, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; outline: none; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
+        .toggle-btn { text-align: center; color: var(--primary); font-size: 14px; cursor: pointer; margin-top: 15px; font-weight: 600; }
+        .prod-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
+        .prod-item input { width: 80px; margin: 0; padding: 8px; text-align: center; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="auth-screen">
-        <h2 id="auth-title" style="text-align:center">Login</h2>
-        <input type="tel" id="phone-input">
-        <input type="password" id="password-input" placeholder="Password (6+ chars)">
-        <button onclick="handleAuth()">Enter System</button>
-        <p style="text-align:center; color:blue; cursor:pointer" onclick="toggleAuth()" id="toggle-btn">New user? Create Account</p>
+<div class="card">
+    <div id="auth-box">
+        <h2 id="title">Cloud Login</h2>
+        <div id="msg" style="color: red; font-size: 13px; text-align: center;"></div>
+        <input type="tel" id="phone">
+        <input type="password" id="pass" placeholder="Password (min 6 characters)">
+        <button onclick="runAuth()" id="main-btn">Login to System</button>
+        <div class="toggle-btn" onclick="switchMode()" id="switch-text">New user? Create your account</div>
     </div>
 
-    <div id="main-menu" class="hidden">
-        <h2 id="welcome-user" style="text-align:center; font-size: 14px;"></h2>
-        <button onclick="showEntry('stock')" style="background:#28a745">📦 Monthly Stock</button>
-        <button onclick="showEntry('sales')">📝 Daily Sales</button>
-        <button onclick="location.reload()" style="background:#666">Logout</button>
+    <div id="menu-box" class="hidden">
+        <h2 id="user-display">Dashboard</h2>
+        <button onclick="openForm('stock')" style="background: var(--success)">📦 Open Monthly Stock</button>
+        <button onclick="openForm('sales')">📝 New Sales Report</button>
+        <button onclick="location.reload()" style="background: #666">Secure Logout</button>
     </div>
 
-    <div id="entry-screen" class="hidden">
-        <h2 id="entry-title">Entry</h2>
-        <div id="product-list" style="max-height:400px; overflow-y:auto"></div>
-        <button onclick="saveToDatabase()" id="save-btn">Save to Cloud</button>
-        <button onclick="showSection('main-menu')" style="background:#666">Back</button>
+    <div id="form-box" class="hidden">
+        <h2 id="form-title">Entry</h2>
+        <input type="text" id="search" placeholder="🔍 Search product..." oninput="drawList(this.value)" style="background: #fafafa">
+        <div id="list" style="max-height: 400px; overflow-y: auto;"></div>
+        <button id="save-btn" style="margin-top: 20px;">Save to Cloud</button>
+        <button onclick="showUI('menu-box')" style="background: #666">Cancel</button>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
-    const iti = window.intlTelInput(document.querySelector("#phone-input"), { initialCountry: "cd" });
-    const supabaseClient = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
+    const iti = window.intlTelInput(document.querySelector("#phone"), { initialCountry: "cd", preferredCountries: ["cd", "zm"] });
+    const sb = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
 
-    let isLoginMode = true;
-    let currentType = "";
-    const products = [
+    let isLogin = true;
+    let mode = "";
+    const items = [
         {c:"DRC1201", n:"GINKO COFFEE"}, {c:"DRC1202", n:"GREEN TEA"}, {c:"DRC1802A", n:"ALFALFA"},
         {c:"DRC1814", n:"CHOCO"}, {c:"DRC2812", n:"MAHARANI"}, {c:"DRC4810", n:"TONGKAT COFFEE"}
+        // Add all 32 products here in this format
     ];
 
-    function toggleAuth() {
-        isLoginMode = !isLoginMode;
-        document.getElementById('auth-title').innerText = isLoginMode ? "Login" : "Sign Up";
-        document.getElementById('toggle-btn').innerText = isLoginMode ? "New user? Create Account" : "Back to Login";
+    function switchMode() {
+        isLogin = !isLogin;
+        document.getElementById('title').innerText = isLogin ? "Cloud Login" : "Create Account";
+        document.getElementById('main-btn').innerText = isLogin ? "Login to System" : "Register & Enter";
+        document.getElementById('switch-text').innerText = isLogin ? "New user? Create your account" : "Already have an account? Login";
     }
 
-    async function handleAuth() {
-        const email = iti.getNumber().replace('+','') + "@dyna.com";
-        const password = document.getElementById('password-input').value;
-        const { data, error } = isLoginMode ? await supabaseClient.auth.signInWithPassword({email, password}) : await supabaseClient.auth.signUp({email, password});
+    async function runAuth() {
+        const btn = document.getElementById('main-btn');
+        const phoneNum = iti.getNumber();
+        if(!phoneNum) return alert("Enter phone number");
         
-        if(error) alert(error.message); 
-        else {
-            document.getElementById('welcome-user').innerText = "Logged in as: " + iti.getNumber();
-            showSection('main-menu');
+        const email = phoneNum.replace('+','') + "@dyna.com";
+        const password = document.getElementById('pass').value;
+        
+        btn.innerHTML = '<span class="loader"></span> Processing...';
+        
+        const { data, error } = isLogin 
+            ? await sb.auth.signInWithPassword({ email, password }) 
+            : await sb.auth.signUp({ email, password });
+
+        if(error) {
+            alert(error.message);
+            btn.innerText = isLogin ? "Login to System" : "Register & Enter";
+        } else {
+            document.getElementById('user-display').innerText = "Account: " + phoneNum;
+            showUI('menu-box');
         }
     }
 
-    function showSection(id) {
-        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
+    function showUI(id) {
+        document.querySelectorAll('.card > div').forEach(d => d.classList.add('hidden'));
         document.getElementById(id).classList.remove('hidden');
     }
 
-    function showEntry(type) {
-        currentType = type;
-        showSection('entry-screen');
-        document.getElementById('entry-title').innerText = type === 'stock' ? "Opening Stock" : "Daily Sales";
-        document.getElementById('product-list').innerHTML = products.map(p => `
-            <div class="prod-row"><span>${p.n}</span><input type="number" class="qty-in" data-code="${p.c}"></div>
+    function openForm(type) {
+        mode = type;
+        showUI('form-box');
+        document.getElementById('form-title').innerText = type === 'stock' ? "Stock Entry" : "Sales Report";
+        drawList();
+        document.getElementById('save-btn').onclick = saveData;
+    }
+
+    function drawList(filter = "") {
+        const list = document.getElementById('list');
+        list.innerHTML = items.filter(i => i.n.toLowerCase().includes(filter.toLowerCase())).map(i => `
+            <div class="prod-item"><span>${i.n}</span><input type="number" class="qty" data-code="${i.c}" placeholder="0"></div>
         `).join('');
     }
 
-    async function saveToDatabase() {
-        const rows = Array.from(document.querySelectorAll('.qty-in')).map(i => ({
+    async function saveData() {
+        const btn = document.getElementById('save-btn');
+        btn.innerHTML = '<span class="loader"></span> Saving...';
+        
+        const data = Array.from(document.querySelectorAll('.qty')).map(i => ({
             month_year: "March 2026",
             product_code: i.dataset.code,
             opening_quantity: parseInt(i.value) || 0
         })).filter(r => r.opening_quantity > 0);
 
-        if(currentType === 'stock') {
-            const { error } = await supabaseClient.from('monthly_stock').upsert(rows);
-            alert(error ? "Error: " + error.message : "Stock levels saved successfully!");
+        if(mode === 'stock') {
+            const { error } = await sb.from('monthly_stock').upsert(data);
+            if(error) alert(error.message); else { alert("Saved!"); showUI('menu-box'); }
         }
+        btn.innerText = "Save to Cloud";
     }
 </script>
 </body>
