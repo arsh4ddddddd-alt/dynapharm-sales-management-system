@@ -1,63 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynapharm Cloud OS | Enterprise</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dynapharm Cloud OS | Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #003366; --secondary: #059669; --accent: #fbbf24; --bg: #f8fafc; --text: #1e293b; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
-        .app-container { width: 100%; max-width: 480px; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); }
+        :root { --p: #003366; --s: #059669; --bg: #f8fafc; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; }
+        .app { width: 100%; max-width: 480px; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .hidden { display: none !important; }
-        .header { background: var(--primary); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 30px 30px; }
+        .header { background: var(--p); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 25px 25px; }
         .content { padding: 25px; flex-grow: 1; }
-        input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 16px; box-sizing: border-box; margin-bottom: 15px; }
-        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--secondary); color: white; }
-        .product-card { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; }
-        .qty-field { width: 80px !important; text-align: center; margin: 0 !important; border: 2px solid #cbd5e1 !important; }
+        input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 16px; box-sizing: border-box; margin-bottom: 12px; }
+        .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; transition: 0.2s; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-s { background: var(--s); color: white; }
+        .btn-g { background: transparent; color: var(--p); border: 2px solid var(--p); }
+        .btn:active { transform: scale(0.98); }
+        .row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; }
+        .q-in { width: 85px !important; text-align: center; margin: 0 !important; border: 2px solid #cbd5e1 !important; font-weight: bold; color: var(--s); }
+        .sticky { position: sticky; top: 0; background: white; z-index: 10; padding-bottom: 10px; border-bottom: 2px solid #f1f5f9; margin-bottom: 10px; }
     </style>
 </head>
 <body>
-
-<div class="app-container">
-    <div id="view-auth">
-        <div class="header"><h1>DYNAPHARM ERP</h1><p>v4.6 Extreme Edition</p></div>
+<div class="app">
+    <div id="v-auth">
+        <div class="header"><h1 id="a-title">DYNAPHARM LOGIN</h1><p>Enterprise Edition v5.0</p></div>
         <div class="content">
-            <input type="text" id="username" placeholder="Username">
-            <input type="password" id="password" placeholder="Password">
-            <button class="btn btn-primary" id="auth-btn" onclick="executeAuth()">Login / Register</button>
-            <p style="text-align:center; font-size:12px; color:#64748b;">Enter username and password.<br>If you don't have an account, it will be created automatically.</p>
+            <input type="text" id="user" placeholder="Username (e.g. arshad123)">
+            <input type="password" id="pass" placeholder="Password (6+ characters)">
+            <button class="btn btn-p" id="b-auth" onclick="handleAuth()">Sign In</button>
+            <button class="btn btn-g" id="b-toggle" onclick="toggleMode()">Create New Account</button>
         </div>
     </div>
 
-    <div id="view-menu" class="hidden">
-        <div class="header"><h1 id="user-title">WELCOME</h1></div>
+    <div id="v-menu" class="hidden">
+        <div class="header"><h1>COMMAND CENTER</h1><p id="u-tag"></p></div>
         <div class="content">
-            <button class="btn btn-success" style="height:100px;" onclick="showView('view-inventory')">📦 MONTHLY INVENTORY</button>
-            <button class="btn" style="background:#64748b; color:white; margin-top:50px;" onclick="location.reload()">LOGOUT</button>
+            <button class="btn btn-s" style="height:120px; font-size: 18px;" onclick="showV('v-stock')">📦 MONTHLY INVENTORY</button>
+            <button class="btn btn-g" style="margin-top: 60px; color: #ef4444; border-color: #ef4444;" onclick="location.reload()">Secure Logout</button>
         </div>
     </div>
 
-    <div id="view-inventory" class="hidden">
+    <div id="v-stock" class="hidden">
         <div class="content">
-            <h2 style="color:var(--primary)">Stock Entry</h2>
-            <input type="text" placeholder="🔍 Search products..." oninput="renderProducts(this.value)">
-            <div id="product-list" style="max-height: 400px; overflow-y: auto;"></div>
-            <button class="btn btn-success" id="save-btn" style="margin-top:20px;" onclick="commitToCloud()">SAVE TO CLOUD</button>
-            <button class="btn" style="background:#64748b; color:white;" onclick="showView('view-menu')">BACK</button>
+            <div class="sticky">
+                <h2 style="color:var(--p); margin: 0 0 10px 0;">Stock Inventory</h2>
+                <input type="text" placeholder="🔍 Search product..." oninput="draw(this.value)">
+            </div>
+            <div id="list" style="max-height: 450px; overflow-y: auto;"></div>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-s" id="b-save" onclick="save()">✅ SAVE TO CLOUD</button>
+                <button class="btn btn-g" onclick="showV('v-menu')">Back to Menu</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // THE REFRESHED KEY
-    const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
-    const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dDRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
-    const sb = supabase.createClient(_URL, _KEY);
+    // FIXED CONNECTION STRINGS
+    const _U = "https://ywmlvtdrwijnhqdypteu.supabase.co";
+    const _K = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
+    const sb = supabase.createClient(_U, _K);
 
+    let isL = true;
     const items = [
         {c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"}, {c:"DRC1203", n:"KACIP FATIMA GANO"}, 
         {c:"DRC1204", n:"TONGKAT & MACCA"}, {c:"DRC1205", n:"CAPPUCCINO GANO"}, {c:"DRC1802A", n:"LIQUID ALFALFA 500ML"},
@@ -73,65 +79,70 @@
         {c:"DRC4824A", n:"SEA CUCUMBER 500ML"}, {c:"DRC5801", n:"CHLOROPHYLL SOAP"}, {c:"DRC5802", n:"GANO SOAP"}
     ];
 
-    async function executeAuth() {
-        const u = document.getElementById('username').value.trim();
-        const p = document.getElementById('password').value;
-        if(!u || p.length < 6) return alert("Username required and Password must be 6+ chars");
+    function toggleMode() {
+        isL = !isL;
+        document.getElementById('a-title').innerText = isL ? "DYNAPHARM LOGIN" : "CREATE ACCOUNT";
+        document.getElementById('b-auth').innerText = isL ? "Sign In" : "Register Now";
+        document.getElementById('b-toggle').innerText = isL ? "Create New Account" : "Back to Login";
+    }
+
+    async function handleAuth() {
+        const u = document.getElementById('user').value.trim();
+        const p = document.getElementById('pass').value;
+        if(!u || p.length < 6) return alert("Username required / Password min 6 chars");
         
         const email = u.toLowerCase() + "@dyna.pro";
-        const btn = document.getElementById('auth-btn');
-        btn.innerText = "VERIFYING...";
+        const btn = document.getElementById('b-auth');
+        btn.innerText = "WAIT...";
 
-        // Try login first
-        let res = await sb.auth.signInWithPassword({ email, password: p });
-        
-        // If login fails, try signing up (Auto-register)
-        if (res.error) {
-            res = await sb.auth.signUp({ email, password: p });
-        }
+        const { data, error } = isL 
+            ? await sb.auth.signInWithPassword({ email, password: p })
+            : await sb.auth.signUp({ email, password: p });
 
-        if (res.error) {
-            alert("SYSTEM ERROR: " + res.error.message);
-            btn.innerText = "Login / Register";
+        if(error) {
+            alert(error.message);
+            btn.innerText = isL ? "Sign In" : "Register Now";
         } else {
-            document.getElementById('user-title').innerText = "HELLO, " + u.toUpperCase();
-            showView('view-menu');
+            document.getElementById('u-tag').innerText = "SYSTEM ACTIVE: " + u.toUpperCase();
+            showV('v-menu');
         }
     }
 
-    function showView(id) {
-        document.querySelectorAll('.app-container > div').forEach(d => d.classList.add('hidden'));
+    function showV(id) {
+        document.getElementById('v-auth').classList.add('hidden');
+        document.getElementById('v-menu').classList.add('hidden');
+        document.getElementById('v-stock').classList.add('hidden');
         document.getElementById(id).classList.remove('hidden');
-        if(id === 'view-inventory') renderProducts();
+        if(id === 'v-stock') draw();
     }
 
-    function renderProducts(f = "") {
-        const list = document.getElementById('product-list');
-        list.innerHTML = items.filter(i => i.n.toLowerCase().includes(f.toLowerCase())).map(i => `
-            <div class="product-card">
-                <div><b>${i.n}</b><br><small>${i.c}</small></div>
+    function draw(f = "") {
+        const l = document.getElementById('list');
+        l.innerHTML = items.filter(i => i.n.toLowerCase().includes(f.toLowerCase()) || i.c.toLowerCase().includes(f.toLowerCase())).map(i => `
+            <div class="row">
+                <div><b>${i.n}</b><br><small style="color:#94a3b8">${i.c}</small></div>
                 <input type="number" class="q" data-c="${i.c}" placeholder="0">
             </div>
         `).join('');
     }
 
-    async function commitToCloud() {
-        const btn = document.getElementById('save-btn');
+    async function save() {
+        const b = document.getElementById('b-save');
         const data = Array.from(document.querySelectorAll('.q')).map(i => ({
             month_year: "March 2026",
             product_code: i.dataset.c,
             opening_quantity: parseInt(i.value) || 0
         })).filter(x => x.opening_quantity > 0);
 
-        if(data.length === 0) return alert("Enter some quantities!");
-        btn.innerText = "SAVING...";
+        if(data.length === 0) return alert("No items entered!");
+        b.innerText = "UPLOADING...";
 
-        // THE PRO FIX: Upsert prevents duplicate key errors
+        // THE FIX: .upsert handles the "Duplicate Key" error from your screenshot
         const { error } = await sb.from('monthly_stock').upsert(data, { onConflict: 'month_year,product_code' });
 
-        if(error) alert("Error: " + error.message);
-        else { alert("✅ INVENTORY SYNCED!"); showView('view-menu'); }
-        btn.innerText = "SAVE TO CLOUD";
+        if(error) alert("Sync Error: " + error.message);
+        else { alert("✅ DATA SAVED SUCCESSFULLY!"); showV('v-menu'); }
+        b.innerText = "✅ SAVE TO CLOUD";
     }
 </script>
 </body>
