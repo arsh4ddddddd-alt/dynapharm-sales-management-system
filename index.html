@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynapharm Cloud</title>
+    <title>Dynapharm Cloud Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -13,7 +13,6 @@
         .hidden { display: none; }
         input, button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
         button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .toggle-text { text-align: center; color: #0056b3; cursor: pointer; text-decoration: underline; font-size: 14px; }
         .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
         .prod-row input { width: 70px; margin: 0; padding: 8px; }
     </style>
@@ -24,13 +23,13 @@
     <div id="auth-screen">
         <h2 id="auth-title" style="text-align:center">Login</h2>
         <input type="tel" id="phone-input">
-        <input type="password" id="password-input" placeholder="Create Password (6+ chars)">
+        <input type="password" id="password-input" placeholder="Password (6+ chars)">
         <button onclick="handleAuth()">Enter System</button>
-        <p class="toggle-text" onclick="toggleAuth()" id="toggle-btn">New user? Create Account</p>
+        <p style="text-align:center; color:blue; cursor:pointer" onclick="toggleAuth()" id="toggle-btn">New user? Create Account</p>
     </div>
 
     <div id="main-menu" class="hidden">
-        <h2 style="text-align:center">Dynapharm Menu</h2>
+        <h2 id="welcome-user" style="text-align:center; font-size: 14px;"></h2>
         <button onclick="showEntry('stock')" style="background:#28a745">📦 Monthly Stock</button>
         <button onclick="showEntry('sales')">📝 Daily Sales</button>
         <button onclick="location.reload()" style="background:#666">Logout</button>
@@ -39,27 +38,22 @@
     <div id="entry-screen" class="hidden">
         <h2 id="entry-title">Entry</h2>
         <div id="product-list" style="max-height:400px; overflow-y:auto"></div>
-        <button onclick="saveData()" id="save-btn">Save to Cloud</button>
+        <button onclick="saveToDatabase()" id="save-btn">Save to Cloud</button>
         <button onclick="showSection('main-menu')" style="background:#666">Back</button>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
 <script>
-    // Initialize Phone Input
-    const iti = window.intlTelInput(document.querySelector("#phone-input"), {
-        initialCountry: "cd",
-        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js"
-    });
-
-    // Supabase Connection
+    const iti = window.intlTelInput(document.querySelector("#phone-input"), { initialCountry: "cd" });
     const supabaseClient = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
 
     let isLoginMode = true;
+    let currentType = "";
     const products = [
         {c:"DRC1201", n:"GINKO COFFEE"}, {c:"DRC1202", n:"GREEN TEA"}, {c:"DRC1802A", n:"ALFALFA"},
         {c:"DRC1814", n:"CHOCO"}, {c:"DRC2812", n:"MAHARANI"}, {c:"DRC4810", n:"TONGKAT COFFEE"}
-    ]; // Add others as needed
+    ];
 
     function toggleAuth() {
         isLoginMode = !isLoginMode;
@@ -68,25 +62,13 @@
     }
 
     async function handleAuth() {
-        const rawPhone = iti.getNumber();
-        if (!rawPhone) return alert("Enter phone number");
-        
-        // FIX: Create a valid email format from the phone number
-        const cleanEmail = rawPhone.replace('+', '') + "@dyna.com";
+        const email = iti.getNumber().replace('+','') + "@dyna.com";
         const password = document.getElementById('password-input').value;
-
-        if (password.length < 6) return alert("Password must be 6+ characters");
-
-        let result;
-        if (isLoginMode) {
-            result = await supabaseClient.auth.signInWithPassword({ email: cleanEmail, password: password });
-        } else {
-            result = await supabaseClient.auth.signUp({ email: cleanEmail, password: password });
-        }
-
-        if (result.error) {
-            alert("Error: " + result.error.message);
-        } else {
+        const { data, error } = isLoginMode ? await supabaseClient.auth.signInWithPassword({email, password}) : await supabaseClient.auth.signUp({email, password});
+        
+        if(error) alert(error.message); 
+        else {
+            document.getElementById('welcome-user').innerText = "Logged in as: " + iti.getNumber();
             showSection('main-menu');
         }
     }
@@ -97,17 +79,25 @@
     }
 
     function showEntry(type) {
+        currentType = type;
         showSection('entry-screen');
         document.getElementById('entry-title').innerText = type === 'stock' ? "Opening Stock" : "Daily Sales";
-        const list = document.getElementById('product-list');
-        list.innerHTML = products.map(p => `
-            <div class="prod-row"><span>${p.n}</span><input type="number" class="qty-input" data-code="${p.c}"></div>
+        document.getElementById('product-list').innerHTML = products.map(p => `
+            <div class="prod-row"><span>${p.n}</span><input type="number" class="qty-in" data-code="${p.c}"></div>
         `).join('');
     }
 
-    async function saveData() {
-        alert("Saving data...");
-        // Logic for saving to your tables from Image 1 would go here
+    async function saveToDatabase() {
+        const rows = Array.from(document.querySelectorAll('.qty-in')).map(i => ({
+            month_year: "March 2026",
+            product_code: i.dataset.code,
+            opening_quantity: parseInt(i.value) || 0
+        })).filter(r => r.opening_quantity > 0);
+
+        if(currentType === 'stock') {
+            const { error } = await supabaseClient.from('monthly_stock').upsert(rows);
+            alert(error ? "Error: " + error.message : "Stock levels saved successfully!");
+        }
     }
 </script>
 </body>
