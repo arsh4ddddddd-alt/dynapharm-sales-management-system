@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynapharm Cloud System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #003366; --accent: #ffcc00; --error: #dc3545; --bg: #f4f7f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .hidden { display: none; }
+        input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
+        .iti { width: 100%; margin-bottom: 8px; } /* For country selector */
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .error-text { color: var(--error); font-size: 14px; font-weight: bold; text-align: center; margin-top: 5px; }
+        .stock-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .stock-row input { width: 80px; margin: 0; }
+        h2 { text-align: center; color: var(--primary); margin-bottom: 20px; border-bottom: 2px solid var(--accent); padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="login-screen">
+        <h2>Dynapharm Login</h2>
+        <p style="text-align:center;">Select country and enter phone number</p>
+        
+        <input type="tel" id="phone-input">
+        <div id="login-error" class="error-text hidden">❌ Wrong number or invalid format!</div>
+        
+        <button onclick="processLogin()" style="margin-top: 15px;">Login</button>
+    </div>
+
+    <div id="main-menu" class="hidden">
+        <h2 id="welcome-msg">Dashboard</h2>
+        <button onclick="showSection('stock-section')" style="background:#28a745;">📦 Monthly Opening Stock</button>
+        <button onclick="showSection('sales-section')">📝 New Sales Report</button>
+        <button onclick="showSection('history-section')">📅 Cloud History</button>
+        <button onclick="location.reload()" style="background:#666; margin-top: 20px;">Logout</button>
+    </div>
+
+    <div id="stock-section" class="hidden">
+        <h2>Set Opening Stock</h2>
+        <div id="stock-list"></div>
+        <button onclick="saveStock()">Save to Cloud</button>
+        <button onclick="showSection('main-menu')" style="background:#666">Back</button>
+    </div>
+
+    <div id="sales-section" class="hidden">
+        <h2>Daily Sales</h2>
+        <input type="date" id="report-date">
+        <div id="sales-list"></div>
+        <button onclick="saveSales()">Submit Report</button>
+        <button onclick="showSection('main-menu')" style="background:#666">Back</button>
+    </div>
+
+    <div id="history-section" class="hidden">
+        <h2>Recent Activity</h2>
+        <div id="history-display">Loading history...</div>
+        <button onclick="showSection('main-menu')" style="background:#666">Back</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/intlTelInput.min.js"></script>
+<script>
+    // Initialize Country Selector
+    const phoneElement = document.querySelector("#phone-input");
+    const iti = window.intlTelInput(phoneElement, {
+        initialCountry: "cd", // Default to DR Congo
+        preferredCountries: ["cd", "zm", "ao"],
+        utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/js/utils.js",
+    });
+
+    const SUPABASE_URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let currentUser = "";
+
+    function processLogin() {
+        const errorMsg = document.getElementById('login-error');
+        
+        // Check if phone number is valid according to country format
+        if (iti.isValidNumber()) {
+            currentUser = iti.getNumber(); // Gets full number with country code
+            errorMsg.classList.add('hidden');
+            document.getElementById('welcome-msg').innerText = "User: " + currentUser;
+            showSection('main-menu');
+        } else {
+            // SHOW WRONG ERROR
+            errorMsg.classList.remove('hidden');
+        }
+    }
+
+    function showSection(id) {
+        document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    // (Stock and Sales rendering logic would follow the same pattern as previous versions)
+</script>
+
+</body>
+</html>
