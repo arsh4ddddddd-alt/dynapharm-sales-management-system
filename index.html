@@ -2,50 +2,66 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynapharm Pro v4</title>
+    <title>Dynapharm Cloud OS</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --p: #003366; --s: #059669; --bg: #f1f5f9; }
-        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 10px; }
-        .card { background: white; width: 100%; max-width: 480px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        :root { --p: #003366; --s: #059669; --bg: #f1f5f9; --accent: #ffcc00; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 10px; display: flex; justify-content: center; }
+        .card { background: white; width: 100%; max-width: 500px; min-height: 90vh; padding: 20px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
         .hidden { display: none; }
-        h2 { color: var(--p); text-align: center; border-bottom: 3px solid #ffcc00; padding-bottom: 8px; margin-top: 0; }
-        input, button { width: 100%; padding: 15px; margin: 8px 0; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 16px; box-sizing: border-box; }
-        button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; }
-        .item input { width: 80px; margin: 0; text-align: center; border: 2px solid #e2e8f0; }
-        .sticky { position: sticky; top: 0; background: white; z-index: 10; padding-bottom: 10px; }
+        h2 { color: var(--p); text-align: center; margin: 0 0 15px 0; font-size: 24px; border-bottom: 4px solid var(--accent); display: inline-block; width: 100%; padding-bottom: 10px; }
+        input, button { width: 100%; padding: 16px; margin: 8px 0; border-radius: 14px; border: 1px solid #cbd5e1; font-size: 16px; box-sizing: border-box; outline: none; }
+        button { background: var(--p); color: white; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
+        button:active { transform: scale(0.98); }
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; transition: 0.2s; }
+        .item-row:hover { background: #f8fafc; }
+        .item-info { display: flex; flex-direction: column; flex: 1; }
+        .item-name { font-weight: 700; color: #1e293b; font-size: 14px; }
+        .item-code { font-size: 11px; color: #64748b; font-weight: 600; }
+        .qty-input { width: 90px !important; border: 2px solid #e2e8f0 !important; text-align: center; font-weight: bold; color: var(--s); margin: 0 !important; }
+        .qty-input:focus { border-color: var(--s) !important; background: #ecfdf5; }
+        .sticky-header { position: sticky; top: -10px; background: white; z-index: 100; padding: 10px 0; margin-bottom: 10px; border-bottom: 2px solid #f1f5f9; }
+        .badge { background: #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; margin-bottom: 10px; display: inline-block; }
     </style>
 </head>
 <body>
 <div class="card">
     <div id="auth-box">
-        <h2 id="title">Dynapharm Login</h2>
+        <h2>Dynapharm Cloud</h2>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <span class="badge" id="mode-badge">SECURE ACCESS</span>
+        </div>
         <input type="text" id="user" placeholder="Username (e.g. arshadpatel)">
-        <input type="password" id="pass" placeholder="Password (6+ chars)">
-        <button onclick="auth()" id="btn">Sign In</button>
-        <p style="text-align:center">New? <b onclick="toggle()" style="color:blue; cursor:pointer">Create Account</b></p>
+        <input type="password" id="pass" placeholder="Password">
+        <button onclick="auth()" id="btn-auth">Sign In</button>
+        <p style="text-align:center; font-size: 14px; color: #64748b;">System Maintenance: v4.0 Extreme<br>
+        <b onclick="toggle()" style="color:var(--p); cursor:pointer; text-decoration: underline;">Create New Account</b></p>
     </div>
 
     <div id="menu-box" class="hidden">
-        <h2>Dashboard</h2>
-        <button onclick="show('stock-box')" style="background:var(--s); height: 100px; font-size: 20px;">📦 Monthly Inventory</button>
-        <button onclick="location.reload()" style="background:#64748b; margin-top:40px;">Logout</button>
+        <h2>Control Center</h2>
+        <div style="margin-top: 40px;">
+            <button onclick="show('stock-box')" style="background:var(--s); height: 120px; font-size: 20px; box-shadow: 0 4px 15px rgba(5,150,105,0.3);">📦 STOCK INVENTORY</button>
+            <button onclick="alert('Daily Sales module coming soon!')" style="background:#3b82f6; height: 80px; margin-top: 15px;">📊 VIEW REPORTS</button>
+            <button onclick="location.reload()" style="background:#ef4444; margin-top: 40px;">SECURE LOGOUT</button>
+        </div>
     </div>
 
     <div id="stock-box" class="hidden">
-        <div class="sticky">
-            <h2>Stock Entry</h2>
-            <input type="text" placeholder="🔍 Search products..." oninput="draw(this.value)">
+        <div class="sticky-header">
+            <h2>Inventory Entry</h2>
+            <input type="text" id="search" placeholder="🔍 Search Name or Code..." oninput="render(this.value)">
         </div>
-        <div id="list" style="max-height: 450px; overflow-y: auto;"></div>
-        <button onclick="save()" id="s-btn" style="background:var(--s); margin-top:15px;">Save to Cloud</button>
-        <button onclick="show('menu-box')" style="background:#64748b">Back</button>
+        <div id="list" style="flex-grow: 1; overflow-y: auto; border-radius: 12px;"></div>
+        <div style="padding-top: 15px;">
+            <button onclick="save()" id="btn-save" style="background:var(--s);">✅ SAVE TO CLOUD</button>
+            <button onclick="show('menu-box')" style="background:#64748b; margin-top:10px;">BACK TO MENU</button>
+        </div>
     </div>
 </div>
 
 <script>
-    // FIXED API KEY AND URL
+    // CORE SYSTEM CONNECTION
     const sb = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
     
     let isL = true;
@@ -54,27 +70,33 @@
         {c:"DRC1204", n:"TONGKAT & MACCA"}, {c:"DRC1205", n:"CAPPUCCINO GANO"}, {c:"DRC1802A", n:"LIQUID ALFALFA 500ML"},
         {c:"DRC1804", n:"GANODERMA COFFEE"}, {c:"DRC1810", n:"YEE GANO 90s"}, {c:"DRC1811", n:"YEEGARLIC 90s"}, 
         {c:"DRC1814", n:"GANO CHOCO"}, {c:"DRC1817", n:"PRESIDENT COFFEE"}, {c:"DRC1818", n:"BLACK GANO"},
-        {c:"DRC2802", n:"GOAT MILK 150s"}, {c:"DRC2804", n:"SOYA POWDER"}, {c:"DRC2805", n:"SPIRULINA"}, 
+        {c:"DRC2802", n:"GOAT MILK 150s"}, {c:"DRC2804", n:"SOYA POWDER"}, {c:"DRC2805", n:"SPIRULINA 60s"}, 
         {c:"DRC2807", n:"SPIRULINA 300s"}, {c:"DRC2812", n:"WARISAN MAHARANI"}, {c:"DRC2813", n:"GINGER SOYA"},
-        {c:"DRC2814", n:"PREMIX GOAT MILK"}, {c:"DRC3804", n:"DYNA TONIC"}, {c:"DRC3809", n:"YEE YANG YEN"}, 
-        {c:"DRC3810", n:"RED COFFEE GINSENG"}, {c:"DRC3812", n:"GREEN TEA 60s"}, {c:"DRC3814", n:"PROLINK 20s"},
-        {c:"DRC4803", n:"GINSENG HONEY"}, {c:"DRC4805", n:"GINSENG 9x10"}, {c:"DRC4810", n:"TONGKAT ALI COFFEE"}, 
-        {c:"DRC4811", n:"GINALI 100s"}, {c:"DRC4815", n:"YEEGINKGO 90s"}, {c:"DRC4817", n:"MILK THISTLE"},
-        {c:"DRC4821", n:"TONGKAT ALI 100s"}, {c:"DRC4824", n:"SEA CUCUMBER"}
+        {c:"DRC2814", n:"PREMIX GOAT MILK"}, {c:"DRC3804", n:"DYNA TONIC 200ML"}, {c:"DRC3804A", n:"DYNA TONIC 500ML"},
+        {c:"DRC3809", n:"YEE YANG YEN"}, {c:"DRC3810", n:"RED COFFEE GINSENG"}, {c:"DRC3812", n:"GREEN TEA 60s"}, 
+        {c:"DRC3814", n:"PROLINK 20s"}, {c:"DRC4803", n:"GINSENG HONEY"}, {c:"DRC4805", n:"GINSENG 9x10"}, 
+        {c:"DRC4810", n:"TONGKAT ALI COFFEE"}, {c:"DRC4811", n:"GINALI 100s"}, {c:"DRC4815", n:"YEEGINKGO 90s"}, 
+        {c:"DRC4817", n:"MILK THISTLE"}, {c:"DRC4821", n:"TONGKAT ALI 100s"}, {c:"DRC4824", n:"SEA CUCUMBER 250ML"},
+        {c:"DRC4824A", n:"SEA CUCUMBER 500ML"}, {c:"DRC5801", n:"CHLOROPHYLL SOAP"}, {c:"DRC5802", n:"GANO SOAP"}
     ];
 
-    function toggle() { isL = !isL; document.getElementById('title').innerText = isL ? "Dynapharm Login" : "Create Account"; document.getElementById('btn').innerText = isL ? "Sign In" : "Register Now"; }
+    function toggle() { 
+        isL = !isL; 
+        document.getElementById('title').innerText = isL ? "Dynapharm Cloud" : "Join System"; 
+        document.getElementById('btn-auth').innerText = isL ? "Sign In" : "Register Now";
+        document.getElementById('mode-badge').innerText = isL ? "SECURE ACCESS" : "NEW REGISTRATION";
+    }
 
     async function auth() {
         const u = document.getElementById('user').value.trim();
         const p = document.getElementById('pass').value;
-        if(!u || !p) return alert("Enter details!");
+        if(!u || !p) return alert("⚠️ PLEASE ENTER ALL DETAILS");
         const email = u.toLowerCase() + "@dynapharm.cloud";
-        const b = document.getElementById('btn');
-        b.innerText = "Connecting...";
+        const b = document.getElementById('btn-auth');
+        b.innerText = "⏳ VERIFYING...";
         
         const { error } = isL ? await sb.auth.signInWithPassword({email, password:p}) : await sb.auth.signUp({email, password:p});
-        if(error) { alert(error.message); b.innerText = "Try Again"; }
+        if(error) { alert("❌ " + error.message); b.innerText = "RETRY"; }
         else show('menu-box');
     }
 
@@ -83,25 +105,48 @@
         document.getElementById('menu-box').classList.add('hidden');
         document.getElementById('stock-box').classList.add('hidden');
         document.getElementById(id).classList.remove('hidden');
-        if(id === 'stock-box') draw();
+        if(id === 'stock-box') render();
     }
 
-    function draw(f = "") {
-        document.getElementById('list').innerHTML = items.filter(i => i.n.toLowerCase().includes(f.toLowerCase())).map(i => `
-            <div class="item"><span>${i.n}</span><input type="number" class="v" data-c="${i.c}" placeholder="0"></div>
+    function render(f = "") {
+        const list = document.getElementById('list');
+        const filtered = items.filter(i => i.n.toLowerCase().includes(f.toLowerCase()) || i.c.toLowerCase().includes(f.toLowerCase()));
+        list.innerHTML = filtered.map(i => `
+            <div class="item-row">
+                <div class="item-info">
+                    <span class="item-name">${i.n}</span>
+                    <span class="item-code">${i.c}</span>
+                </div>
+                <input type="number" class="qty-input" data-c="${i.c}" placeholder="0" min="0">
+            </div>
         `).join('');
     }
 
     async function save() {
-        const b = document.getElementById('s-btn');
-        b.innerText = "Saving...";
-        const data = Array.from(document.querySelectorAll('.v')).map(i => ({
-            month_year: "March 2026", product_code: i.dataset.c, opening_quantity: parseInt(i.value) || 0
+        const b = document.getElementById('btn-save');
+        const inputs = Array.from(document.querySelectorAll('.qty-input'));
+        const data = inputs.map(i => ({
+            month_year: new Date().toLocaleString('default', { month: 'long', year: 'numeric' }),
+            product_code: i.dataset.c,
+            opening_quantity: parseInt(i.value) || 0
         })).filter(r => r.opening_quantity > 0);
 
+        if(data.length === 0) return alert("⚠️ NO QUANTITIES ENTERED!");
+
+        b.innerText = "⏳ UPLOADING DATA...";
+        b.style.background = "#fbbf24";
+
         const { error } = await sb.from('monthly_stock').upsert(data);
-        if(error) alert(error.message); else { alert("✅ All 32 Products Saved!"); show('menu-box'); }
-        b.innerText = "Save to Cloud";
+        
+        if(error) {
+            alert("❌ DATABASE ERROR: " + error.message);
+            b.innerText = "RETRY SAVE";
+            b.style.background = "#ef4444";
+        } else {
+            alert("🎉 EXTREME SUCCESS! ALL DATA SAVED TO CLOUD.");
+            inputs.forEach(i => i.value = "");
+            show('menu-box');
+        }
     }
 </script>
 </body>
