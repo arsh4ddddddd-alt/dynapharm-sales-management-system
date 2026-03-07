@@ -1,99 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynapharm Cloud</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynapharm Cloud Pro</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.8/css/intlTelInput.css"/>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --p: #003366; --bg: #f8fafc; }
-        body { font-family: sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; width: 100%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        :root { --p: #003366; --s: #059669; --bg: #f8fafc; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; padding: 15px; }
+        .card { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
         .hidden { display: none; }
-        input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
-        button { background: var(--p); color: white; font-weight: bold; cursor: pointer; border: none; }
-        .prod-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .prod-row input { width: 70px; margin: 0; }
+        h2 { color: var(--p); text-align: center; border-bottom: 2px solid #ffcc00; padding-bottom: 10px; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
+        button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; }
+        .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid #f1f5f9; }
+        .prod-row input { width: 80px; margin: 0; text-align: center; }
     </style>
 </head>
 <body>
 <div class="card">
     <div id="auth-box">
-        <h2 id="t" style="text-align:center">Cloud Login</h2>
+        <h2 id="header">Dynapharm Login</h2>
         <input type="tel" id="phone">
         <input type="password" id="pass" placeholder="Password (6+ chars)">
-        <button onclick="runAuth()">Enter System</button>
-        <p style="text-align:center; font-size:14px">New? <b onclick="tMode()" style="color:blue; cursor:pointer">Create Account</b></p>
+        <button onclick="handleAuth()">Enter System</button>
+        <p style="text-align:center; font-size:14px">New? <b onclick="toggle()" style="color:blue; cursor:pointer">Create Account</b></p>
     </div>
 
-    <div id="main-menu" class="hidden">
-        <h2 style="text-align:center">Main Menu</h2>
-        <button onclick="showUI('entry-box')" style="background:#059669">📦 Monthly Stock Entry</button>
-        <button onclick="location.reload()" style="background:#64748b; margin-top:20px">Logout</button>
+    <div id="menu-box" class="hidden">
+        <h2>Main Menu</h2>
+        <button onclick="show('entry-box')" style="background:var(--s); height: 80px;">📦 Monthly Stock Entry</button>
+        <button onclick="location.reload()" style="background:#64748b; margin-top:20px;">Logout</button>
     </div>
 
     <div id="entry-box" class="hidden">
-        <h2 style="text-align:center">Stock Entry</h2>
+        <h2 style="position: sticky; top: 0; background: white;">Stock Entry</h2>
         <div id="list" style="max-height: 400px; overflow-y: auto;"></div>
-        <button onclick="saveData()" style="background:#059669; margin-top:10px">Save to Cloud</button>
-        <button onclick="showUI('main-menu')" style="background:#64748b">Back</button>
+        <button onclick="save()" style="background:var(--s); margin-top:15px;">Save to Cloud</button>
+        <button onclick="show('menu-box')" style="background:#64748b">Back</button>
     </div>
 </div>
 
 <script>
     const iti = window.intlTelInput(document.querySelector("#phone"), { initialCountry: "cd", separateDialCode: true });
-    const sb = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
+    const sb = supabase.createClient("https://ywmlvtdrwijnhqdypteu.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dDRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg");
     
     let isLogin = true;
-    const prods = [{c:"DRC1201", n:"GINKO COFFEE"}, {c:"DRC1202", n:"GREEN TEA"}, {c:"DRC1802A", n:"ALFALFA"}, {c:"DRC2812", n:"MAHARANI"}];
 
-    function tMode() { 
-        isLogin = !isLogin; 
-        document.getElementById('t').innerText = isLogin ? "Cloud Login" : "Create Account"; 
+    function toggle() {
+        isLogin = !isLogin;
+        document.getElementById('header').innerText = isLogin ? "Dynapharm Login" : "Create Account";
     }
 
-    async function runAuth() {
-        const fullNumber = iti.getNumber();
-        if(!fullNumber) return alert("Enter phone number");
+    async function handleAuth() {
+        const num = iti.getNumber();
+        if(!num) return alert("Please enter your phone number");
 
-        // The Fix: Ensure the email format is perfect
-        const email = fullNumber.replace('+', '') + "@dynapharm.cloud";
+        // THIS FIXES THE INVALID FORMAT ERROR:
+        // Converts +243902702275 to 243902702275@dynapharm.cloud
+        const cleanEmail = num.replace('+', '') + "@dynapharm.cloud";
         const password = document.getElementById('pass').value;
-
+        
         const { error } = isLogin 
-            ? await sb.auth.signInWithPassword({email, password}) 
-            : await sb.auth.signUp({email, password});
+            ? await sb.auth.signInWithPassword({ email: cleanEmail, password }) 
+            : await sb.auth.signUp({ email: cleanEmail, password });
 
         if(error) alert(error.message); 
-        else {
-            if(!isLogin) alert("Account created! Now please Login.");
-            showUI('main-menu');
-        }
+        else show('menu-box');
     }
 
-    function showUI(id) {
+    function show(id) {
         document.getElementById('auth-box').classList.add('hidden');
-        document.getElementById('main-menu').classList.add('hidden');
+        document.getElementById('menu-box').classList.add('hidden');
         document.getElementById('entry-box').classList.add('hidden');
         document.getElementById(id).classList.remove('hidden');
-        if(id === 'entry-box') loadProds();
+        if(id === 'entry-box') loadItems();
     }
 
-    function loadProds() {
+    function loadItems() {
+        const prods = [{c:"DRC1201", n:"GINKO COFFEE"}, {c:"DRC1802A", n:"ALFALFA"}, {c:"DRC2812", n:"MAHARANI"}];
         document.getElementById('list').innerHTML = prods.map(p => `
-            <div class="prod-row"><span>${p.n}</span><input type="number" class="q" data-c="${p.c}" placeholder="0"></div>
+            <div class="prod-row"><span>${p.n}</span><input type="number" class="v" data-c="${p.c}" placeholder="0"></div>
         `).join('');
     }
 
-    async function saveData() {
-        const rows = Array.from(document.querySelectorAll('.q')).map(i => ({ 
-            product_code: i.dataset.c, 
-            opening_quantity: parseInt(i.value)||0, 
-            month_year: "March 2026" 
+    async function save() {
+        const data = Array.from(document.querySelectorAll('.v')).map(i => ({
+            month_year: "March 2026",
+            product_code: i.dataset.c,
+            opening_quantity: parseInt(i.value) || 0
         })).filter(r => r.opening_quantity > 0);
 
-        const { error } = await sb.from('monthly_stock').upsert(rows);
+        const { error } = await sb.from('monthly_stock').upsert(data);
         if(error) alert(error.message); else alert("Saved successfully!");
     }
 </script>
