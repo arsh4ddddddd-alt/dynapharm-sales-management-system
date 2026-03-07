@@ -2,66 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynapharm Cloud | Enterprise v6.0</title>
+    <title>Dynapharm Enterprise | v7.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --p: #003366; --s: #059669; --bg: #f8fafc; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; color: #1e293b; }
-        .app { width: 100%; max-width: 480px; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; }
+        .app { width: 100%; max-width: 480px; background: white; min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.1); }
         .hidden { display: none !important; }
         .header { background: var(--p); color: white; padding: 40px 20px; text-align: center; border-radius: 0 0 30px 30px; }
         .content { padding: 25px; flex-grow: 1; }
-        input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 16px; box-sizing: border-box; margin-bottom: 15px; }
+        input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 16px; box-sizing: border-box; margin-bottom: 12px; }
         .btn { width: 100%; padding: 18px; border-radius: 12px; border: none; font-size: 16px; font-weight: 800; cursor: pointer; text-transform: uppercase; margin-bottom: 10px; transition: 0.2s; }
         .btn-p { background: var(--p); color: white; }
         .btn-s { background: var(--s); color: white; }
         .btn-o { background: transparent; border: 2px solid var(--p); color: var(--p); }
-        .btn:active { transform: scale(0.97); opacity: 0.8; }
+        .btn:active { transform: scale(0.97); }
         .item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; }
-        .q-in { width: 90px !important; text-align: center; border: 2px solid #cbd5e1 !important; font-weight: 900; margin: 0 !important; color: var(--s); }
-        #console { background: #111; color: #10b981; padding: 12px; font-family: monospace; font-size: 11px; border-top: 2px solid #333; }
+        .q-in { width: 85px !important; text-align: center; border: 2px solid #cbd5e1 !important; font-weight: 900; margin: 0 !important; color: var(--s); }
+        #console { background: #000; color: #00ff00; padding: 12px; font-family: monospace; font-size: 11px; min-height: 50px; }
     </style>
 </head>
 <body>
 <div class="app">
     <div id="v-auth">
-        <div class="header"><h1>DYNAPHARM</h1><p id="a-text">SECURE PORTAL LOGIN</p></div>
-        <div class="main-content content">
-            <input type="text" id="user" placeholder="Enter Username">
-            <input type="password" id="pass" placeholder="Password (6+ Characters)">
-            <button class="btn btn-p" id="b-auth" onclick="handleAuth()">Enter System</button>
-            <button class="btn btn-o" id="b-tog" onclick="toggleAuth()">New? Create Account</button>
+        <div class="header"><h1>DYNAPHARM</h1><p id="a-tag">ENTERPRISE CLOUD LOGIN</p></div>
+        <div class="content">
+            <input type="text" id="user" placeholder="Username">
+            <input type="password" id="pass" placeholder="Password (6+ chars)">
+            <button class="btn btn-p" id="b-auth" onclick="handleAuth()">Sign In</button>
+            <button class="btn btn-o" id="b-tog" onclick="toggleAuth()">Create New Account</button>
         </div>
     </div>
 
     <div id="v-dash" class="hidden">
-        <div class="header"><h1>COMMAND CENTER</h1><p id="u-tag"></p></div>
+        <div class="header"><h1>DASHBOARD</h1><p id="u-welcome"></p></div>
         <div class="content">
-            <button class="btn btn-s" style="height:120px; font-size: 18px;" onclick="showV('v-stock')">📦 MONTHLY INVENTORY</button>
-            <button class="btn btn-o" style="margin-top: 50px; border-color: #ef4444; color: #ef4444;" onclick="location.reload()">Secure Logout</button>
+            <button class="btn btn-s" style="height:120px;" onclick="showV('v-stock')">📦 MONTHLY INVENTORY</button>
+            <button class="btn btn-o" style="margin-top: 40px; border-color: red; color: red;" onclick="location.reload()">Emergency Logout</button>
         </div>
     </div>
 
     <div id="v-stock" class="hidden">
         <div class="content">
-            <div style="position: sticky; top:0; background:white; padding-bottom:10px; z-index:10;">
-                <h2 style="color:var(--p); margin:0 0 10px 0;">Stock Entry</h2>
-                <input type="text" placeholder="🔍 Search product..." oninput="draw(this.value)">
+            <div style="position: sticky; top:0; background:white; padding-bottom:10px; z-index:10; border-bottom: 2px solid #eee;">
+                <h2 style="color:var(--p); margin:0 0 10px 0;">Stock Inventory</h2>
+                <input type="text" placeholder="🔍 Filter products..." oninput="draw(this.value)">
             </div>
-            <div id="list" style="max-height: 400px; overflow-y: auto;"></div>
-            <button class="btn btn-s" id="b-save" style="margin-top:20px;" onclick="save()">✅ SYNC TO CLOUD</button>
+            <div id="list" style="max-height: 450px; overflow-y: auto;"></div>
+            <button class="btn btn-s" id="b-save" style="margin-top:20px;" onclick="save()">✅ SAVE TO CLOUD</button>
             <button class="btn btn-o" onclick="showV('v-dash')">Back</button>
         </div>
     </div>
     
-    <div id="console">System: Standing by...</div>
+    <div id="console">System Status: Ready</div>
 </div>
 
 <script>
-    // FRESH GENERATED KEYS - DO NOT CHANGE
+    // HARDCODED ENTERPRISE KEYS
     const _U = "https://ywmlvtdrwijnhqdypteu.supabase.co";
     const _K = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dDRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
-    const sb = supabase.createClient(_U, _K);
+    
+    let sb;
+    try {
+        sb = supabase.createClient(_U, _K);
+    } catch(e) {
+        document.getElementById('console').innerText = "FATAL: " + e.message;
+    }
 
     let isL = true;
     const log = (m) => { document.getElementById('console').innerText = "System: " + m; };
@@ -83,32 +89,33 @@
 
     function toggleAuth() {
         isL = !isL;
-        document.getElementById('a-text').innerText = isL ? "SECURE PORTAL LOGIN" : "CREATE NEW ACCOUNT";
-        document.getElementById('b-auth').innerText = isL ? "Enter System" : "Register Now";
-        document.getElementById('b-tog').innerText = isL ? "New? Create Account" : "Back to Login";
+        document.getElementById('a-tag').innerText = isL ? "ENTERPRISE CLOUD LOGIN" : "CREATE NEW ACCOUNT";
+        document.getElementById('b-auth').innerText = isL ? "Sign In" : "Register Now";
+        document.getElementById('b-tog').innerText = isL ? "Create New Account" : "Back to Login";
+        log(isL ? "Mode: Login" : "Mode: Registration");
     }
 
     async function handleAuth() {
         const u = document.getElementById('user').value.trim();
         const p = document.getElementById('pass').value;
-        if(!u || p.length < 6) return alert("Fill all fields (Password min 6 chars)");
+        if(!u || p.length < 6) return alert("Enter Username & Password (6+ characters)");
         
-        log("Connecting to Cloud...");
+        log("Testing Connection...");
         const email = u.toLowerCase() + "@dyna.pro";
         const b = document.getElementById('b-auth');
-        b.innerText = "VERIFYING...";
+        b.innerText = "Connecting...";
 
         const { data, error } = isL 
             ? await sb.auth.signInWithPassword({ email, password: p })
             : await sb.auth.signUp({ email, password: p });
 
         if(error) {
-            log("Auth Failed.");
+            log("Error: " + error.message);
             alert(error.message);
-            b.innerText = isL ? "Enter System" : "Register Now";
+            b.innerText = isL ? "Sign In" : "Register Now";
         } else {
             log("Access Granted.");
-            document.getElementById('u-tag').innerText = "OPERATOR: " + u.toUpperCase();
+            document.getElementById('u-welcome').innerText = "User: " + u.toUpperCase();
             showV('v-dash');
         }
     }
@@ -123,7 +130,7 @@
         const l = document.getElementById('list');
         l.innerHTML = items.filter(i => i.n.toLowerCase().includes(f.toLowerCase()) || i.c.toLowerCase().includes(f.toLowerCase())).map(i => `
             <div class="item">
-                <div><b>${i.n}</b><br><small style="color:#94a3b8">${i.c}</small></div>
+                <div><b>${i.n}</b><br><small style="color:#64748b">${i.c}</small></div>
                 <input type="number" class="q-val" data-c="${i.c}" placeholder="0">
             </div>
         `).join('');
@@ -137,22 +144,22 @@
             opening_quantity: parseInt(i.value) || 0
         })).filter(x => x.opening_quantity > 0);
 
-        if(data.length === 0) return alert("Enter at least one item!");
-        b.innerText = "UPLOADING...";
-        log("Syncing Data...");
+        if(data.length === 0) return alert("Nothing to save!");
+        b.innerText = "SAVING...";
+        log("Uploading " + data.length + " entries...");
 
-        // THE FIX: Using .upsert solves the "Duplicate Key" error from your screenshot
+        // PRO FIX: .upsert solves the duplicate key error from your screenshot
         const { error } = await sb.from('monthly_stock').upsert(data, { onConflict: 'month_year,product_code' });
 
         if(error) {
-            log("Error during sync.");
-            alert(error.message);
+            log("Upload Failed: " + error.message);
+            alert("Error: " + error.message);
         } else {
-            log("Cloud Sync Complete.");
-            alert("✅ INVENTORY UPDATED SUCCESSFULLY!");
+            log("Sync Successful.");
+            alert("✅ ALL DATA SAVED TO CLOUD!");
             showV('v-dash');
         }
-        b.innerText = "✅ SYNC TO CLOUD";
+        b.innerText = "✅ SAVE TO CLOUD";
     }
 </script>
 </body>
