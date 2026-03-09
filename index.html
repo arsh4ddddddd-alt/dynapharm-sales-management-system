@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dynapharm ERP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynapharm Speed</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -11,75 +11,103 @@
 
 <style>
 
+:root{
+--p:#0f172a;
+--accent:#2563eb;
+--success:#059669;
+--warn:#e11d48;
+--bg:#f8fafc;
+}
+
 body{
 font-family:system-ui;
 margin:0;
-background:#f1f5f9;
-padding-bottom:120px;
+background:var(--bg);
+padding-bottom:110px;
+color:#1e293b;
 }
 
 .hidden{display:none}
 
 .header{
-background:#0f172a;
+background:var(--p);
 color:white;
-padding:25px;
-border-radius:0 0 25px 25px;
+padding:25px 20px;
+border-radius:0 0 30px 30px;
+position:sticky;
+top:0;
 }
 
-.stats{
+.stats-row{
 display:flex;
 gap:10px;
 margin-top:15px;
 }
 
-.stat{
+.stat-box{
 flex:1;
-background:rgba(255,255,255,0.1);
-padding:10px;
-border-radius:12px;
+background:rgba(255,255,255,0.08);
+padding:12px;
+border-radius:16px;
+}
+
+.stat-box small{
+font-size:10px;
+opacity:.7;
+}
+
+.stat-box b{
+font-size:18px;
+display:block;
+margin-top:4px;
 }
 
 .content{
+padding:15px;
 max-width:500px;
 margin:auto;
-padding:15px;
 }
 
 .card{
 background:white;
-padding:15px;
-border-radius:14px;
-margin-bottom:10px;
+padding:16px;
+border-radius:18px;
 border:1px solid #e2e8f0;
+margin-bottom:12px;
 }
 
 input{
+width:100%;
+padding:14px;
+border:2px solid #e2e8f0;
+border-radius:14px;
+font-size:16px;
+}
+
+.qty{
 width:70px;
-padding:10px;
-border-radius:10px;
-border:1px solid #cbd5e1;
 text-align:center;
 }
 
-.search{
+.btn{
 width:100%;
-padding:12px;
-margin-bottom:10px;
-}
-
-button{
-width:100%;
-padding:15px;
+padding:16px;
 border:none;
-border-radius:12px;
-font-weight:bold;
+border-radius:14px;
+font-weight:700;
 cursor:pointer;
 margin-top:10px;
 }
 
-.primary{background:#2563eb;color:white}
-.success{background:#059669;color:white}
+.btn-p{
+background:var(--accent);
+color:white;
+}
+
+.btn-s{
+background:var(--success);
+color:white;
+}
 
 .nav{
 position:fixed;
@@ -90,21 +118,419 @@ width:92%;
 max-width:450px;
 background:#1e293b;
 display:flex;
-padding:10px;
 border-radius:20px;
+padding:10px;
 }
 
-.nav div{
+.nav-btn{
 flex:1;
 text-align:center;
-color:#94a3b8;
-font-size:12px;
+color:#64748b;
+font-size:11px;
 cursor:pointer;
 }
 
-.nav .active{color:white}
+.nav-btn.active{color:white}
 
-.low{color:#dc2626;font-weight:bold}
+.nav-btn span{
+font-size:20px;
+display:block;
+}
+
+.low{color:var(--warn);font-weight:bold}
 
 </style>
-</head
+</head>
+
+
+<body>
+
+<!-- LOGIN -->
+
+<div id="v-auth" class="content" style="padding-top:80px;text-align:center">
+
+<h1>DYNAPHARM</h1>
+
+<div class="card">
+
+<input id="user" placeholder="Username" style="margin-bottom:12px">
+
+<input id="pass" type="password" placeholder="Password">
+
+<button class="btn btn-p" onclick="handleAuth()" style="margin-top:15px">Login</button>
+
+<p onclick="toggleAuth()" id="t-btn" style="margin-top:20px;color:var(--accent);cursor:pointer">
+Need Account? Register
+</p>
+
+</div>
+
+</div>
+
+
+
+<!-- MAIN APP -->
+
+<div id="main-ui" class="hidden">
+
+<div class="header">
+
+<div style="display:flex;justify-content:space-between">
+
+<b id="v-title">OPENING</b>
+
+<select id="m-picker" onchange="refresh()">
+<option>March 2026</option>
+<option>April 2026</option>
+</select>
+
+</div>
+
+<div class="stats-row">
+
+<div class="stat-box">
+<small>Items</small>
+<b id="s-total">0</b>
+</div>
+
+<div class="stat-box">
+<small>Best Seller</small>
+<b id="s-top">---</b>
+</div>
+
+</div>
+
+</div>
+
+
+<div class="content">
+
+<div id="v-entry">
+
+<input id="search" placeholder="Search..." oninput="draw(this.value)">
+
+<div id="list"></div>
+
+<button class="btn btn-p" onclick="saveData()">💾 Sync All to Cloud</button>
+
+<button class="btn btn-s" onclick="carryOver()">📦 Transfer March Stock</button>
+
+</div>
+
+
+<div id="v-rpt" class="hidden">
+
+<button class="btn btn-p" onclick="exportPDF()">Export PDF</button>
+
+<div id="rpt-list"></div>
+
+</div>
+
+</div>
+
+
+<div class="nav">
+
+<div class="nav-btn active" onclick="tab('OPENING',this)">
+<span>📦</span>OPEN
+</div>
+
+<div class="nav-btn" onclick="tab('RECEIVED',this)">
+<span>🚚</span>RECV
+</div>
+
+<div class="nav-btn" onclick="tab('SALES',this)">
+<span>💰</span>SALE
+</div>
+
+<div class="nav-btn" onclick="tab('REPORT',this)">
+<span>📊</span>REPORT
+</div>
+
+</div>
+
+</div>
+
+
+
+<script>
+
+const _URL="https://ywmlvtdrwijnhqdypteu.supabase.co"
+const _KEY="PASTE_YOUR_KEY_HERE"
+
+const sb=supabase.createClient(_URL,_KEY)
+
+let isLogin=true
+let curMode="OPENING"
+
+
+const items=[
+{c:"DRC1201",n:"GINKO & GINSENG COFFEE"},
+{c:"DRC1202",n:"GANODERMA GREEN TEA"},
+{c:"DRC1203",n:"KACIP FATIMA GANO"},
+{c:"DRC1204",n:"TONGKAT & MACCA"},
+{c:"DRC1205",n:"CAPPUCCINO GANO"},
+{c:"DRC1804",n:"GANODERMA COFFEE"},
+{c:"DRC1810",n:"YEE GANO 90s"},
+{c:"DRC1811",n:"YEEGARLIC 90s"},
+{c:"DRC1814",n:"GANO CHOCO"},
+{c:"DRC1817",n:"PRESIDENT COFFEE"},
+{c:"DRC1818",n:"BLACK GANO"},
+{c:"DRC2802",n:"GOAT MILK 150s"},
+{c:"DRC2804",n:"SOYA POWDER"},
+{c:"DRC2805",n:"SPIRULINA 60s"},
+{c:"DRC2807",n:"SPIRULINA 300s"},
+{c:"DRC2812",n:"WARISAN MAHARANI"},
+{c:"DRC2813",n:"GINGER SOYA"},
+{c:"DRC2814",n:"PREMIX GOAT MILK"},
+{c:"DRC3804",n:"DYNA TONIC 200ML"},
+{c:"DRC3804A",n:"DYNA TONIC 500ML"},
+{c:"DRC3810",n:"RED COFFEE GINSENG"},
+{c:"DRC4803",n:"GINSENG HONEY"},
+{c:"DRC4810",n:"TONGKAT ALI COFFEE"},
+{c:"DRC4821",n:"TONGKAT ALI 100s"},
+{c:"DRC5801",n:"CHLOROPHYLL SOAP"},
+{c:"DRC5802",n:"GANO SOAP"}
+]
+
+
+
+function toggleAuth(){
+isLogin=!isLogin
+document.getElementById("t-btn").innerText=
+isLogin?"Need Account? Register":"Back to Login"
+}
+
+
+
+async function handleAuth(){
+
+const u=document.getElementById("user").value.trim()
+const p=document.getElementById("pass").value
+
+const email=u.toLowerCase()+"@dyna.pro"
+
+const {error}= isLogin
+? await sb.auth.signInWithPassword({email,password:p})
+: await sb.auth.signUp({email,password:p})
+
+if(error) alert(error.message)
+else{
+
+document.getElementById("v-auth").classList.add("hidden")
+document.getElementById("main-ui").classList.remove("hidden")
+
+draw()
+
+}
+
+}
+
+
+
+function tab(m,el){
+
+curMode=m
+
+document.querySelectorAll(".nav-btn")
+.forEach(b=>b.classList.remove("active"))
+
+el.classList.add("active")
+
+document.getElementById("v-title").innerText=m
+
+document.getElementById("v-entry").classList.toggle("hidden",m==="REPORT")
+document.getElementById("v-rpt").classList.toggle("hidden",m!=="REPORT")
+
+if(m==="REPORT") loadReport()
+
+}
+
+
+
+function draw(f=""){
+
+document.getElementById("list").innerHTML=
+
+items
+.filter(i=>i.n.includes(f.toUpperCase())||i.c.includes(f.toUpperCase()))
+.map(i=>`
+
+<div class="card">
+
+<div style="display:flex;justify-content:space-between;align-items:center">
+
+<div>
+<b>${i.n}</b><br>
+<small>${i.c}</small>
+</div>
+
+<input type="number" class="qty" data-c="${i.c}" placeholder="0">
+
+</div>
+
+</div>
+
+`).join("")
+
+}
+
+
+
+async function saveData(){
+
+const rows=[...document.querySelectorAll(".qty")]
+
+.map(x=>({
+code:x.dataset.c,
+qty:parseInt(x.value)||0
+}))
+
+.filter(x=>x.qty>0)
+
+if(!rows.length)return alert("Enter numbers")
+
+if(curMode==="OPENING"){
+
+await sb.from("monthly_stock").insert(
+rows.map(r=>({product_code:r.code,opening_quantity:r.qty}))
+)
+
+}
+
+if(curMode==="SALES"){
+
+await sb.from("sales").insert(
+rows.map(r=>({product_code:r.code,qty_sold:r.qty}))
+)
+
+}
+
+if(curMode==="RECEIVED"){
+
+await sb.from("received_stock").insert(
+rows.map(r=>({product_code:r.code,qty_received:r.qty}))
+)
+
+}
+
+alert("Saved")
+
+}
+
+
+
+async function loadReport(){
+
+const {data:o}=await sb.from("monthly_stock").select("*")
+const {data:s}=await sb.from("sales").select("*")
+const {data:r}=await sb.from("received_stock").select("*")
+
+const report=items.map(i=>{
+
+const open=o?.find(x=>x.product_code===i.c)?.opening_quantity||0
+
+const sold=s?.filter(x=>x.product_code===i.c)
+.reduce((a,b)=>a+b.qty_sold,0)
+
+const recv=r?.filter(x=>x.product_code===i.c)
+.reduce((a,b)=>a+b.qty_received,0)
+
+const stock=open+recv-sold
+
+return{
+name:i.n,
+stock,
+open,
+recv,
+sold
+}
+
+}).filter(x=>x.open||x.recv||x.sold)
+
+
+
+document.getElementById("s-total").innerText=report.length
+
+const top=[...report].sort((a,b)=>b.sold-a.sold)[0]
+
+document.getElementById("s-top").innerText=top?top.name:"---"
+
+
+
+document.getElementById("rpt-list").innerHTML=
+
+report.map(d=>`
+
+<div class="card">
+
+<div style="display:flex;justify-content:space-between">
+
+<b>${d.name}</b>
+
+<span class="${d.stock<5?'low':''}">
+${d.stock}
+</span>
+
+</div>
+
+<small>
+
+OPEN ${d.open} |
+RECV ${d.recv} |
+SOLD ${d.sold}
+
+</small>
+
+</div>
+
+`).join("")
+
+
+
+window.rptData=report
+
+}
+
+
+
+function exportPDF(){
+
+const {jsPDF}=window.jspdf
+
+const doc=new jsPDF()
+
+doc.text("DYNAPHARM REPORT",14,20)
+
+doc.autoTable({
+
+head:[["ITEM","OPEN","RECV","SOLD","BAL"]],
+
+body:window.rptData.map(x=>[
+x.name,
+x.open,
+x.recv,
+x.sold,
+x.stock
+]),
+
+startY:30
+
+})
+
+doc.save("report.pdf")
+
+}
+
+
+
+function carryOver(){
+
+alert("Carry over logic same as your old system")
+
+}
+
+</script>
+
+</body>
+</html>
