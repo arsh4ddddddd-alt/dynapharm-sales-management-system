@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DYNAPHARM Pro v44</title>
+    <title>DYNAPHARM Pro v45</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -92,7 +92,6 @@
     document.getElementById('entry-date').value = today;
     document.getElementById('view-date').value = today;
 
-    // Prices matching your PDF
     const items = [
         {c:"DRC1201", n:"CAFE GINKO EN POUDRE ET GINSENG", p: 13.00}, {c:"DRC1202", n:"CAFÉ DE THÉ VERT AVEC GANODERMA", p: 14.00}, {c:"DRC1203", n:"CAFÉ KACIP FATIMA AVEC GANODERMA", p: 14.00}, {c:"DRC1204", n:"CAFÉ TONGKAT ET MACCA EN POUDRE", p: 14.00}, {c:"DRC1205", n:"CAFÉ CUPPUCCINO AVEC GANODERMA", p: 15.00}, {c:"DRC1802A", n:"D.I. LIQUID ALFALFA PLUS GUARANA", p: 20.00}, {c:"DRC1804", n:"GANODERMA CAFE", p: 11.00}, {c:"DRC1810", n:"CAPSULE DE YEE GANO 90s", p: 23.00}, {c:"DRC1811", n:"YEEGARLIC CAPSULE 90s", p: 23.00}, {c:"DRC1814", n:"GANODERMA CHOCOLAT", p: 19.00}, {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT", p: 15.00}, {c:"DRC1818", n:"CAFÉ NOIR GANODERMA", p: 14.00}, {c:"DRC2802", n:"LAIT DE CHEVRE 150s", p: 16.00}, {c:"DRC2804", n:"POUDRE GRAINES DE SOJA", p: 17.00}, {c:"DRC2805", n:"MARINE SPIRULLINA", p: 17.00}, {c:"DRC2807", n:"SPIRULINA (300s)", p: 22.00}, {c:"DRC2812", n:"HERBA WARISAN MAHARANI", p: 36.00}, {c:"DRC2813", n:"SOJA GINGEMBRE", p: 14.00}, {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1", p: 15.00}, {c:"DRC3804", n:"DYNA TONIC 780ml", p: 33.00}, {c:"DRC3809", n:"YEE YANG YEN 90s", p: 23.00}, {c:"DRC3810", n:"RED COFFEE GINSENG", p: 13.00}, {c:"DRC3812", n:"GREEN TEA CAPSULE 60s", p: 23.00}, {c:"DRC3814", n:"PROLINK 20s", p: 36.00}, {c:"DRC4803", n:"GINSENG MIEL GINGEMBRE", p: 17.00}, {c:"DRC4805", n:"GINSENG CAPSULE 9x10s", p: 31.00}, {c:"DRC4810", n:"CAFÉ TONGKAT ALI", p: 11.00}, {c:"DRC4811", n:"GINALI CAPSULE 100s", p: 27.00}, {c:"DRC4815", n:"YEEGINKGO 90s", p: 23.00}, {c:"DRC4817", n:"MILK THISTLE 120s", p: 36.00}, {c:"DRC4821", n:"TONGKAT ALI 100s", p: 21.00}, {c:"DRC4824", n:"SEA CUCUMBER JELLY", p: 31.00}, {c:"DRC5802N", n:"NONI 500ml", p: 26.00}, {c:"DRC5803", n:"NONI PLUS TEA 30s", p: 19.00}, {c:"DRC5806", n:"DYNA 'S' TABLET 120s", p: 21.00}, {c:"DRC9918", n:"DYNA SERENOA 100s", p: 32.00}, {c:"DRC5801", n:"CHLOROPHYLL SOAP", p: 5.00}, {c:"DRC5802", n:"GANO SOAP", p: 5.00}
     ];
@@ -193,7 +192,6 @@
         const user = document.getElementById("u-display").innerText;
         const totalSales = window.rptData.reduce((a,b) => a + b.total, 0);
 
-        [span_12](start_span)// Header Style matching PDF Model[span_12](end_span)
         doc.setFontSize(16);
         doc.setFont("helvetica", "bold");
         doc.text("RAPPORT GLOBAL DES VENTES & INVENTAIRE", 105, 15, { align: "center" });
@@ -203,7 +201,6 @@
         doc.text(`Date ciblée: ${date}`, 14, 25);
         doc.text("Ce document récapitule les ventes pour la journée indiquée.", 14, 30);
 
-        [span_13](start_span)// Summary Table[span_13](end_span)
         doc.autoTable({
             startY: 35,
             head: [['Boutique', 'Total des Ventes ($)']],
@@ -212,7 +209,6 @@
             headStyles: { fillColor: [40, 40, 40] }
         });
 
-        [span_14](start_span)// Detailed Table per User/Shop[span_14](end_span)
         doc.setFont("helvetica", "bold");
         doc.text(`DÉTAIL: ${user} (Ventes = $${totalSales.toFixed(2)})`, 14, doc.lastAutoTable.finalY + 10);
 
