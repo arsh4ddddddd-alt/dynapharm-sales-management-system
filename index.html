@@ -142,10 +142,7 @@ display:block;
 </style>
 </head>
 
-
 <body>
-
-<!-- LOGIN -->
 
 <div id="v-auth" class="content" style="padding-top:80px;text-align:center">
 
@@ -167,9 +164,6 @@ Need Account? Register
 
 </div>
 
-
-
-<!-- MAIN APP -->
 
 <div id="main-ui" class="hidden">
 
@@ -213,8 +207,6 @@ Need Account? Register
 
 <button class="btn btn-p" onclick="saveData()">💾 Sync All to Cloud</button>
 
-<button class="btn btn-s" onclick="carryOver()">📦 Transfer March Stock</button>
-
 </div>
 
 
@@ -255,10 +247,11 @@ Need Account? Register
 
 <script>
 
-const _URL="https://ywmlvtdrwijnhqdypteu.supabase.co"
-const _KEY="PASTE_YOUR_KEY_HERE"
+const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
 
-const sb=supabase.createClient(_URL,_KEY)
+const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
+
+const sb = supabase.createClient(_URL,_KEY);
 
 let isLogin=true
 let curMode="OPENING"
@@ -270,29 +263,19 @@ const items=[
 {c:"DRC1203",n:"KACIP FATIMA GANO"},
 {c:"DRC1204",n:"TONGKAT & MACCA"},
 {c:"DRC1205",n:"CAPPUCCINO GANO"},
-{c:"DRC1804",n:"GANODERMA COFFEE"},
-{c:"DRC1810",n:"YEE GANO 90s"},
-{c:"DRC1811",n:"YEEGARLIC 90s"},
 {c:"DRC1814",n:"GANO CHOCO"},
 {c:"DRC1817",n:"PRESIDENT COFFEE"},
 {c:"DRC1818",n:"BLACK GANO"},
 {c:"DRC2802",n:"GOAT MILK 150s"},
-{c:"DRC2804",n:"SOYA POWDER"},
 {c:"DRC2805",n:"SPIRULINA 60s"},
-{c:"DRC2807",n:"SPIRULINA 300s"},
-{c:"DRC2812",n:"WARISAN MAHARANI"},
-{c:"DRC2813",n:"GINGER SOYA"},
-{c:"DRC2814",n:"PREMIX GOAT MILK"},
-{c:"DRC3804",n:"DYNA TONIC 200ML"},
-{c:"DRC3804A",n:"DYNA TONIC 500ML"},
-{c:"DRC3810",n:"RED COFFEE GINSENG"},
+{c:"DRC3804",n:"DYNA TONIC"},
+{c:"DRC3810",n:"RED COFFEE"},
 {c:"DRC4803",n:"GINSENG HONEY"},
 {c:"DRC4810",n:"TONGKAT ALI COFFEE"},
-{c:"DRC4821",n:"TONGKAT ALI 100s"},
+{c:"DRC4821",n:"TONGKAT ALI"},
 {c:"DRC5801",n:"CHLOROPHYLL SOAP"},
 {c:"DRC5802",n:"GANO SOAP"}
 ]
-
 
 
 function toggleAuth(){
@@ -300,7 +283,6 @@ isLogin=!isLogin
 document.getElementById("t-btn").innerText=
 isLogin?"Need Account? Register":"Back to Login"
 }
-
 
 
 async function handleAuth(){
@@ -327,7 +309,6 @@ draw()
 }
 
 
-
 function tab(m,el){
 
 curMode=m
@@ -345,7 +326,6 @@ document.getElementById("v-rpt").classList.toggle("hidden",m!=="REPORT")
 if(m==="REPORT") loadReport()
 
 }
-
 
 
 function draw(f=""){
@@ -374,7 +354,6 @@ items
 `).join("")
 
 }
-
 
 
 async function saveData(){
@@ -419,7 +398,6 @@ alert("Saved")
 }
 
 
-
 async function loadReport(){
 
 const {data:o}=await sb.from("monthly_stock").select("*")
@@ -429,25 +407,14 @@ const {data:r}=await sb.from("received_stock").select("*")
 const report=items.map(i=>{
 
 const open=o?.find(x=>x.product_code===i.c)?.opening_quantity||0
-
-const sold=s?.filter(x=>x.product_code===i.c)
-.reduce((a,b)=>a+b.qty_sold,0)
-
-const recv=r?.filter(x=>x.product_code===i.c)
-.reduce((a,b)=>a+b.qty_received,0)
+const sold=s?.filter(x=>x.product_code===i.c).reduce((a,b)=>a+b.qty_sold,0)
+const recv=r?.filter(x=>x.product_code===i.c).reduce((a,b)=>a+b.qty_received,0)
 
 const stock=open+recv-sold
 
-return{
-name:i.n,
-stock,
-open,
-recv,
-sold
-}
+return{name:i.n,open,recv,sold,stock}
 
 }).filter(x=>x.open||x.recv||x.sold)
-
 
 
 document.getElementById("s-total").innerText=report.length
@@ -493,7 +460,6 @@ window.rptData=report
 }
 
 
-
 function exportPDF(){
 
 const {jsPDF}=window.jspdf
@@ -519,14 +485,6 @@ startY:30
 })
 
 doc.save("report.pdf")
-
-}
-
-
-
-function carryOver(){
-
-alert("Carry over logic same as your old system")
 
 }
 
