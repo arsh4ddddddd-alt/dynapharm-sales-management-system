@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynapharm Elite v30</title>
+    <title>Dynapharm Elite v31</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -12,12 +12,7 @@
         body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding-bottom: 120px; background: var(--bg); color: #1e293b; }
         .hidden { display: none !important; }
 
-        /* --- LOGIN --- */
-        #v-auth { background: radial-gradient(circle at top left, #1e293b, #0f172a); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .auth-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); padding: 30px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; max-width: 350px; text-align: center; color: white; }
-        .auth-input { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: white; margin-bottom: 15px; box-sizing: border-box; }
-
-        /* --- DASHBOARD --- */
+        /* --- UI COMPONENTS --- */
         .header { background: var(--p); color: white; padding: 30px 20px 50px; border-radius: 0 0 35px 35px; position: relative; }
         .stats-row { display: flex; gap: 12px; margin-top: 25px; margin-bottom: -65px; position: relative; z-index: 5; }
         .stat-box { flex: 1; background: #1e293b; padding: 18px 15px; border-radius: 22px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); }
@@ -29,12 +24,18 @@
         
         .btn { width: 100%; padding: 16px; border: none; border-radius: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; }
         .btn-p { background: var(--accent); color: white; }
-        .btn-orange { background: var(--orange); color: white; margin-bottom: 20px; }
+        .btn-orange { background: var(--orange); color: white; margin-bottom: 15px; }
+        .btn-danger { background: #fee2e2; color: var(--warn); border: 1px solid #fecaca; font-size: 13px; margin-top: 10px; }
 
         .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 420px; background: #0f172a; display: flex; border-radius: 25px; padding: 12px; box-shadow: 0 20px 25px rgba(0,0,0,0.3); z-index: 1000; }
         .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; font-weight: bold; cursor: pointer; }
         .nav-btn.active { color: white; }
         .nav-btn span { font-size: 22px; display: block; margin-bottom: 4px; }
+
+        /* --- AUTH --- */
+        #v-auth { background: radial-gradient(circle at top left, #1e293b, #0f172a); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .auth-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); padding: 30px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; max-width: 350px; text-align: center; color: white; }
+        .auth-input { width: 100%; padding: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; color: white; margin-bottom: 15px; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -53,7 +54,7 @@
 <div id="main-ui" class="hidden">
     <div class="header">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div><small style="opacity:0.7">WELCOME BACK,</small><br><b id="u-display" style="font-size: 18px;">USER</b></div>
+            <div><small style="opacity:0.7">LOGGED IN AS,</small><br><b id="u-display" style="font-size: 18px;">USER</b></div>
             <select id="m-picker" onchange="refresh()" style="background:rgba(255,255,255,0.15); color:white; border:none; padding:8px; border-radius:10px; font-weight:bold;">
                 <option style="color:black">March 2026</option><option style="color:black">April 2026</option>
             </select>
@@ -70,9 +71,16 @@
             <div id="list"></div>
             <button class="btn btn-p" onclick="saveData()" style="margin-top:10px;">💾 Sync Cloud Data</button>
         </div>
+
         <div id="v-rpt" class="hidden">
             <button class="btn btn-orange" onclick="exportPDF()">📄 Download Navy/Orange PDF</button>
             <div id="rpt-list"></div>
+            
+            <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                <small style="color: #64748b; font-weight: bold; text-transform: uppercase;">Danger Zone</small>
+                <button class="btn btn-danger" onclick="resetAllData()">🗑️ Reset Monthly Data</button>
+                <p style="font-size: 11px; color: #94a3b8; margin-top: 8px; text-align: center;">This will delete all REC, OPEN, and SALES records for the current month.</p>
+            </div>
         </div>
     </div>
 
@@ -100,6 +108,7 @@
     function tab(m, el) { curMode = m; document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active")); el.classList.add("active"); document.getElementById("v-entry").classList.toggle("hidden", m === "REPORT"); document.getElementById("v-rpt").classList.toggle("hidden", m !== "REPORT"); if(m === "REPORT") loadReport(); else draw(); }
     function refresh() { draw(); loadReport(); }
     function draw(f = "") { document.getElementById("list").innerHTML = items.filter(i => i.n.includes(f.toUpperCase()) || i.c.includes(f.toUpperCase())).map(i => `<div class="card" style="display:flex; justify-content:space-between; align-items:center;"><div><b>${i.n}</b><br><small style="color:#64748b">${i.c}</small></div><input type="number" class="qty-in" data-c="${i.c}" placeholder="0" style="width:70px; text-align:center; padding:10px; border:1px solid #e2e8f0; border-radius:10px;"></div>`).join(""); }
+    
     async function saveData() {
         const { data: { user } } = await sb.auth.getUser(); const month = document.getElementById("m-picker").value;
         const rows = [...document.querySelectorAll(".qty-in")].map(x => ({ code: x.dataset.c, qty: parseInt(x.value) || 0 })).filter(x => x.qty > 0);
@@ -110,6 +119,24 @@
         else if(curMode === "RECEIVED") res = await sb.from("received_stock").insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, month_ref: month, user_id: user.id })));
         if(res.error) alert(res.error.message); else { alert("Synced!"); draw(); loadReport(); }
     }
+
+    async function resetAllData() {
+        const month = document.getElementById("m-picker").value;
+        const confirmClear = confirm(`Are you sure you want to delete ALL data for ${month}? This cannot be undone.`);
+        if (!confirmClear) return;
+
+        const { data: { user } } = await sb.auth.getUser();
+        
+        await Promise.all([
+            sb.from("monthly_stock").delete().eq('month_year', month).eq('user_id', user.id),
+            sb.from("sales").delete().eq('month_ref', month).eq('user_id', user.id),
+            sb.from("received_stock").delete().eq('month_ref', month).eq('user_id', user.id)
+        ]);
+
+        alert("System Reset Complete!");
+        refresh();
+    }
+
     async function loadReport() {
         const month = document.getElementById("m-picker").value;
         const [{data:o}, {data:s}, {data:r}] = await Promise.all([sb.from("monthly_stock").select("*").eq('month_year', month), sb.from("sales").select("*").eq('month_ref', month), sb.from("received_stock").select("*").eq('month_ref', month)]);
@@ -125,6 +152,7 @@
         document.getElementById("rpt-list").innerHTML = report.map(d => `<div class="card"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;"><b>${d.name}</b><span style="font-weight:900; color:${d.stock < 5 ? 'var(--warn)' : 'var(--success)'}">${d.stock}</span></div><div style="font-size:11px; color:#64748b; display:flex; justify-content:space-between; background:#f8fafc; padding:8px; border-radius:10px;"><span>REC: ${d.recv}</span><span>OPEN: ${d.open}</span><span>SOLD: ${d.sold}</span></div></div>`).join("");
         window.rptData = report;
     }
+
     function exportPDF() {
         const { jsPDF } = window.jspdf; const doc = new jsPDF(); const month = document.getElementById("m-picker").value;
         doc.setFillColor(15, 23, 42); doc.rect(0, 0, 210, 40, 'F');
