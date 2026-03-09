@@ -309,19 +309,55 @@
         window.rptData = report;
     }
 
-    function exportPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const month = document.getElementById("m-picker").value;
-        doc.setFillColor(225, 29, 72); doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("DYNAPHARM ERP REPORT", 14, 25);
-        doc.autoTable({
-            startY: 45, head: [['PRODUCT', 'OPEN', 'RECV', 'SOLD', 'BAL']],
-            body: window.rptData.map(x => [x.name, x.open, x.recv, x.sold, x.stock]),
-            headStyles: { fillColor: [249, 115, 22] }
-        });
-        doc.save(`Dynapharm_${month}.pdf`);
-    }
+  function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const month = document.getElementById("m-picker").value;
+    
+    // --- BRANDING ---
+    // Deep Royal Navy Header (Professional & Bold)
+    doc.setFillColor(15, 23, 42); 
+    doc.rect(0, 0, 210, 40, 'F');
+    
+    // White Text for Header
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.text("DYNAPHARM ERP REPORT", 14, 25);
+    
+    // Sub-info
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`INVENTORY SUMMARY: ${month.toUpperCase()}`, 14, 33);
+
+    // --- TABLE ---
+    doc.autoTable({
+        startY: 45,
+        head: [['PRODUCT NAME', 'OPEN', 'RECV', 'SOLD', 'BALANCE']],
+        body: window.rptData.map(x => [
+            x.name, 
+            x.open, 
+            x.recv, 
+            x.sold, 
+            { content: x.stock, styles: { fontStyle: 'bold' } }
+        ]),
+        headStyles: { 
+            fillColor: [249, 115, 22], // Vibrant Orange
+            textColor: [255, 255, 255],
+            fontSize: 11
+        },
+        alternateRowStyles: {
+            fillColor: [248, 250, 252] // Very light grey for readability
+        },
+        styles: {
+            lineColor: [226, 232, 240],
+            lineWidth: 0.1,
+        }
+    });
+
+    doc.save(`Dynapharm_Report_${month.replace(' ', '_')}.pdf`);
+}
+
 </script>
 </body>
 </html>
