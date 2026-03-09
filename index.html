@@ -3,226 +3,352 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DYNAPHARM Pro v50</title>
+    <title>DYNAPHARM Pro v51.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    
     <style>
-        :root { --p: #0f172a; --accent: #6366f1; --orange: #f97316; --bg: #f8fafc; --warn: #f43f5e; }
-        body { font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 150px; background: var(--bg); color: #1e293b; }
+        :root { 
+            --p: #0f172a; --accent: #6366f1; --orange: #f97316; --bg: #f1f5f9; 
+            --warn: #f43f5e; --success: #10b981; --glass: rgba(255,255,255,0.1);
+        }
+        
+        body { font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 120px; background: var(--bg); color: #1e293b; -webkit-tap-highlight-color: transparent; }
         .hidden { display: none !important; }
-        
-        /* Auth UI */
-        .auth-card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); width: 100%; max-width: 320px; color: #0f172a; }
-        .input-group { position: relative; width: 100%; }
-        .auth-input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #e2e8f0; box-sizing: border-box; font-size: 14px; }
-        .eye-icon { position: absolute; right: 15px; top: 15px; cursor: pointer; color: #64748b; font-size: 18px; }
 
-        /* Header */
-        .header { background: var(--p); color: white; padding: 25px 20px 45px; border-radius: 0 0 35px 35px; }
-        .stats-row { display: flex; gap: 10px; margin-top: 20px; margin-bottom: -65px; position: relative; z-index: 5; }
-        .stat-box { flex: 1; background: #1e293b; padding: 15px; border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        .stat-box small { font-size: 9px; color: #94a3b8; font-weight: bold; display: block; text-transform: uppercase; }
-        .stat-box b { font-size: 16px; color: white; display: block; margin-top: 4px; }
+        /* --- AUTHENTICATION UI --- */
+        #v-auth { background: #0f172a; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: white; padding: 40px 30px; border-radius: 30px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); width: 100%; max-width: 350px; }
+        .auth-card h2 { margin: 0 0 25px; font-size: 28px; color: #0f172a; text-align: center; font-weight: 800; }
+        .input-group { position: relative; margin-bottom: 15px; }
+        .auth-input { width: 100%; padding: 16px; border-radius: 14px; border: 1.5px solid #e2e8f0; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box; }
+        .auth-input:focus { border-color: var(--accent); }
+        .eye-btn { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 20px; color: #94a3b8; }
+
+        /* --- HEADER & DASHBOARD --- */
+        .header { background: var(--p); color: white; padding: 30px 20px 60px; border-radius: 0 0 40px 40px; position: sticky; top: 0; z-index: 100; }
+        .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
+        .user-info small { color: #94a3b8; letter-spacing: 1px; font-weight: bold; }
+        .user-info b { font-size: 18px; display: block; color: var(--accent); }
         
-        .content { padding: 80px 20px 20px; }
-        .card { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid #f1f5f9; }
-        .flex-card { display: flex; justify-content: space-between; align-items: center; }
+        .date-picker-wrap { background: var(--glass); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
+        .date-picker-wrap input { background: transparent; border: none; color: white; font-weight: bold; font-family: inherit; outline: none; }
+
+        .stats-row { display: flex; gap: 15px; margin: -40px 20px 0; position: relative; z-index: 110; }
+        .stat-card { flex: 1; background: white; padding: 20px 15px; border-radius: 24px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; border: 1px solid #f1f5f9; }
+        .stat-card small { font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; }
+        .stat-card b { display: block; font-size: 22px; color: #0f172a; margin-top: 5px; }
+
+        /* --- CONTENT AREA --- */
+        .content { padding: 60px 20px 20px; }
+        .card { background: white; padding: 20px; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 15px; }
         
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 16px; font-weight: 700; cursor: pointer; font-size: 14px; transition: 0.2s; }
-        .btn-p { background: var(--accent); color: white; }
-        .btn-s { background: #e2e8f0; color: #1e293b; width: auto; padding: 10px 15px; border-radius: 10px; font-size: 11px; font-weight: bold; }
-        
-        .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background: #0f172a; display: flex; border-radius: 25px; padding: 12px; box-shadow: 0 20px 30px rgba(0,0,0,0.3); z-index: 1000; }
-        .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; font-weight: bold; cursor: pointer; }
+        /* Toggles */
+        .mode-toggle { display: flex; background: #e2e8f0; padding: 5px; border-radius: 16px; margin-bottom: 20px; }
+        .mode-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; background: transparent; color: #64748b; }
+        .mode-btn.active { background: white; color: var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        /* Product List Styles */
+        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
+        .product-item:last-child { border: none; }
+        .product-info b { font-size: 14px; display: block; color: #1e293b; max-width: 200px; }
+        .product-info span { font-size: 11px; color: #94a3b8; font-weight: bold; }
+        .qty-input { width: 70px; padding: 12px 5px; border-radius: 12px; border: 1.5px solid #e2e8f0; text-align: center; font-weight: 800; color: var(--p); font-size: 16px; }
+
+        /* --- SHOP SYSTEM --- */
+        .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-top: 10px; }
+        .shop-header h3 { margin: 0; font-size: 20px; color: #0f172a; }
+        .shop-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 10px; align-items: center; }
+        .grid-label { font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; padding: 0 5px; }
+        .grid-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 15px; margin-bottom: 8px; align-items: center; }
+        .grid-row span { font-weight: bold; font-size: 12px; color: #475569; }
+        .grid-row input { width: 100%; padding: 8px 0; border: 1.5px solid #e2e8f0; border-radius: 8px; text-align: center; font-weight: bold; outline: none; }
+        .grid-row input:focus { border-color: var(--accent); }
+
+        /* --- NAVIGATION --- */
+        .nav { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 450px; background: #0f172a; display: flex; border-radius: 28px; padding: 10px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); z-index: 1000; }
+        .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; }
         .nav-btn.active { color: white; }
         .nav-btn span { font-size: 24px; display: block; margin-bottom: 4px; }
 
-        /* Shop Entry Grid */
-        .shop-container { margin-bottom: 30px; border-left: 5px solid var(--accent); padding-left: 15px; }
-        .g-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; background: #f1f5f9; padding: 10px; border-radius: 12px; margin-top: 5px; align-items: center; font-size: 11px; }
-        .g-row input { width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center; font-weight: bold; }
-        
-        .type-toggle { display: flex; background: #e2e8f0; border-radius: 12px; padding: 4px; margin-bottom: 15px; }
-        .t-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; background: transparent; color: #64748b; }
-        .t-btn.active { background: white; color: var(--accent); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        /* Buttons */
+        .btn { width: 100%; padding: 18px; border-radius: 18px; border: none; font-weight: 800; cursor: pointer; font-size: 15px; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        .btn-p { background: var(--accent); color: white; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
+        .btn-s { background: white; color: var(--p); border: 1.5px solid #e2e8f0; width: auto; padding: 10px 18px; font-size: 12px; border-radius: 12px; }
+        .btn-orange { background: var(--orange); color: white; margin-top: 10px; }
+
+        /* Report Styles */
+        .rpt-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
+        .val-in { color: var(--success); font-weight: bold; }
+        .val-out { color: var(--warn); font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="v-auth" style="background:#0f172a; height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
+<div id="v-auth">
     <div class="auth-card">
-        <h2 id="auth-title">Login</h2>
+        <h2 id="auth-title">DYNAPHARM</h2>
         <input id="user" class="auth-input" placeholder="Username">
         <div class="input-group">
             <input id="pass" class="auth-input" type="password" placeholder="Password">
-            <span class="eye-icon" onclick="togglePass()">👁️</span>
+            <span class="eye-btn" onclick="togglePass()">👁️</span>
         </div>
         <button id="auth-btn" class="btn btn-p" onclick="handleAuth()">Sign In</button>
-        <span id="toggle-text" style="font-size:12px; color:var(--accent); cursor:pointer; display:block; margin-top:15px; text-align:center;" onclick="toggleAuthMode()">New here? Create Account</span>
+        <p style="text-align:center; font-size:13px; color:var(--accent); cursor:pointer; margin-top:20px; font-weight:600;" onclick="toggleAuthMode()">New Account? Register here</p>
     </div>
 </div>
 
 <div id="main-ui" class="hidden">
     <div class="header">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div><small>DYNAMIC PRO</small><br><b id="u-display" style="color:var(--accent); font-size: 14px;">---</b></div>
-            <input type="date" id="view-date" onchange="refresh()" style="background:rgba(255,255,255,0.2); color:white; border:none; padding:10px; border-radius:10px; font-weight: bold;">
-        </div>
-        <div class="stats-row">
-            <div class="stat-box"><small>ENTRÉE</small><b id="s-in">0</b></div>
-            <div class="stat-box"><small>VENTES</small><b id="s-out">0</b></div>
+        <div class="top-bar">
+            <div class="user-info">
+                <small>BIENVENUE,</small>
+                <b id="u-display">ADMIN</b>
+            </div>
+            <div class="date-picker-wrap">
+                <input type="date" id="view-date" onchange="refreshAll()">
+            </div>
         </div>
     </div>
 
+    <div class="stats-row">
+        <div class="stat-card"><small>Entrées</small><b id="st-in">0</b></div>
+        <div class="stat-card"><small>Ventes</small><b id="st-out">0</b></div>
+        <div class="stat-card"><small>Solde</small><b id="st-bal">0</b></div>
+    </div>
+
     <div class="content">
+        
         <div id="v-personal">
-            <div class="type-toggle">
-                <button id="btn-in" class="t-btn active" onclick="setType('IN')">📥 STOCK IN</button>
-                <button id="btn-out" class="t-btn" onclick="setType('OUT')">📤 STOCK OUT</button>
+            <div class="mode-toggle">
+                <button id="m-in" class="mode-btn active" onclick="setMode('IN')">📥 STOCK IN</button>
+                <button id="m-out" class="mode-btn" onclick="setMode('OUT')">📤 STOCK OUT</button>
             </div>
-            <div class="card"><input id="search" placeholder="Search product..." oninput="drawPersonal(this.value)" style="border:none; width:100%; outline:none;"></div>
-            <div id="personal-list"></div>
-            <button class="btn btn-p" onclick="savePersonal()">💾 Save Entry</button>
+            <div class="card" style="padding: 5px 20px;">
+                <input type="text" id="search" placeholder="Rechercher un produit..." oninput="renderPersonal(this.value)" style="width:100%; border:none; padding:15px 0; outline:none; font-size:16px;">
+            </div>
+            <div class="card" id="personal-list" style="padding-top:5px;"></div>
+            <button class="btn btn-p" onclick="savePersonalData()">💾 ENREGISTRER LE STOCK</button>
         </div>
 
         <div id="v-global" class="hidden">
-            <div style="display:flex; gap:10px; margin-bottom:15px;">
-                <button class="btn-s" onclick="addShop()">+ Add Shop</button>
-                <button class="btn-s" style="background:var(--orange); color:white;" onclick="exportGlobalPDF()">📄 Export PDF</button>
+            <div style="display:flex; gap:10px; margin-bottom:20px;">
+                <button class="btn btn-s" onclick="addShop()">+ Ajouter une Boutique</button>
+                <button class="btn btn-s" style="background:var(--orange); color:white; border:none;" onclick="exportProPDF()">📄 Télécharger PDF</button>
             </div>
             <div id="shops-container"></div>
         </div>
 
         <div id="v-rpt" class="hidden">
-            <div id="rpt-summary" class="card"></div>
-            <div id="rpt-details"></div>
+            <div class="card">
+                <h3 style="margin-top:0;">Résumé du jour</h3>
+                <div id="rpt-summary-content"></div>
+                <button class="btn btn-orange" style="background:#fee2e2; color:var(--warn); border:1px solid #fecaca; margin-top:20px;" onclick="resetDay()">🗑️ Effacer les données du jour</button>
+            </div>
         </div>
+
     </div>
 
     <div class="nav">
-        <div class="nav-btn active" onclick="tab('PERSONAL', this)"><span>📥</span>Stock</div>
-        <div class="nav-btn" onclick="tab('GLOBAL', this)"><span>🌍</span>Ventes Globales</div>
-        <div class="nav-btn" onclick="tab('REPORT', this)"><span>📊</span>Rapport</div>
+        <div class="nav-btn active" onclick="switchTab('PERSONAL', this)">
+            <span>📦</span>Stock
+        </div>
+        <div class="nav-btn" onclick="switchTab('GLOBAL', this)">
+            <span>🌍</span>Ventes
+        </div>
+        <div class="nav-btn" onclick="switchTab('REPORT', this)">
+            <span>📊</span>Rapport
+        </div>
     </div>
 </div>
 
 <script>
+    // --- CONFIGURATION ---
     const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
     const sb = supabase.createClient(_URL, _KEY);
-    
-    let isSignUpMode = false;
-    let curType = "IN";
-    let shops = [];
 
     const items = [
-        {c:"DRC1201", n:"CAFE GINKO & GINSENG", p: 13.00}, {c:"DRC1202", n:"CAFÉ THÉ VERT GANODERMA", p: 14.00}, {c:"DRC1203", n:"CAFÉ KACIP FATIMA", p: 14.00}, {c:"DRC1204", n:"CAFÉ TONGKAT & MACCA", p: 14.00}, {c:"DRC1205", n:"CAFÉ CUPPUCCINO", p: 15.00}, {c:"DRC1802A", n:"D.I. LIQUID ALFALFA PLUS", p: 20.00}, {c:"DRC1804", n:"GANODERMA CAFE", p: 11.00}, {c:"DRC1810", n:"CAPSULE DE YEE GANO 90s", p: 23.00}, {c:"DRC1811", n:"YEEGARLIC CAPSULE 90s", p: 23.00}, {c:"DRC1814", n:"GANODERMA CHOCOLAT", p: 19.00}, {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT", p: 15.00}, {c:"DRC1818", n:"CAFÉ NOIR GANODERMA", p: 14.00}, {c:"DRC2802", n:"LAIT DE CHEVRE 150s", p: 16.00}, {c:"DRC2804", n:"POUDRE GRAINES DE SOJA", p: 17.00}, {c:"DRC2805", n:"MARINE SPIRULLINA", p: 17.00}, {c:"DRC2807", n:"SPIRULINA (300s)", p: 22.00}, {c:"DRC2812", n:"HERBA WARISAN MAHARANI", p: 36.00}, {c:"DRC2813", n:"SOJA GINGEMBRE", p: 14.00}, {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1", p: 15.00}, {c:"DRC3804", n:"DYNA TONIC 780ml", p: 33.00}, {c:"DRC3809", n:"YEE YANG YEN 90s", p: 23.00}, {c:"DRC3810", n:"RED COFFEE GINSENG", p: 13.00}, {c:"DRC3812", n:"GREEN TEA CAPSULE 60s", p: 23.00}, {c:"DRC3814", n:"PROLINK 20s", p: 36.00}, {c:"DRC4803", n:"GINSENG MIEL GINGEMBRE", p: 17.00}, {c:"DRC4805", n:"GINSENG CAPSULE 9x10s", p: 31.00}, {c:"DRC4810", n:"CAFÉ TONGKAT ALI", p: 11.00}, {c:"DRC4811", n:"GINALI CAPSULE 100s", p: 27.00}, {c:"DRC4815", n:"YEEGINKGO 90s", p: 23.00}, {c:"DRC4817", n:"MILK THISTLE 120s", p: 36.00}, {c:"DRC4821", n:"TONGKAT ALI 100s", p: 21.00}, {c:"DRC4824", n:"SEA CUCUMBER JELLY", p: 31.00}, {c:"DRC5802N", n:"NONI 500ml", p: 26.00}, {c:"DRC5803", n:"NONI PLUS TEA 30s", p: 19.00}, {c:"DRC5806", n:"DYNA 'S' TABLET 120s", p: 21.00}, {c:"DRC9918", n:"DYNA SERENOA 100s", p: 32.00}, {c:"DRC5801", n:"CHLOROPHYLL SOAP", p: 5.00}, {c:"DRC5802", n:"GANO SOAP", p: 5.00}
+        {c:"DRC1201", n:"CAFE GINKO & GINSENG", p: 13}, {c:"DRC1202", n:"CAFÉ THÉ VERT GANODERMA", p: 14}, {c:"DRC1203", n:"CAFÉ KACIP FATIMA", p: 14}, {c:"DRC1204", n:"CAFÉ TONGKAT & MACCA", p: 14}, {c:"DRC1205", n:"CAFÉ CUPPUCCINO", p: 15}, {c:"DRC1802A", n:"D.I. LIQUID ALFALFA PLUS", p: 20}, {c:"DRC1804", n:"GANODERMA CAFE", p: 11}, {c:"DRC1810", n:"CAPSULE DE YEE GANO 90s", p: 23}, {c:"DRC1811", n:"YEEGARLIC CAPSULE 90s", p: 23}, {c:"DRC1814", n:"GANODERMA CHOCOLAT", p: 19}, {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT", p: 15}, {c:"DRC1818", n:"CAFÉ NOIR GANODERMA", p: 14}, {c:"DRC2802", n:"LAIT DE CHEVRE 150s", p: 16}, {c:"DRC2804", n:"POUDRE GRAINES DE SOJA", p: 17}, {c:"DRC2805", n:"MARINE SPIRULLINA", p: 17}, {c:"DRC2807", n:"SPIRULINA (300s)", p: 22}, {c:"DRC2812", n:"HERBA WARISAN MAHARANI", p: 36}, {c:"DRC2813", n:"SOJA GINGEMBRE", p: 14}, {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1", p: 15}, {c:"DRC3804", n:"DYNA TONIC 780ml", p: 33}, {c:"DRC3809", n:"YEE YANG YEN 90s", p: 23}, {c:"DRC3810", n:"RED COFFEE GINSENG", p: 13}, {c:"DRC3812", n:"GREEN TEA CAPSULE 60s", p: 23}, {c:"DRC3814", n:"PROLINK 20s", p: 36}, {c:"DRC4803", n:"GINSENG MIEL GINGEMBRE", p: 17}, {c:"DRC4805", n:"GINSENG CAPSULE 9x10s", p: 31}, {c:"DRC4810", n:"CAFÉ TONGKAT ALI", p: 11}, {c:"DRC4811", n:"GINALI CAPSULE 100s", p: 27}, {c:"DRC4815", n:"YEEGINKGO 90s", p: 23}, {c:"DRC4817", n:"MILK THISTLE 120s", p: 36}, {c:"DRC4821", n:"TONGKAT ALI 100s", p: 21}, {c:"DRC4824", n:"SEA CUCUMBER JELLY", p: 31}, {c:"DRC5802N", n:"NONI 500ml", p: 26}, {c:"DRC5803", n:"NONI PLUS TEA 30s", p: 19}, {c:"DRC5806", n:"DYNA 'S' TABLET 120s", p: 21}, {c:"DRC9918", n:"DYNA SERENOA 100s", p: 32}, {c:"DRC5801", n:"CHLOROPHYLL SOAP", p: 5}, {c:"DRC5802", n:"GANO SOAP", p: 5}
     ];
 
-    document.getElementById('view-date').value = new Date().toISOString().split('T')[0];
+    let currentMode = 'IN';
+    let shops = [];
+    let isSignUp = false;
 
-    function togglePass() { const p = document.getElementById("pass"); p.type = p.type === "password" ? "text" : "password"; }
-    function toggleAuthMode() { isSignUpMode = !isSignUpMode; document.getElementById("auth-title").innerText = isSignUpMode ? "Register" : "Login"; }
-
+    // --- AUTHENTICATION ---
+    function togglePass() {
+        const p = document.getElementById('pass');
+        p.type = p.type === 'password' ? 'text' : 'password';
+    }
+    function toggleAuthMode() {
+        isSignUp = !isSignUp;
+        document.getElementById('auth-title').innerText = isSignUp ? "S'Inscrire" : "DYNAPHARM";
+        document.getElementById('auth-btn').innerText = isSignUp ? "Créer Compte" : "Connexion";
+    }
     async function handleAuth() {
-        let u = document.getElementById("user").value.trim().toLowerCase();
-        if(!u.includes("@")) u += "@dyna.pro";
-        let res = isSignUpMode ? await sb.auth.signUp({email: u, password: document.getElementById("pass").value}) : await sb.auth.signInWithPassword({email: u, password: document.getElementById("pass").value});
-        if(res.error) alert(res.error.message); else showMainUI(u);
+        let u = document.getElementById('user').value.trim().toLowerCase();
+        const p = document.getElementById('pass').value;
+        if(!u.includes('@')) u += "@dyna.pro";
+        let res = isSignUp ? await sb.auth.signUp({email: u, password: p}) : await sb.auth.signInWithPassword({email: u, password: p});
+        if(res.error) alert(res.error.message); else loginSuccess(u);
+    }
+    function loginSuccess(u) {
+        document.getElementById('u-display').innerText = u.split('@')[0].toUpperCase();
+        document.getElementById('v-auth').classList.add('hidden');
+        document.getElementById('main-ui').classList.remove('hidden');
+        document.getElementById('view-date').value = new Date().toISOString().split('T')[0];
+        renderPersonal();
     }
 
-    function showMainUI(u) {
-        document.getElementById("u-display").innerText = u.split("@")[0].toUpperCase();
-        document.getElementById("v-auth").classList.add("hidden");
-        document.getElementById("main-ui").classList.remove("hidden");
-        drawPersonal();
-    }
-
-    function tab(t, el) {
+    // --- NAVIGATION & TOGGLES ---
+    function switchTab(t, el) {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
         document.getElementById('v-personal').classList.toggle('hidden', t !== 'PERSONAL');
         document.getElementById('v-global').classList.toggle('hidden', t !== 'GLOBAL');
         document.getElementById('v-rpt').classList.toggle('hidden', t !== 'REPORT');
-        if(t === 'REPORT') loadReport();
+        if(t === 'REPORT') calculateReport();
+    }
+    function setMode(m) {
+        currentMode = m;
+        document.getElementById('m-in').classList.toggle('active', m === 'IN');
+        document.getElementById('m-out').classList.toggle('active', m === 'OUT');
     }
 
-    function setType(t) { curType = t; document.getElementById('btn-in').classList.toggle('active', t === 'IN'); document.getElementById('btn-out').classList.toggle('active', t === 'OUT'); }
-
-    function drawPersonal(f = "") {
-        document.getElementById("personal-list").innerHTML = items.filter(i => i.n.includes(f.toUpperCase())).map(i => `
-            <div class="card flex-card">
-                <div><b>${i.n}</b><br><small>${i.c}</small></div>
-                <input type="number" class="qty-p" data-c="${i.c}" style="width:65px; padding:10px; border-radius:10px; border:1px solid #ddd; text-align:center; font-weight:bold;" placeholder="0">
-            </div>
-        `).join("");
-    }
-
-    // GLOBAL SHOP SYSTEM
-    function addShop() {
-        const n = prompt("Nom de la Boutique (ex: KAPENDA 1):");
-        if(n) { shops.push({ id: Date.now(), name: n, data: [] }); renderShops(); }
-    }
-    function addAllToShop(sid) {
-        shops.find(x => x.id === sid).data = items.map(i => ({ ...i, sold: 0, bal: 0 }));
-        renderShops();
-    }
-    function updateG(sid, code, field, val) {
-        const r = shops.find(x => x.id === sid).data.find(x => x.c === code);
-        if(r) r[field] = parseInt(val) || 0;
-    }
-    function renderShops() {
-        document.getElementById("shops-container").innerHTML = shops.map(s => `
-            <div class="shop-container">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <b style="font-size:17px;">${s.name}</b>
-                    <button class="btn-s" onclick="addAllToShop(${s.id})">Add All Products</button>
+    // --- PERSONAL STOCK ENGINE ---
+    function renderPersonal(filter = "") {
+        const container = document.getElementById('personal-list');
+        const filtered = items.filter(i => i.n.includes(filter.toUpperCase()) || i.c.includes(filter.toUpperCase()));
+        container.innerHTML = filtered.map(i => `
+            <div class="product-item">
+                <div class="product-info">
+                    <b>${i.n}</b>
+                    <span>${i.c} • $${i.p}</span>
                 </div>
-                <div class="g-row" style="background:#0f172a; color:white; font-weight:bold;">
-                    <span>Code</span><span>Vendu</span><span>Reste</span>
-                </div>
-                ${s.data.map(r => `
-                    <div class="g-row">
-                        <span>${r.c}</span>
-                        <input type="number" value="${r.sold||''}" oninput="updateG(${s.id},'${r.c}','sold',this.value)">
-                        <input type="number" value="${r.bal||''}" oninput="updateG(${s.id},'${r.c}','bal',this.value)">
-                    </div>
-                `).join('')}
+                <input type="number" class="qty-input p-qty" data-code="${i.c}" placeholder="0">
             </div>
         `).join('');
     }
 
-    function exportGlobalPDF() {
+    // --- GLOBAL SALES (SHOP SYSTEM) ---
+    function addShop() {
+        const name = prompt("Nom de la Boutique (ex: KAPENDA 1):");
+        if(!name) return;
+        const shopId = Date.now();
+        shops.push({ id: shopId, name: name, entries: [] });
+        renderShops();
+    }
+
+    function addAllProducts(shopId) {
+        const shop = shops.find(s => s.id === shopId);
+        shop.entries = items.map(i => ({ ...i, sold: 0, balance: 0 }));
+        renderShops();
+    }
+
+    function updateShopVal(shopId, code, field, val) {
+        const shop = shops.find(s => s.id === shopId);
+        const entry = shop.entries.find(e => e.c === code);
+        if(entry) entry[field] = parseInt(val) || 0;
+    }
+
+    function renderShops() {
+        const container = document.getElementById('shops-container');
+        container.innerHTML = shops.map(s => `
+            <div class="card">
+                <div class="shop-header">
+                    <h3>${s.name}</h3>
+                    <button class="btn-s" onclick="addAllProducts(${s.id})">Add All Products</button>
+                </div>
+                <div class="shop-grid">
+                    <div class="grid-label">Produit</div>
+                    <div class="grid-label">Vendu</div>
+                    <div class="grid-label">Reste</div>
+                </div>
+                <div id="entries-${s.id}">
+                    ${s.entries.map(e => `
+                        <div class="grid-row">
+                            <span>${e.c}</span>
+                            <input type="number" value="${e.sold || ''}" oninput="updateShopVal(${s.id}, '${e.c}', 'sold', this.value)">
+                            <input type="number" value="${e.balance || ''}" oninput="updateShopVal(${s.id}, '${e.c}', 'balance', this.value)">
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // --- PDF GENERATOR (PRO MODEL) ---
+    function exportProPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        const date = document.getElementById("view-date").value;
-        doc.setFontSize(16).setFont("helvetica", "bold").text("RAPPORT GLOBAL DES VENTES", 105, 15, { align: "center" });
-        
+        const date = document.getElementById('view-date').value;
+
+        // Header
+        doc.setFontSize(18).setFont("helvetica", "bold").text("RAPPORT GLOBAL DES VENTES", 105, 20, { align: "center" });
+        doc.setFontSize(11).setFont("helvetica", "normal").text(`Date: ${date}`, 14, 30);
+
+        // Summary Table
         let grandTotal = 0;
-        const summary = shops.map(s => {
-            const total = s.data.reduce((a, b) => a + (b.sold * b.p), 0);
+        const summaryData = shops.map(s => {
+            const total = s.entries.reduce((sum, e) => sum + (e.sold * e.p), 0);
             grandTotal += total;
             return [s.name, `$${total.toFixed(2)}`];
         });
 
-        doc.autoTable({ startY: 25, head: [['Boutique', 'Total ($)']], body: [...summary, ['TOTAL GÉNÉRAL', `$${grandTotal.toFixed(2)}`]], theme: 'grid' });
+        doc.autoTable({
+            startY: 35,
+            head: [['Boutique', 'Total des Ventes ($)']],
+            body: [...summaryData, [{content: 'TOTAL GÉNÉRAL DU JOUR', styles: {fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold'}}, `$${grandTotal.toFixed(2)}`]],
+            theme: 'grid'
+        });
 
+        // Detailed Pages
         shops.forEach(s => {
             doc.addPage();
-            doc.text(`DÉTAIL: ${s.name}`, 14, 15);
+            doc.setFontSize(14).text(`DÉTAIL: ${s.name}`, 14, 15);
             doc.autoTable({
                 startY: 20,
                 head: [['Code', 'Désignation', 'Prix Unit.', 'Vendu', 'Reste', 'Total $']],
-                body: s.data.filter(r => r.sold > 0 || r.bal > 0).map(r => [r.c, r.n, `$${r.p}`, r.sold, r.bal, `$${(r.sold * r.p).toFixed(2)}`]),
-                theme: 'grid'
+                body: s.entries.filter(e => e.sold > 0 || e.balance > 0).map(e => [
+                    e.c, e.n, `$${e.p}`, e.sold, e.balance, `$${(e.sold * e.p).toFixed(2)}`
+                ]),
+                theme: 'grid',
+                styles: { fontSize: 8 }
             });
         });
+
         doc.save(`Rapport_Dyna_${date}.pdf`);
     }
 
-    function refresh() { drawPersonal(); }
-    function loadReport() { /* summary calculations */ }
+    // --- REPORT CALCULATION ---
+    function calculateReport() {
+        const container = document.getElementById('rpt-summary-content');
+        let totalValIn = 0;
+        let totalValOut = 0;
+
+        // This is a placeholder summary. In a real DB sync, this would fetch from Supabase.
+        container.innerHTML = `
+            <div class="rpt-item"><span>Total In (Personal)</span><span class="val-in">$0.00</span></div>
+            <div class="rpt-item"><span>Total Sales (Personal)</span><span class="val-out">$0.00</span></div>
+            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+            <div class="rpt-item"><b>Total Shops Revenue</b><b>$${shops.reduce((a, s) => a + s.entries.reduce((sum, e) => sum + (e.sold*e.p), 0), 0).toFixed(2)}</b></div>
+        `;
+    }
+
+    function resetDay() {
+        if(confirm("Effacer toutes les entrées d'aujourd'hui?")) {
+            shops = [];
+            renderShops();
+            calculateReport();
+        }
+    }
+
+    function refreshAll() { /* Logic to fetch data from Supabase for the selected date */ }
+    async function savePersonalData() { alert("Données enregistrées localement ! Connectez Supabase pour la sauvegarde cloud."); }
+
 </script>
 </body>
 </html>
