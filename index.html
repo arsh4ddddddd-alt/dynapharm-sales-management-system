@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dynapharm ERP v27</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dynapharm ERP</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -13,10 +13,12 @@
 
 body{
 font-family:system-ui;
-background:#f1f5f9;
 margin:0;
+background:#f1f5f9;
 padding-bottom:120px;
 }
+
+.hidden{display:none}
 
 .header{
 background:#0f172a;
@@ -31,22 +33,22 @@ gap:10px;
 margin-top:15px;
 }
 
-.box{
+.stat{
 flex:1;
 background:rgba(255,255,255,0.1);
 padding:10px;
-border-radius:10px;
+border-radius:12px;
 }
 
 .content{
-padding:15px;
 max-width:500px;
 margin:auto;
+padding:15px;
 }
 
 .card{
 background:white;
-padding:14px;
+padding:15px;
 border-radius:14px;
 margin-bottom:10px;
 border:1px solid #e2e8f0;
@@ -62,11 +64,11 @@ text-align:center;
 
 .search{
 width:100%;
-margin-bottom:12px;
 padding:12px;
+margin-bottom:10px;
 }
 
-.btn{
+button{
 width:100%;
 padding:15px;
 border:none;
@@ -76,15 +78,15 @@ cursor:pointer;
 margin-top:10px;
 }
 
-.blue{background:#2563eb;color:white}
-.green{background:#059669;color:white}
+.primary{background:#2563eb;color:white}
+.success{background:#059669;color:white}
 
 .nav{
 position:fixed;
 bottom:15px;
 left:50%;
 transform:translateX(-50%);
-width:90%;
+width:92%;
 max-width:450px;
 background:#1e293b;
 display:flex;
@@ -100,314 +102,9 @@ font-size:12px;
 cursor:pointer;
 }
 
-.nav .active{
-color:white;
-}
+.nav .active{color:white}
 
-.low{
-color:#dc2626;
-font-weight:bold;
-}
+.low{color:#dc2626;font-weight:bold}
 
 </style>
-</head>
-
-<body>
-
-<div class="header">
-
-<b id="title">OPENING</b>
-
-<div class="stats">
-
-<div class="box">
-<small>Items</small>
-<div id="s-items">0</div>
-</div>
-
-<div class="box">
-<small>Best Seller</small>
-<div id="s-top">---</div>
-</div>
-
-<div class="box">
-<small>Total Sales</small>
-<div id="s-sales">0</div>
-</div>
-
-</div>
-</div>
-
-
-<div class="content">
-
-<input class="search" id="search" placeholder="Search product..." oninput="draw(this.value)">
-
-<div id="list"></div>
-
-<button class="btn blue" onclick="saveData()">Save Data</button>
-
-<div id="report"></div>
-
-</div>
-
-
-<div class="nav">
-<div class="active" onclick="tab('OPENING',this)">📦<br>OPEN</div>
-<div onclick="tab('RECEIVED',this)">🚚<br>RECV</div>
-<div onclick="tab('SALES',this)">💰<br>SALE</div>
-<div onclick="tab('REPORT',this)">📊<br>REPORT</div>
-</div>
-
-
-<script>
-
-const URL="https://ywmlvtdrwijnhqdypteu.supabase.co"
-const KEY="YOUR_KEY"
-
-const sb=supabase.createClient(URL,KEY)
-
-let mode="OPENING"
-
-const items=[
-{c:"DRC1201",n:"GINKO & GINSENG COFFEE"},
-{c:"DRC1202",n:"GANODERMA GREEN TEA"},
-{c:"DRC1203",n:"KACIP FATIMA GANO"},
-{c:"DRC1204",n:"TONGKAT & MACCA"},
-{c:"DRC1205",n:"CAPPUCCINO GANO"},
-{c:"DRC1814",n:"GANO CHOCO"},
-{c:"DRC1817",n:"PRESIDENT COFFEE"},
-{c:"DRC1818",n:"BLACK GANO"},
-{c:"DRC2802",n:"GOAT MILK"},
-{c:"DRC2805",n:"SPIRULINA 60"},
-{c:"DRC3804",n:"DYNA TONIC"},
-{c:"DRC3810",n:"RED COFFEE"},
-{c:"DRC4803",n:"GINSENG HONEY"},
-{c:"DRC4810",n:"TONGKAT ALI COFFEE"},
-{c:"DRC4815",n:"YEEGINKGO"},
-{c:"DRC4821",n:"TONGKAT ALI"},
-{c:"DRC5801",n:"CHLOROPHYLL SOAP"},
-{c:"DRC5802",n:"GANO SOAP"}
-]
-
-
-function tab(m,el){
-
-mode=m
-
-document.querySelectorAll(".nav div").forEach(x=>x.classList.remove("active"))
-el.classList.add("active")
-
-document.getElementById("title").innerText=m
-
-if(m==="REPORT"){
-loadReport()
-}else{
-draw()
-}
-
-}
-
-
-function draw(f=""){
-
-const list=document.getElementById("list")
-
-list.innerHTML=""
-
-items
-.filter(i=>i.n.includes(f.toUpperCase())||i.c.includes(f.toUpperCase()))
-.forEach(i=>{
-
-list.innerHTML+=`
-
-<div class="card">
-
-<div style="display:flex;justify-content:space-between;align-items:center">
-
-<div>
-<b>${i.n}</b><br>
-<small>${i.c}</small>
-</div>
-
-<input type="number" data-c="${i.c}" class="qty">
-
-</div>
-
-</div>
-
-`
-
-})
-
-}
-
-
-async function saveData(){
-
-const rows=[...document.querySelectorAll(".qty")]
-.map(x=>({
-code:x.dataset.c,
-qty:parseInt(x.value)||0
-}))
-.filter(x=>x.qty>0)
-
-if(!rows.length){
-alert("Enter numbers")
-return
-}
-
-if(mode==="OPENING"){
-
-await sb.from("monthly_stock").insert(
-rows.map(r=>({
-product_code:r.code,
-opening_quantity:r.qty
-}))
-)
-
-}
-
-if(mode==="SALES"){
-
-await sb.from("sales").insert(
-rows.map(r=>({
-product_code:r.code,
-qty_sold:r.qty
-}))
-)
-
-}
-
-if(mode==="RECEIVED"){
-
-await sb.from("received_stock").insert(
-rows.map(r=>({
-product_code:r.code,
-qty_received:r.qty
-}))
-)
-
-}
-
-alert("Saved")
-
-}
-
-
-async function loadReport(){
-
-const {data:o}=await sb.from("monthly_stock").select("*")
-const {data:s}=await sb.from("sales").select("*")
-const {data:r}=await sb.from("received_stock").select("*")
-
-const report=items.map(i=>{
-
-const open=o?.find(x=>x.product_code===i.c)?.opening_quantity||0
-
-const sold=s?.filter(x=>x.product_code===i.c)
-.reduce((a,b)=>a+b.qty_sold,0)
-
-const recv=r?.filter(x=>x.product_code===i.c)
-.reduce((a,b)=>a+b.qty_received,0)
-
-const stock=open+recv-sold
-
-return{
-name:i.n,
-code:i.c,
-open,
-recv,
-sold,
-stock
-}
-
-}).filter(x=>x.open||x.recv||x.sold)
-
-document.getElementById("s-items").innerText=report.length
-
-document.getElementById("s-sales").innerText=
-report.reduce((a,b)=>a+b.sold,0)
-
-const top=[...report].sort((a,b)=>b.sold-a.sold)[0]
-
-document.getElementById("s-top").innerText=
-top?top.name:"---"
-
-
-const div=document.getElementById("report")
-
-div.innerHTML=""
-
-report.forEach(d=>{
-
-div.innerHTML+=`
-
-<div class="card">
-
-<div style="display:flex;justify-content:space-between">
-
-<b>${d.name}</b>
-
-<span class="${d.stock<5?'low':''}">
-${d.stock}
-</span>
-
-</div>
-
-<small>
-
-OPEN ${d.open} |
-RECV ${d.recv} |
-SOLD ${d.sold}
-
-</small>
-
-</div>
-
-`
-
-})
-
-window.rpt=report
-
-}
-
-
-
-function exportPDF(){
-
-const {jsPDF}=window.jspdf
-
-const doc=new jsPDF()
-
-doc.text("DYNAPHARM REPORT",14,20)
-
-doc.autoTable({
-
-head:[["CODE","ITEM","OPEN","RECEIVED","SOLD","BALANCE"]],
-
-body:window.rpt.map(x=>[
-x.code,
-x.name,
-x.open,
-x.recv,
-x.sold,
-x.stock
-]),
-
-startY:30
-
-})
-
-doc.save("dynapharm-report.pdf")
-
-}
-
-
-draw()
-
-</script>
-
-</body>
-</html>
+</head
