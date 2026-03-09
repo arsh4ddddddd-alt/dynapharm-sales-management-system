@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DYNAPHARM Private System</title>
+    <title>DYNAPHARM Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -12,7 +12,9 @@
         body { font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 150px; background: var(--bg); color: #1e293b; }
         .hidden { display: none !important; }
         .auth-card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); width: 100%; max-width: 320px; color: #0f172a; }
+        .input-group { position: relative; width: 100%; }
         .auth-input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #e2e8f0; box-sizing: border-box; font-size: 14px; }
+        .eye-icon { position: absolute; right: 15px; top: 15px; cursor: pointer; color: #64748b; font-size: 18px; }
         .header { background: var(--p); color: white; padding: 30px 20px 50px; border-radius: 0 0 35px 35px; }
         .stats-row { display: flex; gap: 12px; margin-top: 25px; margin-bottom: -70px; position: relative; z-index: 5; }
         .stat-box { flex: 1; background: #1e293b; padding: 20px 15px; border-radius: 22px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
@@ -35,18 +37,20 @@
 <div id="v-auth" style="background:#0f172a; height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
     <div class="auth-card">
         <h2 id="auth-title">Login</h2>
-        <p id="auth-subtitle" style="color:#64748b; font-size:12px; margin-bottom:20px;">Use your username or email</p>
-        <input id="user" class="auth-input" placeholder="Username (e.g. arshad)">
-        <input id="pass" class="auth-input" type="password" placeholder="Password (min. 6 chars)">
+        <input id="user" class="auth-input" placeholder="Username">
+        <div class="input-group">
+            <input id="pass" class="auth-input" type="password" placeholder="Password">
+            <span class="eye-icon" onclick="togglePass()">👁️</span>
+        </div>
         <button id="auth-btn" class="btn btn-p" onclick="handleAuth()">Sign In</button>
-        <span id="toggle-text" style="font-size:12px; color:var(--accent); cursor:pointer; display:block; margin-top:15px;" onclick="toggleAuthMode()">New here? Create Account</span>
+        <span id="toggle-text" style="font-size:12px; color:var(--accent); cursor:pointer; display:block; margin-top:15px; text-align:center;" onclick="toggleAuthMode()">New here? Create Account</span>
     </div>
 </div>
 
 <div id="main-ui" class="hidden">
     <div class="header">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div><small>USER</small><br><b id="u-display" style="font-size:12px; color:#6366f1;">---</b><br><small onclick="location.reload()" style="color:#f43f5e; cursor:pointer;">Logout</small></div>
+            <div><small>USER</small><br><b id="u-display" style="font-size:12px; color:#6366f1;">---</b><br><small onclick="handleLogout()" style="color:#f43f5e; cursor:pointer; text-decoration:underline;">Logout</small></div>
             <input type="date" id="view-date" onchange="refresh()" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:8px; border-radius:8px;">
         </div>
         <div class="stats-row">
@@ -77,44 +81,60 @@
     const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
     const sb = supabase.createClient(_URL, _KEY);
+    
     let isSignUpMode = false;
     let curMode = "RECEIVED";
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('entry-date').value = today;
     document.getElementById('view-date').value = today;
 
-    // PRODUCTS IN PDF ORDER
     const items = [
         {c:"DRC1201", n:"CAFE GINKO EN POUDRE ET GINSENG"}, {c:"DRC1202", n:"CAFÉ DE THÉ VERT AVEC GANODERMA"}, {c:"DRC1203", n:"CAFÉ KACIP FATIMA AVEC GANODERMA"}, {c:"DRC1204", n:"CAFÉ TONGKAT ET MACCA EN POUDRE"}, {c:"DRC1205", n:"CAFÉ CUPPUCCINO AVEC GANODERMA"}, {c:"DRC1802A", n:"D.I. LIQUID ALFALFA PLUS GUARANA"}, {c:"DRC1804", n:"GANODERMA CAFE"}, {c:"DRC1810", n:"CAPSULE DE YEE GANO 90s"}, {c:"DRC1811", n:"YEEGARLIC CAPSULE 90s"}, {c:"DRC1814", n:"GANODERMA CHOCOLAT"}, {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT"}, {c:"DRC1818", n:"CAFÉ NOIR GANODERMA"}, {c:"DRC2802", n:"LAIT DE CHEVRE 150s"}, {c:"DRC2804", n:"POUDRE GRAINES DE SOJA"}, {c:"DRC2805", n:"MARINE SPIRULLINA"}, {c:"DRC2807", n:"SPIRULINA (300s)"}, {c:"DRC2812", n:"HERBA WARISAN MAHARANI"}, {c:"DRC2813", n:"SOJA GINGEMBRE"}, {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1"}, {c:"DRC3804", n:"DYNA TONIC 780ml"}, {c:"DRC3809", n:"YEE YANG YEN 90s"}, {c:"DRC3810", n:"RED COFFEE GINSENG"}, {c:"DRC3812", n:"GREEN TEA CAPSULE 60s"}, {c:"DRC3814", n:"PROLINK 20s"}, {c:"DRC4803", n:"GINSENG MIEL GINGEMBRE"}, {c:"DRC4805", n:"GINSENG CAPSULE 9x10s"}, {c:"DRC4810", n:"CAFÉ TONGKAT ALI"}, {c:"DRC4811", n:"GINALI CAPSULE 100s"}, {c:"DRC4815", n:"YEEGINKGO 90s"}, {c:"DRC4817", n:"MILK THISTLE 120s"}, {c:"DRC4821", n:"TONGKAT ALI 100s"}, {c:"DRC4824", n:"SEA CUCUMBER JELLY"}, {c:"DRC5802N", n:"NONI 500ml"}, {c:"DRC5803", n:"NONI PLUS TEA 30s"}, {c:"DRC5806", n:"DYNA 'S' TABLET 120s"}, {c:"DRC9918", n:"DYNA SERENOA 100s"}, {c:"DRC5801", n:"CHLOROPHYLL SOAP"}, {c:"DRC5802", n:"GANO SOAP"}
     ];
+
+    // AUTO-LOGIN CHECK
+    window.onload = async () => {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) showMainUI(session.user.email);
+    };
+
+    function togglePass() {
+        const p = document.getElementById("pass");
+        p.type = p.type === "password" ? "text" : "password";
+    }
 
     function toggleAuthMode() {
         isSignUpMode = !isSignUpMode;
         document.getElementById("auth-title").innerText = isSignUpMode ? "Create Account" : "Login";
         document.getElementById("auth-btn").innerText = isSignUpMode ? "Register" : "Sign In";
-        document.getElementById("toggle-text").innerText = isSignUpMode ? "Already have an account? Login" : "New here? Create Account";
+        document.getElementById("toggle-text").innerText = isSignUpMode ? "Back to Login" : "New here? Create Account";
     }
 
     async function handleAuth() {
         let u = document.getElementById("user").value.trim().toLowerCase();
         const p = document.getElementById("pass").value;
-        if(u.length < 3 || p.length < 6) return alert("Username too short or password < 6 chars");
-        
-        // AUTO-FIX: If it's not an email, make it one
+        if(!u || p.length < 6) return alert("Check username/password");
         if(!u.includes("@")) u = u + "@dyna.pro";
 
         let res = isSignUpMode ? await sb.auth.signUp({email: u, password: p}) : await sb.auth.signInWithPassword({email: u, password: p});
 
         if(res.error) alert(res.error.message);
         else {
-            if(isSignUpMode) alert("Account Ready! Now click Sign In.");
-            else {
-                document.getElementById("u-display").innerText = u.split("@")[0].toUpperCase();
-                document.getElementById("v-auth").classList.add("hidden");
-                document.getElementById("main-ui").classList.remove("hidden");
-                refresh();
-            }
+            if(isSignUpMode) alert("Account Ready! Now Sign In.");
+            else showMainUI(u);
         }
+    }
+
+    function showMainUI(email) {
+        document.getElementById("u-display").innerText = email.split("@")[0].toUpperCase();
+        document.getElementById("v-auth").classList.add("hidden");
+        document.getElementById("main-ui").classList.remove("hidden");
+        refresh();
+    }
+
+    async function handleLogout() {
+        await sb.auth.signOut();
+        location.reload();
     }
 
     function tab(m, el) { curMode = m; document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active")); el.classList.add("active"); document.getElementById("v-entry").classList.toggle("hidden", m === 'REPORT'); document.getElementById("v-rpt").classList.toggle("hidden", m !== 'REPORT'); if(m === 'REPORT') loadReport(); else draw(); }
@@ -125,11 +145,11 @@
         const { data: { user } } = await sb.auth.getUser();
         const date = document.getElementById("entry-date").value;
         const rows = [...document.querySelectorAll(".qty-in")].map(x => ({ code: x.dataset.c, qty: parseInt(x.value) || 0 })).filter(x => x.qty > 0);
-        if(!rows.length) return alert("Enter numbers!");
+        if(!rows.length) return alert("Enter data");
         const table = curMode === "SALES" ? "sales" : "received_stock";
         const payload = rows.map(r => ({ product_code: r.code, [curMode === "SALES" ? 'qty_sold' : 'qty_received']: r.qty, month_ref: date, user_id: user.id }));
         const { error } = await sb.from(table).insert(payload);
-        if(error) alert("Error saving"); else { alert("Saved!"); draw(); refresh(); }
+        if(error) alert("Error"); else { alert("Saved!"); draw(); refresh(); }
     }
 
     async function loadReport() {
