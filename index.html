@@ -27,6 +27,7 @@
         .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; font-weight: bold; cursor: pointer; }
         .nav-btn.active { color: white; }
         .nav-btn span { font-size: 24px; display: block; margin-bottom: 4px; }
+        .date-input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-weight: bold; font-family: inherit; }
         .history-item { font-size: 11px; padding: 8px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; }
         .badge { padding: 2px 6px; border-radius: 5px; font-size: 9px; font-weight: bold; color: white; }
         input[type="number"] { width: 65px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 10px; text-align: center; font-weight: 800; }
@@ -48,29 +49,32 @@
     <div class="header">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div><small>OPERATOR</small><br><b id="u-display" style="font-size:18px;">---</b></div>
-            <select id="m-picker" onchange="refresh()" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:8px; border-radius:10px; font-weight:bold;">
-                <option style="color:black">March 2026</option><option style="color:black">April 2026</option>
-            </select>
+            <div>
+                <small style="display:block; text-align:right">REPORT DATE</small>
+                <input type="date" id="view-date" onchange="refresh()" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:5px; border-radius:8px; font-size:12px;">
+            </div>
         </div>
         <div class="stats-row">
-            <div class="stat-box"><small>TOTAL STOCK IN</small><b id="s-in">0</b></div>
-            <div class="stat-box"><small>TOTAL SALES</small><b id="s-out">0</b></div>
+            <div class="stat-box"><small>DAY'S STOCK IN</small><b id="s-in">0</b></div>
+            <div class="stat-box"><small>DAY'S SALES</small><b id="s-out">0</b></div>
         </div>
     </div>
 
     <div class="content">
         <div id="v-entry">
+            <small style="color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">TRANSACTION DATE</small>
+            <input type="date" id="entry-date" class="date-input">
             <div class="card" style="margin-bottom:15px;"><input id="search" placeholder="Search product..." oninput="draw(this.value)" style="border:none; width:100%; outline:none;"></div>
             <div id="list"></div>
             <button class="btn btn-p" onclick="saveData()">💾 Commit Changes</button>
         </div>
 
         <div id="v-rpt" class="hidden">
-            <button class="btn btn-danger" onclick="resetEverything()">🗑️ Reset Everything</button>
-            <button class="btn btn-orange" onclick="exportPDF()">📄 Download PDF Report</button>
-            <h3 style="font-size:14px; margin:20px 0 10px;">📊 Current Inventory Balance</h3>
+            <button class="btn btn-danger" onclick="resetEverything()">🗑️ Reset Day Data</button>
+            <button class="btn btn-orange" onclick="exportPDF()">📄 Download PDF for this Date</button>
+            <h3 id="rpt-title" style="font-size:14px; margin:20px 0 10px;">📊 Inventory Balance</h3>
             <div id="rpt-list"></div>
-            <h3 style="font-size:14px; margin:30px 0 10px;">🕒 Activity History (Date & Time)</h3>
+            <h3 style="font-size:14px; margin:30px 0 10px;">🕒 Activity Log</h3>
             <div id="history-log" class="card" style="padding:10px;"></div>
         </div>
     </div>
@@ -87,6 +91,12 @@
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
     const sb = supabase.createClient(_URL, _KEY);
     let curMode = "RECEIVED";
+    
+    // Set default date to today for both pickers
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('entry-date').value = today;
+    document.getElementById('view-date').value = today;
+
     const items = [
         {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT 4 EN 1"},
         {c:"DRC1205", n:"CAFÉ CUPPUCCINO AVEC LA POUDRE GANODERMA"},
@@ -136,48 +146,68 @@
     function tab(m, el) { curMode = m; document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active")); el.classList.add("active"); document.getElementById("v-entry").classList.toggle("hidden", m === 'REPORT'); document.getElementById("v-rpt").classList.toggle("hidden", m !== 'REPORT'); if(m === 'REPORT') loadReport(); else draw(); }
     function refresh() { draw(); loadReport(); }
     function draw(f = "") { document.getElementById("list").innerHTML = items.filter(i => i.n.includes(f.toUpperCase())).map(i => `<div class="card flex-card"><div><b>${i.n}</b><br><small style="color:#64748b">${i.c}</small></div><input type="number" class="qty-in" data-c="${i.c}" placeholder="0"></div>`).join(""); }
+
     async function saveData() {
-        const { data: { user } } = await sb.auth.getUser(); const month = document.getElementById("m-picker").value;
+        const { data: { user } } = await sb.auth.getUser(); 
+        const selectedDate = document.getElementById("entry-date").value;
         const rows = [...document.querySelectorAll(".qty-in")].map(x => ({ code: x.dataset.c, qty: parseInt(x.value) || 0 })).filter(x => x.qty > 0);
         if(!rows.length) return alert("Enter numbers!");
+        
         let res;
-        if(curMode === "SALES") res = await sb.from("sales").insert(rows.map(r => ({ product_code: r.code, qty_sold: r.qty, month_ref: month, user_id: user.id })));
-        else if(curMode === "RECEIVED") res = await sb.from("received_stock").insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, month_ref: month, user_id: user.id })));
-        if(res.error) alert("Error"); else { alert("Saved with Timestamp!"); draw(); }
+        if(curMode === "SALES") res = await sb.from("sales").insert(rows.map(r => ({ product_code: r.code, qty_sold: r.qty, month_ref: selectedDate, user_id: user.id })));
+        else if(curMode === "RECEIVED") res = await sb.from("received_stock").insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, month_ref: selectedDate, user_id: user.id })));
+        
+        if(res.error) alert("Error"); else { alert("Saved for " + selectedDate); draw(); refresh(); }
     }
+
     async function loadReport() {
-        const month = document.getElementById("m-picker").value;
-        const [{data:s}, {data:r}] = await Promise.all([sb.from("sales").select("*").eq('month_ref', month).order('created_at', {ascending: false}), sb.from("received_stock").select("*").eq('month_ref', month).order('created_at', {ascending: false})]);
+        const selDate = document.getElementById("view-date").value;
+        document.getElementById("rpt-title").innerText = "📊 Inventory for " + selDate;
+        
+        const [{data:s}, {data:r}] = await Promise.all([
+            sb.from("sales").select("*").eq('month_ref', selDate).order('created_at', {ascending: false}), 
+            sb.from("received_stock").select("*").eq('month_ref', selDate).order('created_at', {ascending: false})
+        ]);
+
         const report = items.map(i => {
             const sold = s?.filter(x => x.product_code === i.c).reduce((a,b)=>a+b.qty_sold, 0) || 0;
             const recv = r?.filter(x => x.product_code === i.c).reduce((a,b)=>a+b.qty_received, 0) || 0;
             return { name: i.n, recv, sold, stock: (recv - sold) };
         }).filter(x => x.recv > 0 || x.sold > 0);
+
         document.getElementById("s-in").innerText = report.reduce((a,b)=>a+b.recv, 0);
         document.getElementById("s-out").innerText = report.reduce((a,b)=>a+b.sold, 0);
-        document.getElementById("rpt-list").innerHTML = report.map(d => `<div class="card flex-card"><div style="flex:1"><b>${d.name}</b><br><small style="color:#64748b">IN: ${d.recv} | SOLD: ${d.sold}</small></div><div style="text-align:right"><b style="color:${d.stock < 10 ? 'var(--warn)' : '#10b981'}; font-size:18px;">${d.stock}</b><br><small>REMAIN</small></div></div>`).join("");
+        document.getElementById("rpt-list").innerHTML = report.map(d => `<div class="card flex-card"><div style="flex:1"><b>${d.name}</b><br><small style="color:#64748b">IN: ${d.recv} | SOLD: ${d.sold}</small></div><div style="text-align:right"><b style="color:${d.stock < 0 ? 'var(--warn)' : '#10b981'}; font-size:18px;">${d.stock}</b><br><small>BALANCE</small></div></div>`).join("");
+
         const history = [...(s||[]).map(x=>({...x, type:'SALE'})), ...(r||[]).map(x=>({...x, type:'STOCK-IN'}))].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
         document.getElementById("history-log").innerHTML = history.slice(0, 20).map(h => {
             const dt = new Date(h.created_at);
-            const timeStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const timeStr = dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const itemName = items.find(i=>i.c === h.product_code)?.n || h.product_code;
             return `<div class="history-item"><span><span class="badge" style="background:${h.type==='SALE'?'var(--warn)':'var(--accent)'}">${h.type}</span> <b>${h.qty_sold || h.qty_received}</b> ${itemName}</span><span style="color:#94a3b8">${timeStr}</span></div>`;
         }).join("");
         window.rptData = report;
     }
+
     async function resetEverything() {
-        const month = document.getElementById("m-picker").value;
-        if(!confirm(`Delete all history and stock for ${month}?`)) return;
+        const selDate = document.getElementById("view-date").value;
+        if(!confirm(`Delete all history for ${selDate}?`)) return;
         const { data: { user } } = await sb.auth.getUser();
-        await Promise.all([sb.from("received_stock").delete().eq('month_ref', month).eq('user_id', user.id), sb.from("sales").delete().eq('month_ref', month).eq('user_id', user.id)]);
-        alert("System Reset Complete!"); refresh();
+        await Promise.all([
+            sb.from("received_stock").delete().eq('month_ref', selDate).eq('user_id', user.id), 
+            sb.from("sales").delete().eq('month_ref', selDate).eq('user_id', user.id)
+        ]);
+        alert("Deleted data for " + selDate); refresh();
     }
+
     function exportPDF() {
+        const selDate = document.getElementById("view-date").value;
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
         doc.setFillColor(15, 23, 42); doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("DETAILED STOCK HISTORY REPORT", 14, 25);
-        doc.autoTable({ startY: 45, head: [['PRODUCT', 'STOCK IN', 'SALES', 'REMAINING']], body: window.rptData.map(x => [x.name, x.recv, x.sold, x.stock]), headStyles: { fillColor: [249, 115, 22] } });
-        doc.save(`Stock_Detailed_Report.pdf`);
+        doc.setTextColor(255, 255, 255); doc.setFontSize(22); 
+        doc.text("STOCK REPORT: " + selDate, 14, 25);
+        doc.autoTable({ startY: 45, head: [['PRODUCT', 'STOCK IN', 'SALES', 'NET BALANCE']], body: window.rptData.map(x => [x.name, x.recv, x.sold, x.stock]), headStyles: { fillColor: [249, 115, 22] } });
+        doc.save(`Report_${selDate}.pdf`);
     }
 </script>
 </body>
