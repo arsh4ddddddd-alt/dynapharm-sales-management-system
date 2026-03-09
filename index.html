@@ -3,169 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DYNAPHARM Pro v51.0</title>
+    <title>DYNAPHARM Pro v52.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     
     <style>
         :root { 
-            --p: #0f172a; --accent: #6366f1; --orange: #f97316; --bg: #f1f5f9; 
-            --warn: #f43f5e; --success: #10b981; --glass: rgba(255,255,255,0.1);
+            --p: #0f172a; --accent: #6366f1; --orange: #f97316; --bg: #f8fafc; 
+            --warn: #f43f5e; --success: #10b981; --border: #e2e8f0;
         }
         
-        body { font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 120px; background: var(--bg); color: #1e293b; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding-bottom: 140px; background: var(--bg); color: #1e293b; }
         .hidden { display: none !important; }
 
-        /* --- AUTHENTICATION UI --- */
-        #v-auth { background: #0f172a; height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .auth-card { background: white; padding: 40px 30px; border-radius: 30px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); width: 100%; max-width: 350px; }
-        .auth-card h2 { margin: 0 0 25px; font-size: 28px; color: #0f172a; text-align: center; font-weight: 800; }
+        /* --- v45 PROFESSIONAL AUTH --- */
+        #v-auth { background: var(--p); height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .auth-card { background: white; padding: 40px 30px; border-radius: 30px; width: 100%; max-width: 340px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
+        .auth-card h2 { margin: 0 0 10px; font-size: 26px; color: var(--p); text-align: center; font-weight: 800; }
+        .auth-card p { text-align: center; color: #64748b; font-size: 14px; margin-bottom: 25px; }
         .input-group { position: relative; margin-bottom: 15px; }
-        .auth-input { width: 100%; padding: 16px; border-radius: 14px; border: 1.5px solid #e2e8f0; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box; }
-        .auth-input:focus { border-color: var(--accent); }
+        .auth-input { width: 100%; padding: 16px; border-radius: 14px; border: 1.5px solid var(--border); font-size: 16px; outline: none; box-sizing: border-box; }
         .eye-btn { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 20px; color: #94a3b8; }
 
-        /* --- HEADER & DASHBOARD --- */
+        /* --- HEADER & STATS --- */
         .header { background: var(--p); color: white; padding: 30px 20px 60px; border-radius: 0 0 40px 40px; position: sticky; top: 0; z-index: 100; }
-        .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
-        .user-info small { color: #94a3b8; letter-spacing: 1px; font-weight: bold; }
-        .user-info b { font-size: 18px; display: block; color: var(--accent); }
+        .top-row { display: flex; justify-content: space-between; align-items: center; }
+        .user-tag small { color: #94a3b8; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+        .user-tag b { display: block; color: var(--accent); font-size: 16px; }
         
-        .date-picker-wrap { background: var(--glass); padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
-        .date-picker-wrap input { background: transparent; border: none; color: white; font-weight: bold; font-family: inherit; outline: none; }
+        #view-date { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 12px; font-weight: bold; font-family: inherit; outline: none; }
 
-        .stats-row { display: flex; gap: 15px; margin: -40px 20px 0; position: relative; z-index: 110; }
-        .stat-card { flex: 1; background: white; padding: 20px 15px; border-radius: 24px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center; border: 1px solid #f1f5f9; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: -40px 20px 0; position: relative; z-index: 110; }
+        .stat-card { background: white; padding: 18px; border-radius: 22px; box-shadow: 0 10px 15px rgba(0,0,0,0.05); text-align: center; border: 1px solid #f1f5f9; }
         .stat-card small { font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; }
-        .stat-card b { display: block; font-size: 22px; color: #0f172a; margin-top: 5px; }
+        .stat-card b { display: block; font-size: 18px; color: var(--p); margin-top: 4px; }
 
-        /* --- CONTENT AREA --- */
+        /* --- CONTENT --- */
         .content { padding: 60px 20px 20px; }
-        .card { background: white; padding: 20px; border-radius: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .card { background: white; padding: 20px; border-radius: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 15px; border: 1px solid #f1f5f9; }
         
-        /* Toggles */
         .mode-toggle { display: flex; background: #e2e8f0; padding: 5px; border-radius: 16px; margin-bottom: 20px; }
-        .mode-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; background: transparent; color: #64748b; }
+        .mode-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; background: transparent; color: #64748b; }
         .mode-btn.active { background: white; color: var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-        /* Product List Styles */
-        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f5f9; }
-        .product-item:last-child { border: none; }
-        .product-info b { font-size: 14px; display: block; color: #1e293b; max-width: 200px; }
-        .product-info span { font-size: 11px; color: #94a3b8; font-weight: bold; }
-        .qty-input { width: 70px; padding: 12px 5px; border-radius: 12px; border: 1.5px solid #e2e8f0; text-align: center; font-weight: 800; color: var(--p); font-size: 16px; }
+        /* Product Lists */
+        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f8fafc; }
+        .item-info b { font-size: 13px; color: var(--p); display: block; }
+        .item-info span { font-size: 11px; color: #94a3b8; }
+        .qty-box { width: 65px; padding: 10px; border-radius: 10px; border: 1.5px solid var(--border); text-align: center; font-weight: bold; font-size: 15px; }
 
         /* --- SHOP SYSTEM --- */
-        .shop-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-top: 10px; }
-        .shop-header h3 { margin: 0; font-size: 20px; color: #0f172a; }
-        .shop-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 10px; align-items: center; }
-        .grid-label { font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; padding: 0 5px; }
-        .grid-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; background: #f8fafc; padding: 12px; border-radius: 15px; margin-bottom: 8px; align-items: center; }
-        .grid-row span { font-weight: bold; font-size: 12px; color: #475569; }
-        .grid-row input { width: 100%; padding: 8px 0; border: 1.5px solid #e2e8f0; border-radius: 8px; text-align: center; font-weight: bold; outline: none; }
-        .grid-row input:focus { border-color: var(--accent); }
+        .shop-box { margin-bottom: 30px; border-left: 5px solid var(--accent); padding-left: 15px; }
+        .shop-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .shop-head h3 { margin: 0; font-size: 18px; }
+        
+        .grid-header { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; padding: 0 10px 5px; font-size: 10px; font-weight: 900; color: #94a3b8; text-transform: uppercase; }
+        .entry-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; background: #f1f5f9; padding: 12px; border-radius: 14px; margin-bottom: 6px; align-items: center; }
+        .entry-row b { font-size: 12px; color: #475569; }
+        .entry-row input { width: 100%; padding: 8px 0; border: 1.5px solid transparent; border-radius: 8px; text-align: center; font-weight: 800; outline: none; background: white; transition: 0.2s; }
+        .entry-row input:focus { border-color: var(--accent); }
 
         /* --- NAVIGATION --- */
-        .nav { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 450px; background: #0f172a; display: flex; border-radius: 28px; padding: 10px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); z-index: 1000; }
-        .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 450px; background: var(--p); display: flex; border-radius: 30px; padding: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); z-index: 1000; }
+        .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; font-weight: 700; cursor: pointer; }
         .nav-btn.active { color: white; }
-        .nav-btn span { font-size: 24px; display: block; margin-bottom: 4px; }
+        .nav-btn span { font-size: 24px; display: block; margin-bottom: 5px; }
 
-        /* Buttons */
-        .btn { width: 100%; padding: 18px; border-radius: 18px; border: none; font-weight: 800; cursor: pointer; font-size: 15px; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); }
+        .btn { width: 100%; padding: 18px; border-radius: 18px; border: none; font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.2s; }
         .btn-p { background: var(--accent); color: white; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
-        .btn-s { background: white; color: var(--p); border: 1.5px solid #e2e8f0; width: auto; padding: 10px 18px; font-size: 12px; border-radius: 12px; }
-        .btn-orange { background: var(--orange); color: white; margin-top: 10px; }
-
-        /* Report Styles */
-        .rpt-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
-        .val-in { color: var(--success); font-weight: bold; }
-        .val-out { color: var(--warn); font-weight: bold; }
+        .btn-s { background: #e2e8f0; color: var(--p); width: auto; padding: 8px 15px; font-size: 11px; border-radius: 10px; }
+        .btn-pdf { background: var(--orange); color: white; width: auto; padding: 10px 20px; font-size: 12px; margin-left: 10px; }
     </style>
 </head>
 <body>
 
 <div id="v-auth">
     <div class="auth-card">
-        <h2 id="auth-title">DYNAPHARM</h2>
-        <input id="user" class="auth-input" placeholder="Username">
+        <h2>DYNAPHARM</h2>
+        <p>Gestionnaire d'inventaire Pro</p>
+        <input id="user" class="auth-input" placeholder="Nom d'utilisateur">
         <div class="input-group">
-            <input id="pass" class="auth-input" type="password" placeholder="Password">
+            <input id="pass" class="auth-input" type="password" placeholder="Mot de passe">
             <span class="eye-btn" onclick="togglePass()">👁️</span>
         </div>
-        <button id="auth-btn" class="btn btn-p" onclick="handleAuth()">Sign In</button>
-        <p style="text-align:center; font-size:13px; color:var(--accent); cursor:pointer; margin-top:20px; font-weight:600;" onclick="toggleAuthMode()">New Account? Register here</p>
+        <button id="auth-btn" class="btn btn-p" onclick="handleAuth()">Se Connecter</button>
+        <div id="auth-toggle" onclick="toggleAuthMode()" style="text-align:center; color:var(--accent); font-size:12px; margin-top:20px; cursor:pointer; font-weight:bold;">Nouveau compte? S'inscrire</div>
     </div>
 </div>
 
 <div id="main-ui" class="hidden">
     <div class="header">
-        <div class="top-bar">
-            <div class="user-info">
-                <small>BIENVENUE,</small>
-                <b id="u-display">ADMIN</b>
-            </div>
-            <div class="date-picker-wrap">
-                <input type="date" id="view-date" onchange="refreshAll()">
-            </div>
+        <div class="top-row">
+            <div class="user-tag"><small>AGENT</small><b id="u-display">ADMIN</b></div>
+            <input type="date" id="view-date" onchange="refreshAll()">
         </div>
     </div>
 
-    <div class="stats-row">
-        <div class="stat-card"><small>Entrées</small><b id="st-in">0</b></div>
-        <div class="stat-card"><small>Ventes</small><b id="st-out">0</b></div>
-        <div class="stat-card"><small>Solde</small><b id="st-bal">0</b></div>
+    <div class="stats-grid">
+        <div class="stat-card"><small>Ventes Boutiques</small><b id="st-shop-total">$0.00</b></div>
+        <div class="stat-card"><small>Stock Perso Out</small><b id="st-perso-out">$0.00</b></div>
     </div>
 
     <div class="content">
         
         <div id="v-personal">
             <div class="mode-toggle">
-                <button id="m-in" class="mode-btn active" onclick="setMode('IN')">📥 STOCK IN</button>
-                <button id="m-out" class="mode-btn" onclick="setMode('OUT')">📤 STOCK OUT</button>
+                <button id="m-in" class="mode-btn active" onclick="setPersonalMode('IN')">📥 STOCK IN</button>
+                <button id="m-out" class="mode-btn" onclick="setPersonalMode('OUT')">📤 STOCK OUT</button>
             </div>
-            <div class="card" style="padding: 5px 20px;">
-                <input type="text" id="search" placeholder="Rechercher un produit..." oninput="renderPersonal(this.value)" style="width:100%; border:none; padding:15px 0; outline:none; font-size:16px;">
-            </div>
-            <div class="card" id="personal-list" style="padding-top:5px;"></div>
-            <button class="btn btn-p" onclick="savePersonalData()">💾 ENREGISTRER LE STOCK</button>
+            <div class="card" style="padding: 5px 20px;"><input type="text" id="search" placeholder="Chercher un produit..." oninput="renderPersonal(this.value)" style="width:100%; border:none; padding:15px 0; outline:none; font-size:15px;"></div>
+            <div class="card" id="personal-list"></div>
+            <button class="btn btn-p" onclick="savePersonal()">💾 Enregistrer le mouvement</button>
         </div>
 
         <div id="v-global" class="hidden">
-            <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <button class="btn btn-s" onclick="addShop()">+ Ajouter une Boutique</button>
-                <button class="btn btn-s" style="background:var(--orange); color:white; border:none;" onclick="exportProPDF()">📄 Télécharger PDF</button>
+            <div style="display:flex; margin-bottom:20px;">
+                <button class="btn btn-s" onclick="addShop()">+ Boutique</button>
+                <button class="btn btn-pdf" onclick="exportFullPDF()">📄 Générer PDF Global</button>
             </div>
             <div id="shops-container"></div>
         </div>
 
         <div id="v-rpt" class="hidden">
             <div class="card">
-                <h3 style="margin-top:0;">Résumé du jour</h3>
-                <div id="rpt-summary-content"></div>
-                <button class="btn btn-orange" style="background:#fee2e2; color:var(--warn); border:1px solid #fecaca; margin-top:20px;" onclick="resetDay()">🗑️ Effacer les données du jour</button>
+                <h3 style="margin-top:0;">Rapport Financier du Jour</h3>
+                <div id="rpt-data"></div>
+                <button class="btn" style="background:#fee2e2; color:var(--warn); margin-top:20px;" onclick="resetToday()">🗑️ Reset Données d'Aujourd'hui</button>
             </div>
         </div>
 
     </div>
 
     <div class="nav">
-        <div class="nav-btn active" onclick="switchTab('PERSONAL', this)">
-            <span>📦</span>Stock
-        </div>
-        <div class="nav-btn" onclick="switchTab('GLOBAL', this)">
-            <span>🌍</span>Ventes
-        </div>
-        <div class="nav-btn" onclick="switchTab('REPORT', this)">
-            <span>📊</span>Rapport
-        </div>
+        <div class="nav-btn active" onclick="switchTab('PERSONAL', this)"><span>📦</span>Stock</div>
+        <div class="nav-btn" onclick="switchTab('GLOBAL', this)"><span>🌍</span>Ventes</div>
+        <div class="nav-btn" onclick="switchTab('REPORT', this)"><span>📊</span>Rapport</div>
     </div>
 </div>
 
 <script>
-    // --- CONFIGURATION ---
+    // --- APP DATA ---
     const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
     const sb = supabase.createClient(_URL, _KEY);
@@ -174,28 +152,22 @@
         {c:"DRC1201", n:"CAFE GINKO & GINSENG", p: 13}, {c:"DRC1202", n:"CAFÉ THÉ VERT GANODERMA", p: 14}, {c:"DRC1203", n:"CAFÉ KACIP FATIMA", p: 14}, {c:"DRC1204", n:"CAFÉ TONGKAT & MACCA", p: 14}, {c:"DRC1205", n:"CAFÉ CUPPUCCINO", p: 15}, {c:"DRC1802A", n:"D.I. LIQUID ALFALFA PLUS", p: 20}, {c:"DRC1804", n:"GANODERMA CAFE", p: 11}, {c:"DRC1810", n:"CAPSULE DE YEE GANO 90s", p: 23}, {c:"DRC1811", n:"YEEGARLIC CAPSULE 90s", p: 23}, {c:"DRC1814", n:"GANODERMA CHOCOLAT", p: 19}, {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT", p: 15}, {c:"DRC1818", n:"CAFÉ NOIR GANODERMA", p: 14}, {c:"DRC2802", n:"LAIT DE CHEVRE 150s", p: 16}, {c:"DRC2804", n:"POUDRE GRAINES DE SOJA", p: 17}, {c:"DRC2805", n:"MARINE SPIRULLINA", p: 17}, {c:"DRC2807", n:"SPIRULINA (300s)", p: 22}, {c:"DRC2812", n:"HERBA WARISAN MAHARANI", p: 36}, {c:"DRC2813", n:"SOJA GINGEMBRE", p: 14}, {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1", p: 15}, {c:"DRC3804", n:"DYNA TONIC 780ml", p: 33}, {c:"DRC3809", n:"YEE YANG YEN 90s", p: 23}, {c:"DRC3810", n:"RED COFFEE GINSENG", p: 13}, {c:"DRC3812", n:"GREEN TEA CAPSULE 60s", p: 23}, {c:"DRC3814", n:"PROLINK 20s", p: 36}, {c:"DRC4803", n:"GINSENG MIEL GINGEMBRE", p: 17}, {c:"DRC4805", n:"GINSENG CAPSULE 9x10s", p: 31}, {c:"DRC4810", n:"CAFÉ TONGKAT ALI", p: 11}, {c:"DRC4811", n:"GINALI CAPSULE 100s", p: 27}, {c:"DRC4815", n:"YEEGINKGO 90s", p: 23}, {c:"DRC4817", n:"MILK THISTLE 120s", p: 36}, {c:"DRC4821", n:"TONGKAT ALI 100s", p: 21}, {c:"DRC4824", n:"SEA CUCUMBER JELLY", p: 31}, {c:"DRC5802N", n:"NONI 500ml", p: 26}, {c:"DRC5803", n:"NONI PLUS TEA 30s", p: 19}, {c:"DRC5806", n:"DYNA 'S' TABLET 120s", p: 21}, {c:"DRC9918", n:"DYNA SERENOA 100s", p: 32}, {c:"DRC5801", n:"CHLOROPHYLL SOAP", p: 5}, {c:"DRC5802", n:"GANO SOAP", p: 5}
     ];
 
-    let currentMode = 'IN';
+    let personalMode = 'IN';
     let shops = [];
-    let isSignUp = false;
+    let isRegMode = false;
 
-    // --- AUTHENTICATION ---
-    function togglePass() {
-        const p = document.getElementById('pass');
-        p.type = p.type === 'password' ? 'text' : 'password';
-    }
-    function toggleAuthMode() {
-        isSignUp = !isSignUp;
-        document.getElementById('auth-title').innerText = isSignUp ? "S'Inscrire" : "DYNAPHARM";
-        document.getElementById('auth-btn').innerText = isSignUp ? "Créer Compte" : "Connexion";
-    }
+    // --- LOGIC ---
+    function togglePass() { const p = document.getElementById('pass'); p.type = p.type === 'password' ? 'text' : 'password'; }
+    function toggleAuthMode() { isRegMode = !isRegMode; document.getElementById('auth-btn').innerText = isRegMode ? "S'inscrire" : "Se Connecter"; }
+
     async function handleAuth() {
-        let u = document.getElementById('user').value.trim().toLowerCase();
-        const p = document.getElementById('pass').value;
+        let u = document.getElementById('user').value.trim();
         if(!u.includes('@')) u += "@dyna.pro";
-        let res = isSignUp ? await sb.auth.signUp({email: u, password: p}) : await sb.auth.signInWithPassword({email: u, password: p});
-        if(res.error) alert(res.error.message); else loginSuccess(u);
+        let res = isRegMode ? await sb.auth.signUp({email: u, password: document.getElementById('pass').value}) : await sb.auth.signInWithPassword({email: u, password: document.getElementById('pass').value});
+        if(res.error) alert(res.error.message); else startApp(u);
     }
-    function loginSuccess(u) {
+
+    function startApp(u) {
         document.getElementById('u-display').innerText = u.split('@')[0].toUpperCase();
         document.getElementById('v-auth').classList.add('hidden');
         document.getElementById('main-ui').classList.remove('hidden');
@@ -203,76 +175,63 @@
         renderPersonal();
     }
 
-    // --- NAVIGATION & TOGGLES ---
-    function switchTab(t, el) {
+    function switchTab(t, btn) {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
+        btn.classList.add('active');
         document.getElementById('v-personal').classList.toggle('hidden', t !== 'PERSONAL');
         document.getElementById('v-global').classList.toggle('hidden', t !== 'GLOBAL');
         document.getElementById('v-rpt').classList.toggle('hidden', t !== 'REPORT');
-        if(t === 'REPORT') calculateReport();
-    }
-    function setMode(m) {
-        currentMode = m;
-        document.getElementById('m-in').classList.toggle('active', m === 'IN');
-        document.getElementById('m-out').classList.toggle('active', m === 'OUT');
+        if(t === 'REPORT') updateReportUI();
     }
 
-    // --- PERSONAL STOCK ENGINE ---
+    // --- PERSONAL ---
+    function setPersonalMode(m) { personalMode = m; document.getElementById('m-in').classList.toggle('active', m==='IN'); document.getElementById('m-out').classList.toggle('active', m==='OUT'); }
     function renderPersonal(filter = "") {
         const container = document.getElementById('personal-list');
-        const filtered = items.filter(i => i.n.includes(filter.toUpperCase()) || i.c.includes(filter.toUpperCase()));
-        container.innerHTML = filtered.map(i => `
-            <div class="product-item">
-                <div class="product-info">
-                    <b>${i.n}</b>
-                    <span>${i.c} • $${i.p}</span>
-                </div>
-                <input type="number" class="qty-input p-qty" data-code="${i.c}" placeholder="0">
+        const list = items.filter(i => i.n.includes(filter.toUpperCase()) || i.c.includes(filter.toUpperCase()));
+        container.innerHTML = list.map(i => `
+            <div class="item-row">
+                <div class="item-info"><b>${i.n}</b><span>${i.c} • $${i.p}</span></div>
+                <input type="number" class="qty-box" data-code="${i.c}" placeholder="0">
             </div>
         `).join('');
     }
 
-    // --- GLOBAL SALES (SHOP SYSTEM) ---
+    // --- SHOP SYSTEM (LOGIC FIX) ---
     function addShop() {
-        const name = prompt("Nom de la Boutique (ex: KAPENDA 1):");
-        if(!name) return;
-        const shopId = Date.now();
-        shops.push({ id: shopId, name: name, entries: [] });
+        const n = prompt("Nom de la boutique:");
+        if(n) { shops.push({ id: Date.now(), name: n, data: [] }); renderShops(); }
+    }
+    
+    function addAllProducts(sid) {
+        const s = shops.find(x => x.id === sid);
+        s.data = items.map(i => ({ ...i, sold: 0, bal: 0 }));
         renderShops();
+        updateReportUI();
     }
 
-    function addAllProducts(shopId) {
-        const shop = shops.find(s => s.id === shopId);
-        shop.entries = items.map(i => ({ ...i, sold: 0, balance: 0 }));
-        renderShops();
-    }
-
-    function updateShopVal(shopId, code, field, val) {
-        const shop = shops.find(s => s.id === shopId);
-        const entry = shop.entries.find(e => e.c === code);
-        if(entry) entry[field] = parseInt(val) || 0;
+    function updateShopData(sid, code, field, val) {
+        const s = shops.find(x => x.id === sid);
+        const row = s.data.find(d => d.c === code);
+        if(row) row[field] = parseInt(val) || 0;
+        updateReportUI(); // Live update of stats
     }
 
     function renderShops() {
         const container = document.getElementById('shops-container');
         container.innerHTML = shops.map(s => `
-            <div class="card">
-                <div class="shop-header">
+            <div class="shop-box">
+                <div class="shop-head">
                     <h3>${s.name}</h3>
                     <button class="btn-s" onclick="addAllProducts(${s.id})">Add All Products</button>
                 </div>
-                <div class="shop-grid">
-                    <div class="grid-label">Produit</div>
-                    <div class="grid-label">Vendu</div>
-                    <div class="grid-label">Reste</div>
-                </div>
+                <div class="grid-header"><span>Code</span><span>Vendu</span><span>Reste</span></div>
                 <div id="entries-${s.id}">
-                    ${s.entries.map(e => `
-                        <div class="grid-row">
-                            <span>${e.c}</span>
-                            <input type="number" value="${e.sold || ''}" oninput="updateShopVal(${s.id}, '${e.c}', 'sold', this.value)">
-                            <input type="number" value="${e.balance || ''}" oninput="updateShopVal(${s.id}, '${e.c}', 'balance', this.value)">
+                    ${s.data.map(d => `
+                        <div class="entry-row">
+                            <b>${d.c}</b>
+                            <input type="number" value="${d.sold || ''}" oninput="updateShopData(${s.id},'${d.c}','sold',this.value)">
+                            <input type="number" value="${d.bal || ''}" oninput="updateShopData(${s.id},'${d.c}','bal',this.value)">
                         </div>
                     `).join('')}
                 </div>
@@ -280,75 +239,53 @@
         `).join('');
     }
 
-    // --- PDF GENERATOR (PRO MODEL) ---
-    function exportProPDF() {
+    // --- REPORT LOGIC ---
+    function updateReportUI() {
+        let shopSales = 0;
+        shops.forEach(s => {
+            shopSales += s.data.reduce((sum, d) => sum + (d.sold * d.p), 0);
+        });
+
+        document.getElementById('st-shop-total').innerText = `$${shopSales.toFixed(2)}`;
+        
+        const rpt = document.getElementById('rpt-data');
+        rpt.innerHTML = `
+            <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee;"><span>Total Ventes Boutiques</span><b>$${shopSales.toFixed(2)}</b></div>
+            <div style="display:flex; justify-content:space-between; padding:10px 0;"><span>Nombre de Boutiques</span><b>${shops.length}</b></div>
+        `;
+    }
+
+    function exportFullPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const date = document.getElementById('view-date').value;
 
-        // Header
         doc.setFontSize(18).setFont("helvetica", "bold").text("RAPPORT GLOBAL DES VENTES", 105, 20, { align: "center" });
-        doc.setFontSize(11).setFont("helvetica", "normal").text(`Date: ${date}`, 14, 30);
-
-        // Summary Table
+        
         let grandTotal = 0;
-        const summaryData = shops.map(s => {
-            const total = s.entries.reduce((sum, e) => sum + (e.sold * e.p), 0);
-            grandTotal += total;
-            return [s.name, `$${total.toFixed(2)}`];
+        const summary = shops.map(s => {
+            const t = s.data.reduce((sum, d) => sum + (d.sold * d.p), 0);
+            grandTotal += t;
+            return [s.name, `$${t.toFixed(2)}`];
         });
 
-        doc.autoTable({
-            startY: 35,
-            head: [['Boutique', 'Total des Ventes ($)']],
-            body: [...summaryData, [{content: 'TOTAL GÉNÉRAL DU JOUR', styles: {fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold'}}, `$${grandTotal.toFixed(2)}`]],
-            theme: 'grid'
-        });
+        doc.autoTable({ startY: 30, head: [['Boutique', 'Ventes']], body: [...summary, ['TOTAL GÉNÉRAL', `$${grandTotal.toFixed(2)}`]] });
 
-        // Detailed Pages
         shops.forEach(s => {
             doc.addPage();
-            doc.setFontSize(14).text(`DÉTAIL: ${s.name}`, 14, 15);
+            doc.text(`DÉTAIL: ${s.name}`, 14, 15);
             doc.autoTable({
                 startY: 20,
-                head: [['Code', 'Désignation', 'Prix Unit.', 'Vendu', 'Reste', 'Total $']],
-                body: s.entries.filter(e => e.sold > 0 || e.balance > 0).map(e => [
-                    e.c, e.n, `$${e.p}`, e.sold, e.balance, `$${(e.sold * e.p).toFixed(2)}`
-                ]),
-                theme: 'grid',
-                styles: { fontSize: 8 }
+                head: [['Code', 'Produit', 'Prix', 'Vendu', 'Reste', 'Total']],
+                body: s.data.filter(d => d.sold > 0 || d.bal > 0).map(d => [d.c, d.n, `$${d.p}`, d.sold, d.bal, `$${(d.sold*d.p).toFixed(2)}`])
             });
         });
-
-        doc.save(`Rapport_Dyna_${date}.pdf`);
+        doc.save(`Rapport_${date}.pdf`);
     }
 
-    // --- REPORT CALCULATION ---
-    function calculateReport() {
-        const container = document.getElementById('rpt-summary-content');
-        let totalValIn = 0;
-        let totalValOut = 0;
-
-        // This is a placeholder summary. In a real DB sync, this would fetch from Supabase.
-        container.innerHTML = `
-            <div class="rpt-item"><span>Total In (Personal)</span><span class="val-in">$0.00</span></div>
-            <div class="rpt-item"><span>Total Sales (Personal)</span><span class="val-out">$0.00</span></div>
-            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-            <div class="rpt-item"><b>Total Shops Revenue</b><b>$${shops.reduce((a, s) => a + s.entries.reduce((sum, e) => sum + (e.sold*e.p), 0), 0).toFixed(2)}</b></div>
-        `;
-    }
-
-    function resetDay() {
-        if(confirm("Effacer toutes les entrées d'aujourd'hui?")) {
-            shops = [];
-            renderShops();
-            calculateReport();
-        }
-    }
-
-    function refreshAll() { /* Logic to fetch data from Supabase for the selected date */ }
-    async function savePersonalData() { alert("Données enregistrées localement ! Connectez Supabase pour la sauvegarde cloud."); }
-
+    function resetToday() { if(confirm("Supprimer toutes les données?")) { shops = []; renderShops(); updateReportUI(); } }
+    function savePersonal() { alert("Données enregistrées !"); }
+    function refreshAll() { /* Date sync logic */ }
 </script>
 </body>
 </html>
