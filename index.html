@@ -22,7 +22,7 @@
         .btn { width: 100%; padding: 16px; border: none; border-radius: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 14px; }
         .btn-p { background: var(--accent); color: white; }
         .btn-orange { background: var(--orange); color: white; margin-bottom: 20px; }
-        .btn-danger { background: #fee2e2; color: var(--warn); border: 1px solid #fecaca; margin-bottom: 20px; padding: 12px; }
+        .btn-danger { background: #fee2e2; color: var(--warn); border: 1px solid #fecaca; margin-bottom: 10px; padding: 12px; }
         .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: #0f172a; display: flex; border-radius: 25px; padding: 12px; box-shadow: 0 20px 30px rgba(0,0,0,0.3); z-index: 1000; }
         .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; font-weight: bold; cursor: pointer; }
         .nav-btn.active { color: white; }
@@ -70,7 +70,8 @@
         </div>
 
         <div id="v-rpt" class="hidden">
-            <button class="btn btn-danger" onclick="resetEverything()">🗑️ Reset Day Data</button>
+            <button class="btn btn-danger" onclick="resetDayData()">🗑️ Reset Current Day</button>
+            <button class="btn btn-danger" style="background:#fca5a5; color:#7f1d1d;" onclick="resetAllData()">⚠️ ERASE ALL DATA (Global)</button>
             <button class="btn btn-orange" onclick="exportPDF()">📄 Download PDF for this Date</button>
             <h3 id="rpt-title" style="font-size:14px; margin:20px 0 10px;">📊 Inventory Balance</h3>
             <div id="rpt-list"></div>
@@ -92,50 +93,50 @@
     const sb = supabase.createClient(_URL, _KEY);
     let curMode = "RECEIVED";
     
-    // Set default date to today for both pickers
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('entry-date').value = today;
     document.getElementById('view-date').value = today;
 
+    // ORDER UPDATED TO MATCH PDF SEQUENCE
     const items = [
-        {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT 4 EN 1"},
-        {c:"DRC1205", n:"CAFÉ CUPPUCCINO AVEC LA POUDRE GANODERMA"},
-        {c:"DRC1202", n:"CAFÉ DE THÉ VERT AVEC POUDRE GANODERMA"},
-        {c:"DRC1201", n:"CAFÉ GINKO ET GINSENG EN POUDRE"},
-        {c:"DRC1203", n:"CAFÉ KACIP FATIMA AVEC POUDRE GANODERMA"},
-        {c:"DRC1818", n:"CAFÉ NOIR GANODERMA ET TONGKATI ALI"},
-        {c:"DRC4810", n:"CAFÉ TONGKAT ALI (20x21g)"},
+        {c:"DRC1201", n:"CAFE GINKO EN POUDRE ET GINSENG"},
+        {c:"DRC1202", n:"CAFÉ DE THÉ VERT AVEC GANODERMA"},
+        {c:"DRC1203", n:"CAFÉ KACIP FATIMA AVEC GANODERMA"},
         {c:"DRC1204", n:"CAFÉ TONGKAT ET MACCA EN POUDRE"},
-        {c:"DRC1810", n:"CAPSULE DE YEE GANO 90s"},
-        {c:"DRC5801", n:"CHLOROPHYLL SOAP"},
-        {c:"DRC2802", n:"COMPRIMES DE LAIT DE CHEVRE 150s"},
-        {c:"DRC2807", n:"COMPRIME DE SPIRULINA (300s)"},
-        {c:"DRC1802A", n:"D.I. LIQUID ALFALFA PLUS GUARANA 500ML"},
-        {c:"DRC5806", n:"DYNA 'S' TABLET 120s"},
-        {c:"DRC9918", n:"DYNA SERENOA TABLET 100s"},
-        {c:"DRC3804", n:"DYNA TONIC 780ml"},
+        {c:"DRC1205", n:"CAFÉ CUPPUCCINO AVEC GANODERMA"},
+        {c:"DRC1802A", n:"D.I. LIQUID ALFALFA PLUS GUARANA"},
         {c:"DRC1804", n:"GANODERMA CAFE (20x21g)"},
-        {c:"DRC1814", n:"GANODERMA CHOCOLAT (30s x 30g)"},
-        {c:"DRC5802", n:"GANO SOAP"},
-        {c:"DRC4811", n:"GINALI CAPSULE 100s"},
-        {c:"DRC4805", n:"GINSENG CAPSULE 9 x 10s"},
-        {c:"DRC4803", n:"GINSENG MIEL ET GINGEMBRE"},
-        {c:"DRC3812", n:"GREEN TEA EXTRACT CAPSULE 60s"},
-        {c:"DRC2812", n:"HERBA WARISAN MAHARANI"},
-        {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1 POUDRE"},
+        {c:"DRC1810", n:"CAPSULE DE YEE GANO 90s"},
+        {c:"DRC1811", n:"YEEGARLIC CAPSULE 90s"},
+        {c:"DRC1814", n:"GANODERMA CHOCOLAT"},
+        {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT 4 EN 1"},
+        {c:"DRC1818", n:"CAFÉ NOIR GANODERMA ET TONGKATI"},
+        {c:"DRC2802", n:"COMPRIMES DE LAIT DE CHEVRE 150s"},
+        {c:"DRC2804", n:"POUDRE INSTANTANEE GRAINES DE SOJA"},
         {c:"DRC2805", n:"MARINE SOLUBLE SPIRULLINA"},
-        {c:"DRC2813", n:"MELANGE INSTANTANE DE SOJA GINGEMBRE"},
+        {c:"DRC2807", n:"COMPRIME DE SPIRULINA (300s)"},
+        {c:"DRC2812", n:"HERBA WARISAN MAHARANI"},
+        {c:"DRC2813", n:"MELANGE SOJA GINGEMBRE"},
+        {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1 POUDRE"},
+        {c:"DRC3804", n:"DYNA TONIC 780ml"},
+        {c:"DRC3809", n:"YEE YANG YEN TABLET 90s"},
+        {c:"DRC3810", n:"RED COFFEE WITH GINSENG"},
+        {c:"DRC3812", n:"GREEN TEA EXTRACT CAPSULE 60s"},
+        {c:"DRC3814", n:"PROLINK 20s x 20g"},
+        {c:"DRC4803", n:"GINSENG MIEL ET GINGEMBRE"},
+        {c:"DRC4805", n:"GINSENG CAPSULE 9 x 10s"},
+        {c:"DRC4810", n:"CAFÉ TONGKAT ALI (20x21g)"},
+        {c:"DRC4811", n:"GINALI CAPSULE 100s"},
+        {c:"DRC4815", n:"YEEGINKGO TABLET 90s"},
         {c:"DRC4817", n:"MILK THISTLE TABLET 120s"},
+        {c:"DRC4821", n:"TONGKAT ALI CAPSULE 100s"},
+        {c:"DRC4824", n:"SEA CUCUMBER JELLY 500ml"},
         {c:"DRC5802N", n:"NONI 500ml"},
         {c:"DRC5803", n:"NONI PLUS TEA 30s x 3g"},
-        {c:"DRC2804", n:"POUDRE INSTANTANEE DES GRAINES DE SOJA"},
-        {c:"DRC3814", n:"PROLINK 20s x 20g"},
-        {c:"DRC3810", n:"RED COFFEE WITH GINSENG 12s x 25g"},
-        {c:"DRC4824", n:"SEA CUCUMBER JELLY 500ml"},
-        {c:"DRC4821", n:"TONGKAT ALI CAPSULE 100s"},
-        {c:"DRC3809", n:"YEE YANG YEN TABLET 90s"},
-        {c:"DRC1811", n:"YEEGARLIC CAPSULE 90s"},
-        {c:"DRC4815", n:"YEEGINKGO TABLET 90s"}
+        {c:"DRC5806", n:"DYNA 'S' TABLET 120s"},
+        {c:"DRC9918", n:"DYNA SERENOA TABLET 100s"},
+        {c:"DRC5801", n:"CHLOROPHYLL SOAP"},
+        {c:"DRC5802", n:"GANO SOAP"}
     ];
 
     async function handleAuth() {
@@ -145,68 +146,61 @@
     }
     function tab(m, el) { curMode = m; document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active")); el.classList.add("active"); document.getElementById("v-entry").classList.toggle("hidden", m === 'REPORT'); document.getElementById("v-rpt").classList.toggle("hidden", m !== 'REPORT'); if(m === 'REPORT') loadReport(); else draw(); }
     function refresh() { draw(); loadReport(); }
-    function draw(f = "") { document.getElementById("list").innerHTML = items.filter(i => i.n.includes(f.toUpperCase())).map(i => `<div class="card flex-card"><div><b>${i.n}</b><br><small style="color:#64748b">${i.c}</small></div><input type="number" class="qty-in" data-c="${i.c}" placeholder="0"></div>`).join(""); }
+    function draw(f = "") { document.getElementById("list").innerHTML = items.filter(i => i.n.includes(f.toUpperCase()) || i.c.includes(f.toUpperCase())).map(i => `<div class="card flex-card"><div><b>${i.n}</b><br><small style="color:#64748b">${i.c}</small></div><input type="number" class="qty-in" data-c="${i.c}" placeholder="0"></div>`).join(""); }
 
     async function saveData() {
         const { data: { user } } = await sb.auth.getUser(); 
         const selectedDate = document.getElementById("entry-date").value;
         const rows = [...document.querySelectorAll(".qty-in")].map(x => ({ code: x.dataset.c, qty: parseInt(x.value) || 0 })).filter(x => x.qty > 0);
         if(!rows.length) return alert("Enter numbers!");
-        
         let res;
         if(curMode === "SALES") res = await sb.from("sales").insert(rows.map(r => ({ product_code: r.code, qty_sold: r.qty, month_ref: selectedDate, user_id: user.id })));
         else if(curMode === "RECEIVED") res = await sb.from("received_stock").insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, month_ref: selectedDate, user_id: user.id })));
-        
         if(res.error) alert("Error"); else { alert("Saved for " + selectedDate); draw(); refresh(); }
     }
 
     async function loadReport() {
         const selDate = document.getElementById("view-date").value;
         document.getElementById("rpt-title").innerText = "📊 Inventory for " + selDate;
-        
-        const [{data:s}, {data:r}] = await Promise.all([
-            sb.from("sales").select("*").eq('month_ref', selDate).order('created_at', {ascending: false}), 
-            sb.from("received_stock").select("*").eq('month_ref', selDate).order('created_at', {ascending: false})
-        ]);
-
+        const [{data:s}, {data:r}] = await Promise.all([sb.from("sales").select("*").eq('month_ref', selDate).order('created_at', {ascending: false}), sb.from("received_stock").select("*").eq('month_ref', selDate).order('created_at', {ascending: false})]);
         const report = items.map(i => {
             const sold = s?.filter(x => x.product_code === i.c).reduce((a,b)=>a+b.qty_sold, 0) || 0;
             const recv = r?.filter(x => x.product_code === i.c).reduce((a,b)=>a+b.qty_received, 0) || 0;
             return { name: i.n, recv, sold, stock: (recv - sold) };
         }).filter(x => x.recv > 0 || x.sold > 0);
-
         document.getElementById("s-in").innerText = report.reduce((a,b)=>a+b.recv, 0);
         document.getElementById("s-out").innerText = report.reduce((a,b)=>a+b.sold, 0);
         document.getElementById("rpt-list").innerHTML = report.map(d => `<div class="card flex-card"><div style="flex:1"><b>${d.name}</b><br><small style="color:#64748b">IN: ${d.recv} | SOLD: ${d.sold}</small></div><div style="text-align:right"><b style="color:${d.stock < 0 ? 'var(--warn)' : '#10b981'}; font-size:18px;">${d.stock}</b><br><small>BALANCE</small></div></div>`).join("");
-
         const history = [...(s||[]).map(x=>({...x, type:'SALE'})), ...(r||[]).map(x=>({...x, type:'STOCK-IN'}))].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
         document.getElementById("history-log").innerHTML = history.slice(0, 20).map(h => {
             const dt = new Date(h.created_at);
-            const timeStr = dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const itemName = items.find(i=>i.c === h.product_code)?.n || h.product_code;
-            return `<div class="history-item"><span><span class="badge" style="background:${h.type==='SALE'?'var(--warn)':'var(--accent)'}">${h.type}</span> <b>${h.qty_sold || h.qty_received}</b> ${itemName}</span><span style="color:#94a3b8">${timeStr}</span></div>`;
+            return `<div class="history-item"><span><span class="badge" style="background:${h.type==='SALE'?'var(--warn)':'var(--accent)'}">${h.type}</span> <b>${h.qty_sold || h.qty_received}</b> ${items.find(i=>i.c===h.product_code)?.n || h.product_code}</span><span style="color:#94a3b8">${dt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span></div>`;
         }).join("");
         window.rptData = report;
     }
 
-    async function resetEverything() {
+    async function resetDayData() {
         const selDate = document.getElementById("view-date").value;
-        if(!confirm(`Delete all history for ${selDate}?`)) return;
+        if(!confirm(`ERASE everything for ${selDate}?`)) return;
         const { data: { user } } = await sb.auth.getUser();
-        await Promise.all([
-            sb.from("received_stock").delete().eq('month_ref', selDate).eq('user_id', user.id), 
-            sb.from("sales").delete().eq('month_ref', selDate).eq('user_id', user.id)
-        ]);
-        alert("Deleted data for " + selDate); refresh();
+        await Promise.all([sb.from("received_stock").delete().eq('month_ref', selDate).eq('user_id', user.id), sb.from("sales").delete().eq('month_ref', selDate).eq('user_id', user.id)]);
+        alert("Day reset."); refresh();
+    }
+
+    async function resetAllData() {
+        if(!confirm("⚠️ ABSOLUTE DANGER: This will delete the entire history of this account forever. Continue?")) return;
+        if(!confirm("Are you 100% sure? This cannot be undone.")) return;
+        const { data: { user } } = await sb.auth.getUser();
+        await Promise.all([sb.from("received_stock").delete().eq('user_id', user.id), sb.from("sales").delete().eq('user_id', user.id)]);
+        alert("Database is now empty."); refresh();
     }
 
     function exportPDF() {
         const selDate = document.getElementById("view-date").value;
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
         doc.setFillColor(15, 23, 42); doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFontSize(22); 
-        doc.text("STOCK REPORT: " + selDate, 14, 25);
-        doc.autoTable({ startY: 45, head: [['PRODUCT', 'STOCK IN', 'SALES', 'NET BALANCE']], body: window.rptData.map(x => [x.name, x.recv, x.sold, x.stock]), headStyles: { fillColor: [249, 115, 22] } });
+        doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("STOCK REPORT: " + selDate, 14, 25);
+        doc.autoTable({ startY: 45, head: [['PRODUCT', 'STOCK IN', 'SALES', 'BALANCE']], body: window.rptData.map(x => [x.name, x.recv, x.sold, x.stock]), headStyles: { fillColor: [249, 115, 22] } });
         doc.save(`Report_${selDate}.pdf`);
     }
 </script>
