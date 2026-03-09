@@ -2,55 +2,58 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynapharm ERP v20</title>
+    <title>Dynapharm ERP v21.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { --p: #1e293b; --s: #10b981; --warn: #ef4444; --bg: #f1f5f9; --accent: #3b82f6; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: #334155; }
+        :root { --p: #0f172a; --s: #059669; --bg: #f8fafc; --accent: #2563eb; --card: #ffffff; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: #1e293b; }
         .app { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100vh; }
         .hidden { display: none !important; }
         
-        .header { background: var(--p); color: white; padding: 20px; border-radius: 0 0 25px 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .month-select { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; padding: 8px; border-radius: 8px; width: 100%; margin-top: 15px; font-size: 14px; }
+        /* Header & Month Picker */
+        .header { background: var(--p); color: white; padding: 20px; border-radius: 0 0 25px 25px; position: sticky; top: 0; z-index: 100; }
+        .m-select { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 10px; width: 100%; margin-top: 10px; outline: none; }
         
-        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: white; display: flex; border-top: 1px solid #e2e8f0; padding: 10px 0; z-index: 1000; }
-        .nav-btn { flex: 1; text-align: center; font-size: 11px; color: #94a3b8; cursor: pointer; }
-        .nav-btn.active { color: var(--accent); font-weight: 700; }
+        /* Navigation Bar */
+        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: white; display: flex; border-top: 1px solid #e2e8f0; padding: 12px 0; z-index: 1000; box-shadow: 0 -4px 10px rgba(0,0,0,0.05); }
+        .nav-btn { flex: 1; text-align: center; font-size: 11px; color: #94a3b8; cursor: pointer; transition: 0.2s; }
+        .nav-btn.active { color: var(--accent); font-weight: 800; }
         .nav-btn span { font-size: 22px; display: block; }
 
-        .content { padding: 20px; }
-        .card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+        .content { padding: 15px; }
+        .card { background: var(--card); border-radius: 15px; padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; border: 1px solid #f1f5f9; }
         
-        input[type="number"] { width: 80px; padding: 10px; border-radius: 8px; border: 2px solid #f1f5f9; text-align: center; font-weight: bold; }
-        .search-bar { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-sizing: border-box; }
+        input[type="number"] { width: 75px; padding: 12px; border-radius: 10px; border: 2px solid #f1f5f9; text-align: center; font-weight: bold; font-size: 16px; }
+        .search-box { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px; box-sizing: border-box; font-size: 16px; }
         
-        .btn-action { width: 100%; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-        .pill-low { background: #fee2e2; color: #b91c1c; }
-        .pill-ok { background: #dcfce7; color: #15803d; }
+        .btn-action { width: 100%; padding: 18px; background: var(--accent); color: white; border: none; border-radius: 14px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .pill { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
+        .pill-low { background: #fee2e2; color: #dc2626; }
+        .pill-ok { background: #dcfce7; color: #16a34a; }
     </style>
 </head>
 <body>
 
-<div id="v-auth" class="content" style="text-align:center; padding-top:60px;">
-    <h1 style="color:var(--p)">DYNAPHARM ERP</h1>
-    <div class="card" style="flex-direction:column; display:block;">
-        <input type="text" id="user" class="search-bar" placeholder="Username">
-        <input type="password" id="pass" class="search-bar" placeholder="Password (6+ chars)">
-        <button class="btn-action" onclick="handleAuth()">Sign In</button>
-        <p onclick="toggleAuth()" id="auth-txt" style="margin-top:20px; color:var(--accent); cursor:pointer;">New? Create Account</p>
+<div id="v-auth" class="content" style="text-align:center; padding-top:100px;">
+    <h1 style="color:var(--p); margin:0;">DYNAPHARM</h1>
+    <p style="color:#64748b; margin-bottom:40px;">Advanced Inventory Control</p>
+    <div class="card" style="display:block">
+        <input type="text" id="user" class="search-box" placeholder="Username">
+        <input type="password" id="pass" class="search-box" placeholder="Password (6+ chars)">
+        <button class="btn-action" onclick="handleAuth()">Login System</button>
+        <p onclick="toggleAuth()" id="atxt" style="margin-top:20px; color:var(--accent); cursor:pointer; font-size:14px;">Register New User</p>
     </div>
 </div>
 
 <div id="main-ui" class="hidden">
     <div class="header">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 id="view-title" style="margin:0">OPENING</h2>
-            <span id="u-tag" style="font-size:12px; opacity:0.8"></span>
+            <h2 id="view-title" style="margin:0; font-size:18px;">INVENTORY</h2>
+            <span id="u-tag" style="background:rgba(255,255,255,0.2); padding:4px 10px; border-radius:15px; font-size:11px;"></span>
         </div>
-        <select id="month-picker" class="month-select" onchange="changeMonth()">
+        <select id="m-picker" class="m-select" onchange="tab(currentMode, null)">
             <option value="March 2026">March 2026</option>
             <option value="April 2026">April 2026</option>
             <option value="May 2026">May 2026</option>
@@ -59,13 +62,16 @@
 
     <div class="content">
         <div id="v-entry">
-            <input type="text" class="search-bar" placeholder="🔍 Search product..." oninput="draw(this.value)">
+            <input type="text" class="search-box" placeholder="🔍 Search 36 Products..." oninput="draw(this.value)">
             <div id="list"></div>
-            <button class="btn-action" style="margin-top:20px;" onclick="saveData()">Save to Cloud</button>
+            <button class="btn-action" style="margin-top:20px;" onclick="saveData()">Update Cloud Data</button>
         </div>
 
         <div id="v-rpt" class="hidden">
-            <button class="btn-action" style="background:#ef4444; margin-bottom:20px;" onclick="exportPDF()">Export PDF</button>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
+                <button class="btn-action" style="background:#dc2626;" onclick="exportPDF()">PDF</button>
+                <button class="btn-action" style="background:#64748b;" onclick="loadReport()">Refresh</button>
+            </div>
             <div id="rpt-list"></div>
         </div>
     </div>
@@ -81,19 +87,22 @@
 
 <script>
     const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
-    const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
+    const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dDRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
     const sb = supabase.createClient(_URL, _KEY);
 
-    let isLogin = true; let currentMode = 'OPENING'; let reportData = [];
-    const items = [{c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"}, {c:"DRC1804", n:"GANODERMA COFFEE"}, {c:"DRC2802", n:"GOAT MILK 150s"}, {c:"DRC3804A", n:"DYNA TONIC 500ML"}, {c:"DRC4824A", n:"SEA CUCUMBER 500ML"}];
+    let isL = true; let currentMode = 'OPENING'; let reportData = [];
+    
+    const items = [
+        {c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"}, {c:"DRC1203", n:"KACIP FATIMA GANO"}, {c:"DRC1204", n:"TONGKAT & MACCA"}, {c:"DRC1205", n:"CAPPUCCINO GANO"}, {c:"DRC1802A", n:"LIQUID ALFALFA 500ML"}, {c:"DRC1804", n:"GANODERMA COFFEE"}, {c:"DRC1810", n:"YEE GANO 90s"}, {c:"DRC1811", n:"YEEGARLIC 90s"}, {c:"DRC1814", n:"GANO CHOCO"}, {c:"DRC1817", n:"PRESIDENT COFFEE"}, {c:"DRC1818", n:"BLACK GANO"}, {c:"DRC2802", n:"GOAT MILK 150s"}, {c:"DRC2804", n:"SOYA POWDER"}, {c:"DRC2805", n:"SPIRULINA 60s"}, {c:"DRC2807", n:"SPIRULINA 300s"}, {c:"DRC2812", n:"WARISAN MAHARANI"}, {c:"DRC2813", n:"GINGER SOYA"}, {c:"DRC2814", n:"PREMIX GOAT MILK"}, {c:"DRC3804", n:"DYNA TONIC 200ML"}, {c:"DRC3804A", n:"DYNA TONIC 500ML"}, {c:"DRC3809", n:"YEE YANG YEN"}, {c:"DRC3810", n:"RED COFFEE GINSENG"}, {c:"DRC3812", n:"GREEN TEA 60s"}, {c:"DRC3814", n:"PROLINK 20s"}, {c:"DRC4803", n:"GINSENG HONEY"}, {c:"DRC4805", n:"GINSENG 9x10"}, {c:"DRC4810", n:"TONGKAT ALI COFFEE"}, {c:"DRC4811", n:"GINALI 100s"}, {c:"DRC4815", n:"YEEGINKGO 90s"}, {c:"DRC4817", n:"MILK THISTLE"}, {c:"DRC4821", n:"TONGKAT ALI 100s"}, {c:"DRC4824", n:"SEA CUCUMBER 250ML"}, {c:"DRC4824A", n:"SEA CUCUMBER 500ML"}, {c:"DRC5801", n:"CHLOROPHYLL SOAP"}, {c:"DRC5802", n:"GANO SOAP"}
+    ];
 
-    function toggleAuth() { isLogin = !isLogin; document.getElementById('auth-txt').innerText = isLogin ? "New? Create Account" : "Back to Login"; }
+    function toggleAuth() { isL = !isL; document.getElementById('atxt').innerText = isL ? "Register New User" : "Back to Login"; }
 
     async function handleAuth() {
         const u = document.getElementById('user').value.trim();
         const p = document.getElementById('pass').value;
         const email = u.toLowerCase() + "@dyna.pro";
-        const { error } = isLogin ? await sb.auth.signInWithPassword({email, password:p}) : await sb.auth.signUp({email, password:p});
+        const { error } = isL ? await sb.auth.signInWithPassword({email, password:p}) : await sb.auth.signUp({email, password:p});
         if(error) alert(error.message); else { 
             document.getElementById('v-auth').classList.add('hidden');
             document.getElementById('main-ui').classList.remove('hidden');
@@ -104,27 +113,24 @@
 
     function tab(mode, el) {
         currentMode = mode;
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
+        if(el) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
         document.getElementById('view-title').innerText = mode;
         document.getElementById('v-entry').classList.toggle('hidden', mode === 'REPORT');
         document.getElementById('v-rpt').classList.toggle('hidden', mode !== 'REPORT');
         if(mode === 'REPORT') loadReport(); else draw();
     }
 
-    function changeMonth() { alert("Viewing: " + document.getElementById('month-picker').value); loadReport(); }
-
     function draw(f = "") {
-        document.getElementById('list').innerHTML = items.filter(i => i.n.includes(f.toUpperCase())).map(i => `
+        document.getElementById('list').innerHTML = items.filter(i => i.n.includes(f.toUpperCase()) || i.c.includes(f.toUpperCase())).map(i => `
             <div class="card">
-                <div><b>${i.n}</b><br><small style="color:#94a3b8">${i.c}</small></div>
+                <div style="max-width:200px"><b>${i.n}</b><br><small style="color:#94a3b8">${i.c}</small></div>
                 <input type="number" class="qty-in" data-c="${i.c}" placeholder="0">
             </div>`).join('');
     }
 
     async function saveData() {
         const { data: { user } } = await sb.auth.getUser();
-        const month = document.getElementById('month-picker').value;
+        const month = document.getElementById('m-picker').value;
         const rows = Array.from(document.querySelectorAll('.qty-in')).map(i => ({ code: i.dataset.c, qty: parseInt(i.value) || 0, uid: user.id })).filter(x => x.qty > 0);
         if(rows.length === 0) return alert("Enter numbers!");
 
@@ -133,15 +139,14 @@
         else if(currentMode === 'SALES') res = await sb.from('sales').insert(rows.map(r => ({ product_code: r.code, qty_sold: r.qty, user_id: r.uid, month_ref: month })));
         else if(currentMode === 'RECEIVED') res = await sb.from('received_stock').insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, user_id: r.uid, month_ref: month })));
 
-        if(res.error) alert(res.error.message); else { alert("Saved!"); tab('REPORT', document.querySelectorAll('.nav-btn')[3]); }
+        if(res.error) alert(res.error.message); else { alert("Synced Successfully!"); tab('REPORT', document.querySelectorAll('.nav-btn')[3]); }
     }
 
     async function loadReport() {
         const rList = document.getElementById('rpt-list');
-        const month = document.getElementById('month-picker').value;
-        rList.innerHTML = "Syncing month data...";
+        const month = document.getElementById('m-picker').value;
+        rList.innerHTML = "<center>Loading "+month+" Catalog...</center>";
         
-        // Load data filtered by the selected month
         const [{data:o}, {data:s}, {data:r}] = await Promise.all([
             sb.from('monthly_stock').select('*').eq('month_year', month),
             sb.from('sales').select('*').eq('month_ref', month),
@@ -156,24 +161,24 @@
             return { name: i.n, code: i.c, open, recv, sold, stock };
         }).filter(x => x.open > 0 || x.recv > 0 || x.sold > 0);
 
-        rList.innerHTML = reportData.length === 0 ? "<center>No data for this month</center>" : reportData.map(d => `
+        rList.innerHTML = reportData.length === 0 ? "<center>No records yet.</center>" : reportData.map(d => `
             <div class="card" style="display:block">
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <b>${d.name}</b>
-                    <span class="status-pill ${d.stock < 5 ? 'pill-low' : 'pill-ok'}">Stock: ${d.stock}</span>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px">
+                    <b style="font-size:13px">${d.name}</b>
+                    <span class="pill ${d.stock < 5 ? 'pill-low' : 'pill-ok'}">Bal: ${d.stock}</span>
                 </div>
-                <div style="font-size:11px; color:#64748b; background:#f8fafc; padding:8px; border-radius:8px; display:flex; justify-content:space-around;">
-                    <span>In: ${d.open}</span><span>+Rcv: ${d.recv}</span><span>-Sld: ${d.sold}</span>
+                <div style="font-size:11px; color:#64748b; background:#f8fafc; padding:10px; border-radius:10px; display:flex; justify-content:space-between">
+                    <span>Op: ${d.open}</span><span>+Rec: ${d.recv}</span><span>-Sld: ${d.sold}</span>
                 </div>
             </div>`).join('');
     }
 
     function exportPDF() {
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        const month = document.getElementById('month-picker').value;
-        doc.text("DYNAPHARM REPORT - " + month, 14, 20);
-        doc.autoTable({ head:[['Code', 'Item', 'In', 'Rcv', 'Sld', 'Bal']], body: reportData.map(d => [d.code, d.name, d.open, d.recv, d.sold, d.stock]), startY: 30 });
-        doc.save(month + "_Inventory.pdf");
+        const month = document.getElementById('m-picker').value;
+        doc.text("DYNAPHARM OFFICIAL STOCK REPORT - " + month, 14, 20);
+        doc.autoTable({ head:[['Code', 'Item Name', 'Opening', 'Received', 'Sold', 'Closing']], body: reportData.map(d => [d.code, d.name, d.open, d.recv, d.sold, d.stock]), startY: 30, theme: 'grid' });
+        doc.save(month + "_Dynapharm_Inventory.pdf");
     }
 </script>
 </body>
