@@ -2,92 +2,84 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynapharm ERP v17</title>
+    <title>Dynapharm Pro v18</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { --p: #003366; --s: #10b981; --bg: #0f172a; --card: #ffffff; --txt: #1e293b; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); margin: 0; color: var(--txt); display: flex; justify-content: center; }
-        .app { width: 100%; max-width: 480px; background: #f1f5f9; min-height: 100vh; display: flex; flex-direction: column; position: relative; }
+        :root { --p: #003366; --s: #10b981; --warn: #ef4444; --bg: #f8fafc; --nav: #ffffff; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
+        .app { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
         .hidden { display: none !important; }
         
-        /* Glass Header */
-        .header { background: var(--p); color: white; padding: 40px 20px; text-align: center; border-radius: 0 0 30px 30px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); }
-        .header h1 { margin: 0; font-size: 28px; letter-spacing: 2px; }
-        
-        .content { padding: 20px; flex-grow: 1; }
-        
-        /* Inputs & Buttons */
-        input { width: 100%; padding: 16px; border-radius: 12px; border: 2px solid #e2e8f0; margin-bottom: 12px; box-sizing: border-box; font-size: 16px; transition: 0.3s; }
-        input:focus { border-color: var(--p); outline: none; box-shadow: 0 0 0 4px rgba(0,51,102,0.1); }
-        .btn { width: 100%; padding: 18px; border-radius: 14px; border: none; font-weight: 700; cursor: pointer; font-size: 15px; transition: 0.2s; margin-bottom: 10px; }
-        .btn-p { background: var(--p); color: white; box-shadow: 0 4px 12px rgba(0,51,102,0.3); }
-        .btn-s { background: var(--s); color: white; }
-        .btn-ghost { background: transparent; color: var(--p); text-decoration: underline; }
-        
-        /* Dashboard Grid */
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-        .menu-item { background: white; padding: 25px 15px; border-radius: 20px; text-align: center; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); cursor: pointer; border: 1px solid #e2e8f0; }
-        .menu-item:active { transform: scale(0.95); }
-        .menu-item .icon { font-size: 32px; margin-bottom: 10px; display: block; }
-        .menu-item b { font-size: 14px; color: var(--p); }
+        /* Header */
+        .header { background: var(--p); color: white; padding: 20px; text-align: left; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; font-size: 20px; }
 
-        /* List Cards */
-        .item-card { background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--p); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .badge { background: #e0f2fe; color: var(--p); padding: 4px 10px; border-radius: 8px; font-weight: bold; font-size: 12px; }
+        /* Navigation Bar */
+        .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: var(--nav); display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #e2e8f0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 100; }
+        .nav-item { text-align: center; color: #64748b; font-size: 10px; cursor: pointer; flex: 1; }
+        .nav-item.active { color: var(--p); font-weight: bold; }
+        .nav-item span { font-size: 20px; display: block; }
 
-        #console { background: #000; color: #0f0; padding: 12px; font-family: monospace; font-size: 11px; }
+        .content { padding: 15px; flex-grow: 1; }
+        
+        /* Cards */
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #edf2f7; }
+        .card-row { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Stock Alerts */
+        .low-stock { border-left: 5px solid var(--warn); background: #fef2f2; }
+        .good-stock { border-left: 5px solid var(--s); }
+        
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 5px; }
+        .btn { width: 100%; padding: 14px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; }
+        .btn-save { background: var(--p); color: white; margin-top: 10px; }
+        
+        #v-auth { padding: 40px 20px; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="app">
     <div id="v-auth">
-        <div class="header"><h1>DYNAPHARM</h1><p id="auth-sub">Secure Cloud Login</p></div>
-        <div class="content">
+        <h1 style="color:var(--p)">DYNAPHARM</h1>
+        <p>Enterprise Resource Planning</p>
+        <div class="card" style="margin-top:30px">
             <input type="text" id="user" placeholder="Username">
             <input type="password" id="pass" placeholder="Password (6+ chars)">
-            <button class="btn btn-p" id="auth-btn" onclick="handleAuth()">Login to ERP</button>
-            <center><button class="btn btn-ghost" id="toggle-btn" onclick="toggleAuth()">Create New Account</button></center>
+            <button class="btn btn-save" onclick="handleAuth()">Login</button>
+            <p onclick="toggleAuth()" style="color:var(--p); cursor:pointer; margin-top:15px; font-size:14px" id="auth-toggle-text">Create New Account</p>
         </div>
     </div>
 
-    <div id="v-dash" class="hidden">
-        <div class="header"><h2>DASHBOARD</h2><p id="u-tag"></p></div>
+    <div id="main-ui" class="hidden">
+        <div class="header">
+            <h1 id="view-title">Dashboard</h1>
+            <small id="u-tag" style="opacity:0.8"></small>
+        </div>
+
         <div class="content">
-            <div class="grid">
-                <div class="menu-item" onclick="openEntry('OPENING')"><span class="icon">📦</span><b>Opening Stock</b></div>
-                <div class="menu-item" onclick="openEntry('RECEIVED')"><span class="icon">🚚</span><b>Stock Received</b></div>
-                <div class="menu-item" onclick="openEntry('SALES')"><span class="icon">💰</span><b>Daily Sales</b></div>
-                <div class="menu-item" onclick="loadReport()"><span class="icon">📊</span><b>Reports</b></div>
+            <div id="v-entry" class="hidden">
+                <input type="text" placeholder="🔍 Search product..." oninput="draw(this.value)">
+                <div id="list" style="margin-top:15px"></div>
+                <button class="btn btn-save" onclick="saveData()">✅ Sync Changes</button>
             </div>
-            <button class="btn" style="margin-top:50px; color:#ef4444; background:white; border: 1px solid #ef4444;" onclick="location.reload()">Sign Out</button>
-        </div>
-    </div>
 
-    <div id="v-entry" class="hidden">
-        <div class="content">
-            <h3 id="entry-title" style="margin-top:0">Entry</h3>
-            <input type="text" placeholder="🔍 Search products..." oninput="draw(this.value)">
-            <div id="list" style="max-height: 400px; overflow-y: auto; margin-bottom: 20px;"></div>
-            <button class="btn btn-s" onclick="saveEntry()">✅ Save to Cloud</button>
-            <button class="btn" onclick="showV('v-dash')">Cancel</button>
-        </div>
-    </div>
-
-    <div id="v-rpt" class="hidden">
-        <div class="content">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3>Stock Report</h3>
-                <button class="btn btn-p" style="width:auto; padding:10px 20px; background:#dc2626;" onclick="exportPDF()">PDF</button>
+            <div id="v-rpt" class="hidden">
+                <button class="btn" style="background:var(--warn); color:white; margin-bottom:15px;" onclick="exportPDF()">📄 Download PDF Report</button>
+                <div id="rpt-list"></div>
             </div>
-            <div id="rpt-list"></div>
-            <button class="btn" style="margin-top:20px" onclick="showV('v-dash')">Back</button>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item" onclick="changeTab('OPENING')"><span>📦</span>Opening</div>
+            <div class="nav-item" onclick="changeTab('RECEIVED')"><span>🚚</span>Receive</div>
+            <div class="nav-item" onclick="changeTab('SALES')"><span>💰</span>Sales</div>
+            <div class="nav-item" onclick="changeTab('REPORT')"><span>📊</span>Report</div>
+            <div class="nav-item" style="color:red" onclick="location.reload()"><span>🚪</span>Exit</div>
         </div>
     </div>
-
-    <div id="console">> System Standby...</div>
 </div>
 
 <script>
@@ -95,89 +87,83 @@
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
     const sb = supabase.createClient(_URL, _KEY);
 
-    let isLogin = true; let currentMode = ''; let fullData = [];
+    let isLogin = true; let currentMode = 'OPENING'; let reportData = [];
     const items = [{c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"}, {c:"DRC1204", n:"TONGKAT & MACCA"}, {c:"DRC1804", n:"GANODERMA COFFEE"}, {c:"DRC2802", n:"GOAT MILK 150s"}, {c:"DRC3804A", n:"DYNA TONIC 500ML"}, {c:"DRC4824A", n:"SEA CUCUMBER 500ML"}];
 
     function toggleAuth() {
         isLogin = !isLogin;
-        document.getElementById('auth-sub').innerText = isLogin ? "Secure Cloud Login" : "Join Dynapharm ERP";
-        document.getElementById('auth-btn').innerText = isLogin ? "Login to ERP" : "Register Now";
-        document.getElementById('toggle-btn').innerText = isLogin ? "Create New Account" : "Back to Login";
+        document.getElementById('auth-toggle-text').innerText = isLogin ? "Create New Account" : "Back to Login";
     }
 
     async function handleAuth() {
         const u = document.getElementById('user').value.trim();
         const p = document.getElementById('pass').value;
-        if(!u || p.length < 6) return alert("Error: Use 6+ chars");
         const email = u.toLowerCase() + "@dyna.pro";
-        
         const { error } = isLogin ? await sb.auth.signInWithPassword({email, password:p}) : await sb.auth.signUp({email, password:p});
-        if(error) alert(error.message); else { document.getElementById('u-tag').innerText = "Operator: " + u.toUpperCase(); showV('v-dash'); }
+        if(error) alert(error.message); else { 
+            document.getElementById('v-auth').classList.add('hidden');
+            document.getElementById('main-ui').classList.remove('hidden');
+            document.getElementById('u-tag').innerText = u.toUpperCase();
+            changeTab('OPENING');
+        }
     }
 
-    function showV(id) { document.querySelectorAll('.app > div').forEach(d => { if(d.id !== 'console') d.classList.add('hidden'); }); document.getElementById(id).classList.remove('hidden'); }
-
-    function openEntry(mode) { currentMode = mode; document.getElementById('entry-title').innerText = mode + " ENTRY"; showV('v-entry'); draw(); }
+    function changeTab(tab) {
+        currentMode = tab;
+        document.getElementById('view-title').innerText = tab;
+        document.getElementById('v-entry').classList.toggle('hidden', tab === 'REPORT');
+        document.getElementById('v-rpt').classList.toggle('hidden', tab !== 'REPORT');
+        if(tab === 'REPORT') loadReport(); else draw();
+    }
 
     function draw(f = "") {
         document.getElementById('list').innerHTML = items.filter(i => i.n.includes(f.toUpperCase())).map(i => `
-            <div class="item-card">
+            <div class="card card-row">
                 <div><b>${i.n}</b><br><small>${i.c}</small></div>
-                <input type="number" class="qty-in" data-c="${i.c}" style="width:80px; margin:0; text-align:center" placeholder="0">
+                <input type="number" class="qty-in" data-c="${i.c}" style="width:70px" placeholder="0">
             </div>`).join('');
     }
 
-    async function saveEntry() {
+    async function saveData() {
         const { data: { user } } = await sb.auth.getUser();
         const rows = Array.from(document.querySelectorAll('.qty-in')).map(i => ({ code: i.dataset.c, qty: parseInt(i.value) || 0, uid: user.id })).filter(x => x.qty > 0);
-        if(rows.length === 0) return alert("Nothing entered!");
+        if(rows.length === 0) return alert("Enter quantities!");
 
-        let err;
-        if(currentMode === 'OPENING') {
-            const data = rows.map(r => ({ month_year: "March 2026", product_code: r.code, opening_quantity: r.qty, user_id: r.uid }));
-            const res = await sb.from('monthly_stock').upsert(data, { onConflict: 'month_year,product_code,user_id' });
-            err = res.error;
-        } else if(currentMode === 'SALES') {
-            const res = await sb.from('sales').insert(rows.map(r => ({ product_code: r.code, qty_sold: r.qty, user_id: r.uid })));
-            err = res.error;
-        } else if(currentMode === 'RECEIVED') {
-            const res = await sb.from('received_stock').insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, user_id: r.uid })));
-            err = res.error;
-        }
-        if(err) alert(err.message); else { alert("Sync Successful!"); showV('v-dash'); }
+        let res;
+        if(currentMode === 'OPENING') res = await sb.from('monthly_stock').upsert(rows.map(r => ({ month_year: "March 2026", product_code: r.code, opening_quantity: r.qty, user_id: r.uid })), { onConflict: 'month_year,product_code,user_id' });
+        else if(currentMode === 'SALES') res = await sb.from('sales').insert(rows.map(r => ({ product_code: r.code, qty_sold: r.qty, user_id: r.uid })));
+        else if(currentMode === 'RECEIVED') res = await sb.from('received_stock').insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, user_id: r.uid })));
+
+        if(res.error) alert(res.error.message); else { alert("Synced!"); changeTab('REPORT'); }
     }
 
     async function loadReport() {
-        showV('v-rpt');
         const rList = document.getElementById('rpt-list');
-        rList.innerHTML = "Processing Data...";
+        rList.innerHTML = "Syncing with Cloud...";
+        const [{data:o}, {data:s}, {data:r}] = await Promise.all([sb.from('monthly_stock').select('*'), sb.from('sales').select('*'), sb.from('received_stock').select('*')]);
 
-        const [{data:o}, {data:s}, {data:r}] = await Promise.all([
-            sb.from('monthly_stock').select('*'), sb.from('sales').select('*'), sb.from('received_stock').select('*')
-        ]);
-
-        fullData = items.map(i => {
+        reportData = items.map(i => {
             const open = o?.find(x => x.product_code === i.c)?.opening_quantity || 0;
             const sold = s?.filter(x => x.product_code === i.c).reduce((a, b) => a + b.qty_sold, 0) || 0;
             const recv = r?.filter(x => x.product_code === i.c).reduce((a, b) => a + b.qty_received, 0) || 0;
-            return { name: i.n, code: i.c, open, recv, sold, final: (open + recv - sold) };
+            const stock = (open + recv - sold);
+            return { name: i.n, code: i.c, open, recv, sold, stock };
         }).filter(x => x.open > 0 || x.recv > 0 || x.sold > 0);
 
-        rList.innerHTML = fullData.map(d => `
-            <div class="item-card" style="display:block">
-                <div style="display:flex; justify-content:space-between"><b>${d.name}</b> <span class="badge">Final: ${d.final}</span></div>
-                <div style="font-size:11px; margin-top:8px; color:#64748b">Open: ${d.open} | Recv: ${d.recv} | Sold: ${d.sold}</div>
+        rList.innerHTML = reportData.map(d => `
+            <div class="card ${d.stock < 5 ? 'low-stock' : 'good-stock'}">
+                <div class="card-row"><b>${d.name}</b> <span style="font-weight:900">${d.stock}</span></div>
+                <div style="font-size:11px; margin-top:5px; color:#64748b">Opening: ${d.open} | +Received: ${d.recv} | -Sold: ${d.sold}</div>
+                ${d.stock < 5 ? '<small style="color:red; font-weight:bold">⚠️ LOW STOCK ALERT</small>' : ''}
             </div>`).join('');
     }
 
     function exportPDF() {
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        doc.setFontSize(20); doc.text("DYNAPHARM INVENTORY REPORT", 14, 20);
-        const rows = fullData.map(d => [d.code, d.name, d.open, d.recv, d.sold, d.final]);
-        doc.autoTable({ head: [['Code', 'Product', 'Opn', 'Rcv', 'Sld', 'Stock']], body: rows, startY: 30 });
-        doc.save("Dynapharm_Report.pdf");
+        doc.text("DYNAPHARM INVENTORY - MARCH 2026", 14, 20);
+        doc.autoTable({ head:[['Code', 'Item', 'In', 'Rcv', 'Sld', 'Total']], body: reportData.map(d => [d.code, d.name, d.open, d.recv, d.sold, d.stock]), startY: 30 });
+        doc.save("Report.pdf");
     }
 </script>
-
 </body>
 </html>
