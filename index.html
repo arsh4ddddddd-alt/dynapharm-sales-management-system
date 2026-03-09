@@ -3,81 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DYNAPHARM Pro v45</title>
+    <title>DYNAPHARM Pro v46</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { --p: #0f172a; --accent: #6366f1; --orange: #f97316; --bg: #f8fafc; --warn: #f43f5e; --danger: #991b1b; }
-        body { font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 150px; background: var(--bg); color: #1e293b; }
+        :root { --p: #0f172a; --accent: #6366f1; --orange: #f97316; --bg: #f8fafc; --warn: #f43f5e; }
+        body { font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 120px; background: var(--bg); color: #1e293b; overflow-x: hidden; }
         .hidden { display: none !important; }
-        .auth-card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); width: 100%; max-width: 320px; color: #0f172a; }
-        .input-group { position: relative; width: 100%; }
-        .auth-input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #e2e8f0; box-sizing: border-box; font-size: 14px; }
-        .eye-icon { position: absolute; right: 15px; top: 15px; cursor: pointer; color: #64748b; font-size: 18px; }
-        .header { background: var(--p); color: white; padding: 30px 20px 50px; border-radius: 0 0 35px 35px; }
-        .stats-row { display: flex; gap: 12px; margin-top: 25px; margin-bottom: -70px; position: relative; z-index: 5; }
-        .stat-box { flex: 1; background: #1e293b; padding: 20px 15px; border-radius: 22px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
-        .stat-box small { font-size: 10px; color: #94a3b8; font-weight: bold; display: block; text-transform: uppercase; }
-        .stat-box b { font-size: 18px; color: white; display: block; margin-top: 5px; }
-        .content { padding: 90px 20px 20px; }
-        .card { background: white; padding: 18px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid #f1f5f9; }
-        .flex-card { display: flex; justify-content: space-between; align-items: center; }
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 16px; font-weight: 700; cursor: pointer; font-size: 14px; transition: 0.2s; }
-        .btn-p { background: var(--accent); color: white; }
-        .btn-reset { background: #fee2e2; color: var(--warn); border: 1px solid #fecaca; margin-bottom: 10px; padding: 12px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; }
-        .btn-danger { background: var(--danger); color: white; margin-bottom: 20px; padding: 12px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; }
-        .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: #0f172a; display: flex; border-radius: 25px; padding: 12px; box-shadow: 0 20px 30px rgba(0,0,0,0.3); z-index: 1000; }
-        .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; font-weight: bold; cursor: pointer; }
-        .nav-btn.active { color: white; }
-        .nav-btn span { font-size: 24px; display: block; margin-bottom: 4px; }
-        input[type="number"] { width: 65px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 10px; text-align: center; font-weight: 800; }
+        .header { background: var(--p); color: white; padding: 25px 20px; border-radius: 0 0 30px 30px; position: sticky; top: 0; z-index: 100; }
+        .content { padding: 20px; }
+        .card { background: white; padding: 15px; border-radius: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #e2e8f0; }
+        .shop-section { border-left: 5px solid var(--accent); margin-bottom: 30px; padding-left: 10px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 14px; transition: 0.2s; }
+        .btn-p { background: var(--accent); color: white; width: 100%; margin-top: 10px; }
+        .btn-s { background: #e2e8f0; color: #475569; margin-right: 5px; font-size: 12px; }
+        .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: #0f172a; display: flex; border-radius: 20px; padding: 8px; box-shadow: 0 15px 30px rgba(0,0,0,0.3); z-index: 1000; }
+        .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; cursor: pointer; padding: 10px 0; }
+        .nav-btn.active { color: white; font-weight: bold; }
+        .nav-btn span { font-size: 20px; display: block; }
+        input, select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 5px; }
+        .row-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1.2fr; gap: 5px; align-items: center; font-size: 11px; margin-top: 8px; background: #f1f5f9; padding: 8px; border-radius: 8px; }
+        .row-grid input { width: 100%; padding: 5px; font-size: 12px; margin: 0; }
     </style>
 </head>
 <body>
 
 <div id="v-auth" style="background:#0f172a; height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
-    <div class="auth-card">
+    <div style="background:white; padding:30px; border-radius:25px; width:100%; max-width:320px;">
         <h2 id="auth-title">Login</h2>
-        <input id="user" class="auth-input" placeholder="Username">
-        <div class="input-group">
-            <input id="pass" class="auth-input" type="password" placeholder="Password">
-            <span class="eye-icon" onclick="togglePass()">👁️</span>
-        </div>
-        <button id="auth-btn" class="btn btn-p" onclick="handleAuth()">Sign In</button>
-        <span id="toggle-text" style="font-size:12px; color:var(--accent); cursor:pointer; display:block; margin-top:15px; text-align:center;" onclick="toggleAuthMode()">New here? Create Account</span>
+        <input id="user" style="width:100%; box-sizing:border-box;" placeholder="Username">
+        <input id="pass" type="password" style="width:100%; box-sizing:border-box; margin-top:10px;" placeholder="Password">
+        <button class="btn btn-p" onclick="handleAuth()">Sign In</button>
+        <p id="toggle-text" style="text-align:center; font-size:12px; color:var(--accent); cursor:pointer; margin-top:15px;" onclick="toggleAuthMode()">New? Create Account</p>
     </div>
 </div>
 
 <div id="main-ui" class="hidden">
     <div class="header">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div><small>USER</small><br><b id="u-display" style="font-size:12px; color:#6366f1;">---</b><br><small onclick="handleLogout()" style="color:#f43f5e; cursor:pointer; text-decoration:underline;">Logout</small></div>
-            <input type="date" id="view-date" onchange="refresh()" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:8px; border-radius:8px;">
-        </div>
-        <div class="stats-row">
-            <div class="stat-box"><small>STOCK IN</small><b id="s-in">0</b></div>
-            <div class="stat-box"><small>SALES</small><b id="s-out">0</b></div>
+            <b>DYNAPHARM PRO</b>
+            <input type="date" id="view-date" onchange="refresh()">
         </div>
     </div>
+
     <div class="content">
-        <div id="v-entry">
-            <input type="date" id="entry-date" class="auth-input" style="margin-bottom:15px;">
-            <div class="card"><input id="search" placeholder="Search..." oninput="draw(this.value)" style="border:none; width:100%; outline:none;"></div>
-            <div id="list"></div>
-            <button class="btn btn-p" onclick="saveData()">💾 Save Entries</button>
+        <div id="v-sales">
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <button class="btn btn-s" onclick="addShop()">+ Add Shop</button>
+                <button class="btn btn-s" style="background:var(--orange); color:white;" onclick="exportPDF()">📄 Download PDF</button>
+            </div>
+            <div id="shops-container"></div>
         </div>
-        <div id="v-rpt" class="hidden">
-            <button class="btn-reset" onclick="resetDayData()">🗑️ Reset Current Day</button>
-            <button class="btn-danger" onclick="resetAllData()">⚠️ ERASE ALL MY DATA</button>
-            <button class="btn btn-p" style="background:var(--orange); margin-bottom:10px;" onclick="exportPDF()">📄 Download PDF (Professional)</button>
-            <div id="rpt-list"></div>
+
+        <div id="v-stock" class="hidden">
+            <div class="card"><input id="search" placeholder="Search products..." oninput="drawStockList(this.value)" style="width:100%; border:none; outline:none;"></div>
+            <div id="stock-list"></div>
         </div>
     </div>
+
     <div class="nav">
-        <div class="nav-btn active" onclick="tab('RECEIVED', this)"><span>📥</span>IN</div>
-        <div class="nav-btn" onclick="tab('SALES', this)"><span>📤</span>OUT</div>
-        <div class="nav-btn" onclick="tab('REPORT', this)"><span>📊</span>REPORT</div>
+        <div class="nav-btn active" onclick="tab('SALES', this)"><span>🌍</span>Ventes Globales</div>
+        <div class="nav-btn" onclick="tab('STOCK', this)"><span>📦</span>Stock Personnel</div>
     </div>
 </div>
 
@@ -87,148 +74,109 @@
     const sb = supabase.createClient(_URL, _KEY);
     
     let isSignUpMode = false;
-    let curMode = "RECEIVED";
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('entry-date').value = today;
-    document.getElementById('view-date').value = today;
-
     const items = [
-        {c:"DRC1201", n:"CAFE GINKO EN POUDRE ET GINSENG", p: 13.00}, {c:"DRC1202", n:"CAFÉ DE THÉ VERT AVEC GANODERMA", p: 14.00}, {c:"DRC1203", n:"CAFÉ KACIP FATIMA AVEC GANODERMA", p: 14.00}, {c:"DRC1204", n:"CAFÉ TONGKAT ET MACCA EN POUDRE", p: 14.00}, {c:"DRC1205", n:"CAFÉ CUPPUCCINO AVEC GANODERMA", p: 15.00}, {c:"DRC1802A", n:"D.I. LIQUID ALFALFA PLUS GUARANA", p: 20.00}, {c:"DRC1804", n:"GANODERMA CAFE", p: 11.00}, {c:"DRC1810", n:"CAPSULE DE YEE GANO 90s", p: 23.00}, {c:"DRC1811", n:"YEEGARLIC CAPSULE 90s", p: 23.00}, {c:"DRC1814", n:"GANODERMA CHOCOLAT", p: 19.00}, {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT", p: 15.00}, {c:"DRC1818", n:"CAFÉ NOIR GANODERMA", p: 14.00}, {c:"DRC2802", n:"LAIT DE CHEVRE 150s", p: 16.00}, {c:"DRC2804", n:"POUDRE GRAINES DE SOJA", p: 17.00}, {c:"DRC2805", n:"MARINE SPIRULLINA", p: 17.00}, {c:"DRC2807", n:"SPIRULINA (300s)", p: 22.00}, {c:"DRC2812", n:"HERBA WARISAN MAHARANI", p: 36.00}, {c:"DRC2813", n:"SOJA GINGEMBRE", p: 14.00}, {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1", p: 15.00}, {c:"DRC3804", n:"DYNA TONIC 780ml", p: 33.00}, {c:"DRC3809", n:"YEE YANG YEN 90s", p: 23.00}, {c:"DRC3810", n:"RED COFFEE GINSENG", p: 13.00}, {c:"DRC3812", n:"GREEN TEA CAPSULE 60s", p: 23.00}, {c:"DRC3814", n:"PROLINK 20s", p: 36.00}, {c:"DRC4803", n:"GINSENG MIEL GINGEMBRE", p: 17.00}, {c:"DRC4805", n:"GINSENG CAPSULE 9x10s", p: 31.00}, {c:"DRC4810", n:"CAFÉ TONGKAT ALI", p: 11.00}, {c:"DRC4811", n:"GINALI CAPSULE 100s", p: 27.00}, {c:"DRC4815", n:"YEEGINKGO 90s", p: 23.00}, {c:"DRC4817", n:"MILK THISTLE 120s", p: 36.00}, {c:"DRC4821", n:"TONGKAT ALI 100s", p: 21.00}, {c:"DRC4824", n:"SEA CUCUMBER JELLY", p: 31.00}, {c:"DRC5802N", n:"NONI 500ml", p: 26.00}, {c:"DRC5803", n:"NONI PLUS TEA 30s", p: 19.00}, {c:"DRC5806", n:"DYNA 'S' TABLET 120s", p: 21.00}, {c:"DRC9918", n:"DYNA SERENOA 100s", p: 32.00}, {c:"DRC5801", n:"CHLOROPHYLL SOAP", p: 5.00}, {c:"DRC5802", n:"GANO SOAP", p: 5.00}
+        {c:"DRC1201", n:"CAFE GINKO & GINSENG", p: 13}, {c:"DRC1202", n:"CAFÉ THÉ VERT GANODERMA", p: 14}, {c:"DRC1203", n:"CAFÉ KACIP FATIMA", p: 14}, {c:"DRC1204", n:"CAFÉ TONGKAT & MACCA", p: 14}, {c:"DRC1205", n:"CAFÉ CUPPUCCINO", p: 15}, {c:"DRC1802A", n:"LIQUID ALFALFA GUARANA", p: 20}, {c:"DRC1804", n:"GANODERMA CAFE", p: 11}, {c:"DRC1810", n:"CAPSULE YEE GANO 90s", p: 23}, {c:"DRC1811", n:"YEEGARLIC 90s", p: 23}, {c:"DRC1814", n:"GANODERMA CHOCOLAT", p: 19}, {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT", p: 15}, {c:"DRC1818", n:"CAFÉ NOIR GANODERMA", p: 14}, {c:"DRC2802", n:"LAIT DE CHEVRE 150s", p: 16}, {c:"DRC2804", n:"POUDRE GRAINES DE SOJA", p: 17}, {c:"DRC2805", n:"MARINE SPIRULLINA", p: 17}, {c:"DRC2807", n:"SPIRULINA 300s", p: 22}, {c:"DRC2812", n:"MAHARANI", p: 36}, {c:"DRC2813", n:"SOJA GINGEMBRE", p: 14}, {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1", p: 15}, {c:"DRC3804", n:"DYNA TONIC 780ml", p: 33}, {c:"DRC3809", n:"YEE YANG YEN 90s", p: 23}, {c:"DRC3810", n:"RED COFFEE GINSENG", p: 13}, {c:"DRC3812", n:"GREEN TEA CAPSULE 60s", p: 23}, {c:"DRC3814", n:"PROLINK 20s", p: 36}
     ];
 
-    window.onload = async () => {
-        const { data: { session } } = await sb.auth.getSession();
-        if (session) showMainUI(session.user.email);
-    };
+    let shops = [];
 
-    function togglePass() {
-        const p = document.getElementById("pass");
-        p.type = p.type === "password" ? "text" : "password";
-    }
-
-    function toggleAuthMode() {
-        isSignUpMode = !isSignUpMode;
-        document.getElementById("auth-title").innerText = isSignUpMode ? "Create Account" : "Login";
-        document.getElementById("auth-btn").innerText = isSignUpMode ? "Register" : "Sign In";
-        document.getElementById("toggle-text").innerText = isSignUpMode ? "Back to Login" : "New here? Create Account";
-    }
-
+    // AUTH
     async function handleAuth() {
         let u = document.getElementById("user").value.trim().toLowerCase();
         const p = document.getElementById("pass").value;
-        if(!u || p.length < 6) return alert("Check username/password");
-        if(!u.includes("@")) u = u + "@dyna.pro";
-
+        if(!u.includes("@")) u += "@dyna.pro";
         let res = isSignUpMode ? await sb.auth.signUp({email: u, password: p}) : await sb.auth.signInWithPassword({email: u, password: p});
+        if(res.error) alert(res.error.message); else showMainUI();
+    }
+    function showMainUI() { document.getElementById("v-auth").classList.add("hidden"); document.getElementById("main-ui").classList.remove("hidden"); }
 
-        if(res.error) alert(res.error.message);
-        else {
-            if(isSignUpMode) alert("Account Ready! Now Sign In.");
-            else showMainUI(u);
-        }
+    // TABS
+    function tab(t, el) {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('v-sales').classList.toggle('hidden', t !== 'SALES');
+        document.getElementById('v-stock').classList.toggle('hidden', t !== 'STOCK');
+        if(t === 'STOCK') drawStockList();
     }
 
-    function showMainUI(email) {
-        document.getElementById("u-display").innerText = email.split("@")[0].toUpperCase();
-        document.getElementById("v-auth").classList.add("hidden");
-        document.getElementById("main-ui").classList.remove("hidden");
-        refresh();
+    // SHOP MANAGEMENT
+    function addShop() {
+        const name = prompt("Enter Shop Name (e.g. KAPENDA 1):");
+        if(!name) return;
+        const id = Date.now();
+        shops.push({ id, name, data: [] });
+        renderShops();
     }
 
-    async function handleLogout() {
-        await sb.auth.signOut();
-        location.reload();
+    function addAllToShop(shopId) {
+        const shop = shops.find(s => s.id === shopId);
+        shop.data = items.map(i => ({ ...i, sold: 0, balance: 0 }));
+        renderShops();
     }
 
-    function tab(m, el) { curMode = m; document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active")); el.classList.add("active"); document.getElementById("v-entry").classList.toggle("hidden", m === 'REPORT'); document.getElementById("v-rpt").classList.toggle("hidden", m !== 'REPORT'); if(m === 'REPORT') loadReport(); else draw(); }
-    function refresh() { draw(); loadReport(); }
-    function draw(f = "") { document.getElementById("list").innerHTML = items.filter(i => i.n.includes(f.toUpperCase()) || i.c.includes(f.toUpperCase())).map(i => `<div class="card flex-card"><div><b>${i.n}</b><br><small>${i.c}</small></div><input type="number" class="qty-in" data-c="${i.c}" placeholder="0"></div>`).join(""); }
-
-    async function saveData() {
-        const { data: { user } } = await sb.auth.getUser();
-        const date = document.getElementById("entry-date").value;
-        const rows = [...document.querySelectorAll(".qty-in")].map(x => ({ code: x.dataset.c, qty: parseInt(x.value) || 0 })).filter(x => x.qty > 0);
-        if(!rows.length) return alert("Enter data");
-        const table = curMode === "SALES" ? "sales" : "received_stock";
-        const payload = rows.map(r => ({ product_code: r.code, [curMode === "SALES" ? 'qty_sold' : 'qty_received']: r.qty, month_ref: date, user_id: user.id }));
-        const { error } = await sb.from(table).insert(payload);
-        if(error) alert("Error"); else { alert("Saved!"); draw(); refresh(); }
+    function updateVal(shopId, code, field, val) {
+        const shop = shops.find(s => s.id === shopId);
+        const row = shop.data.find(r => r.c === code);
+        if(row) row[field] = parseInt(val) || 0;
     }
 
-    async function loadReport() {
-        const { data: { user } } = await sb.auth.getUser();
-        const selDate = document.getElementById("view-date").value;
-        const [{data:s}, {data:r}] = await Promise.all([sb.from("sales").select("*").eq('month_ref', selDate).eq('user_id', user.id), sb.from("received_stock").select("*").eq('month_ref', selDate).eq('user_id', user.id)]);
-        const report = items.map(i => {
-            const sold = s?.filter(x => x.product_code === i.c).reduce((a,b)=>a+(b.qty_sold||0), 0) || 0;
-            const recv = r?.filter(x => x.product_code === i.c).reduce((a,b)=>a+(b.qty_received||0), 0) || 0;
-            return { name: i.n, code: i.c, price: i.p, recv, sold, stock: (recv - sold), total: (sold * i.p) };
-        }).filter(x => x.recv > 0 || x.sold > 0);
-        document.getElementById("s-in").innerText = report.reduce((a,b)=>a+b.recv, 0);
-        document.getElementById("s-out").innerText = report.reduce((a,b)=>a+b.sold, 0);
-        document.getElementById("rpt-list").innerHTML = report.map(d => `<div class="card flex-card"><div><b>${d.name}</b><br><small>IN: ${d.recv} | OUT: ${d.sold}</small></div><b>${d.stock}</b></div>`).join("");
-        window.rptData = report;
+    function renderShops() {
+        const container = document.getElementById("shops-container");
+        container.innerHTML = shops.map(s => `
+            <div class="shop-section">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3 style="margin:0;">${s.name}</h3>
+                    <button class="btn-s" onclick="addAllToShop(${s.id})">Add All Products</button>
+                </div>
+                <div id="rows-${s.id}">
+                    ${s.data.map(r => `
+                        <div class="row-grid">
+                            <span><b>${r.c}</b></span>
+                            <span style="font-size:9px;">$${r.p}</span>
+                            <input type="number" placeholder="Sold" value="${r.sold||''}" oninput="updateVal(${s.id},'${r.c}','sold',this.value)">
+                            <input type="number" placeholder="Bal" value="${r.balance||''}" oninput="updateVal(${s.id},'${r.c}','balance',this.value)">
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
     }
 
-    async function resetDayData() {
-        const selDate = document.getElementById("view-date").value;
-        if(!confirm(`Erase only YOUR data for ${selDate}?`)) return;
-        const { data: { user } } = await sb.auth.getUser();
-        await Promise.all([sb.from("received_stock").delete().eq('month_ref', selDate).eq('user_id', user.id), sb.from("sales").delete().eq('month_ref', selDate).eq('user_id', user.id)]);
-        refresh();
-    }
-
-    async function resetAllData() {
-        if(!confirm("⚠️ WARNING: This deletes EVERYTHING you ever saved. Continue?")) return;
-        const { data: { user } } = await sb.auth.getUser();
-        await Promise.all([sb.from("received_stock").delete().eq('user_id', user.id), sb.from("sales").delete().eq('user_id', user.id)]);
-        refresh();
-    }
-
+    // PDF EXPORT
     function exportPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        const date = document.getElementById("view-date").value;
-        const user = document.getElementById("u-display").innerText;
-        const totalSales = window.rptData.reduce((a,b) => a + b.total, 0);
+        const date = document.getElementById("view-date").value || "N/A";
 
-        doc.setFontSize(16);
-        doc.setFont("helvetica", "bold");
-        doc.text("RAPPORT GLOBAL DES VENTES & INVENTAIRE", 105, 15, { align: "center" });
-        
-        doc.setFontSize(10);
-        doc.setFont("helvetica", "normal");
-        doc.text(`Date ciblée: ${date}`, 14, 25);
-        doc.text("Ce document récapitule les ventes pour la journée indiquée.", 14, 30);
+        doc.setFontSize(16).setFont("helvetica", "bold");
+        doc.text("RAPPORT GLOBAL DES VENTES", 105, 15, { align: "center" });
+        doc.setFontSize(10).setFont("helvetica", "normal");
+        doc.text(`Date: ${date}`, 14, 25);
 
-        doc.autoTable({
-            startY: 35,
-            head: [['Boutique', 'Total des Ventes ($)']],
-            body: [[user, `$${totalSales.toFixed(2)}`], ['TOTAL GÉNÉRAL DU JOUR', `$${totalSales.toFixed(2)}`]],
-            theme: 'grid',
-            headStyles: { fillColor: [40, 40, 40] }
+        let grandTotal = 0;
+        shops.forEach(shop => {
+            const shopTotal = shop.data.reduce((a, b) => a + (b.sold * b.p), 0);
+            grandTotal += shopTotal;
+
+            doc.setFont("helvetica", "bold").text(`BOUTIQUE: ${shop.name} (Total: $${shopTotal.toFixed(2)})`, 14, doc.autoTable.previous ? doc.autoTable.previous.finalY + 15 : 40);
+            
+            doc.autoTable({
+                startY: doc.autoTable.previous ? doc.autoTable.previous.finalY + 20 : 45,
+                head: [['Code', 'Designation', 'Price', 'Sold', 'Stock', 'Total $']],
+                body: shop.data.filter(r => r.sold > 0 || r.balance > 0).map(r => [
+                    r.c, r.n, `$${r.p}`, r.sold, r.balance, `$${(r.sold * r.p).toFixed(2)}`
+                ]),
+                theme: 'grid',
+                styles: { fontSize: 8 }
+            });
         });
 
-        doc.setFont("helvetica", "bold");
-        doc.text(`DÉTAIL: ${user} (Ventes = $${totalSales.toFixed(2)})`, 14, doc.lastAutoTable.finalY + 10);
-
-        doc.autoTable({
-            startY: doc.lastAutoTable.finalY + 15,
-            head: [['Code', 'Désignation', 'Prix Unit.', 'Vendu', 'Reste (Stock)', 'Total $']],
-            body: window.rptData.map(x => [
-                x.code, 
-                x.name, 
-                `$${x.price.toFixed(2)}`, 
-                x.sold, 
-                x.stock, 
-                `$${x.total.toFixed(2)}`
-            ]),
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [0, 0, 0] }
-        });
-
-        doc.save(`Rapport_Dyna_${date}.pdf`);
+        doc.setFontSize(12).text(`TOTAL GÉNÉRAL DU JOUR: $${grandTotal.toFixed(2)}`, 14, doc.autoTable.previous.finalY + 15);
+        doc.save(`Global_Report_${date}.pdf`);
     }
+
+    function refresh() { /* Supabase sync logic here if needed */ }
+    function drawStockList() { /* Personal stock logic */ }
 </script>
 </body>
 </html>
