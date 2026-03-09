@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Private Inventory System</title>
+    <title>DYNAPHARM Private System</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -11,89 +11,65 @@
         :root { --p: #0f172a; --accent: #6366f1; --orange: #f97316; --bg: #f8fafc; --warn: #f43f5e; }
         body { font-family: 'Inter', sans-serif; margin: 0; padding-bottom: 150px; background: var(--bg); color: #1e293b; }
         .hidden { display: none !important; }
-        
-        /* Auth Styles */
         .auth-card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); width: 100%; max-width: 320px; color: #0f172a; }
         .auth-input { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #e2e8f0; box-sizing: border-box; font-size: 14px; }
-        .auth-toggle { font-size: 12px; color: var(--accent); cursor: pointer; text-decoration: underline; margin-top: 15px; display: block; }
-
         .header { background: var(--p); color: white; padding: 30px 20px 50px; border-radius: 0 0 35px 35px; }
         .stats-row { display: flex; gap: 12px; margin-top: 25px; margin-bottom: -70px; position: relative; z-index: 5; }
-        .stat-box { flex: 1; background: #1e293b; padding: 20px 15px; border-radius: 22px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+        .stat-box { flex: 1; background: #1e293b; padding: 20px 15px; border-radius: 22px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
         .stat-box small { font-size: 10px; color: #94a3b8; font-weight: bold; display: block; text-transform: uppercase; }
         .stat-box b { font-size: 18px; color: white; display: block; margin-top: 5px; }
-        
         .content { padding: 90px 20px 20px; }
         .card { background: white; padding: 18px; border-radius: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid #f1f5f9; }
         .flex-card { display: flex; justify-content: space-between; align-items: center; }
-        
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 14px; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 16px; font-weight: 700; cursor: pointer; font-size: 14px; }
         .btn-p { background: var(--accent); color: white; }
-        .btn-orange { background: var(--orange); color: white; margin-bottom: 20px; }
-        .btn-danger { background: #fee2e2; color: var(--warn); border: 1px solid #fecaca; margin-bottom: 10px; padding: 12px; }
-
         .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: #0f172a; display: flex; border-radius: 25px; padding: 12px; box-shadow: 0 20px 30px rgba(0,0,0,0.3); z-index: 1000; }
         .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; font-weight: bold; cursor: pointer; }
         .nav-btn.active { color: white; }
         .nav-btn span { font-size: 24px; display: block; margin-bottom: 4px; }
-        
         input[type="number"] { width: 65px; padding: 8px; border: 1px solid #e2e8f0; border-radius: 10px; text-align: center; font-weight: 800; }
-        .logout { font-size: 10px; color: #f43f5e; text-decoration: underline; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="v-auth" style="background:#0f172a; height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;">
     <div class="auth-card">
-        <h2 id="auth-title" style="margin-top:0; letter-spacing:1px;">Login</h2>
-        <p id="auth-subtitle" style="color:#64748b; font-size:12px; margin-bottom:20px;">Access your private inventory</p>
-        
-        <input id="user" class="auth-input" placeholder="Email Address">
-        <input id="pass" class="auth-input" type="password" placeholder="Password">
-        
+        <h2 id="auth-title">Login</h2>
+        <p id="auth-subtitle" style="color:#64748b; font-size:12px; margin-bottom:20px;">Use your username or email</p>
+        <input id="user" class="auth-input" placeholder="Username (e.g. arshad)">
+        <input id="pass" class="auth-input" type="password" placeholder="Password (min. 6 chars)">
         <button id="auth-btn" class="btn btn-p" onclick="handleAuth()">Sign In</button>
-        
-        <span id="toggle-text" class="auth-toggle" onclick="toggleAuthMode()">Don't have an account? Create one</span>
+        <span id="toggle-text" style="font-size:12px; color:var(--accent); cursor:pointer; display:block; margin-top:15px;" onclick="toggleAuthMode()">New here? Create Account</span>
     </div>
 </div>
 
 <div id="main-ui" class="hidden">
     <div class="header">
         <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div><small>SECURE SESSION</small><br><b id="u-display" style="font-size:12px; color:#6366f1;">---</b><br><span class="logout" onclick="location.reload()">Log Out</span></div>
-            <div>
-                <small style="display:block; text-align:right">REPORT DATE</small>
-                <input type="date" id="view-date" onchange="refresh()" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:5px; border-radius:8px; font-size:12px;">
-            </div>
+            <div><small>USER</small><br><b id="u-display" style="font-size:12px; color:#6366f1;">---</b><br><small onclick="location.reload()" style="color:#f43f5e; cursor:pointer;">Logout</small></div>
+            <input type="date" id="view-date" onchange="refresh()" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:8px; border-radius:8px;">
         </div>
         <div class="stats-row">
-            <div class="stat-box"><small>MY STOCK IN</small><b id="s-in">0</b></div>
-            <div class="stat-box"><small>MY SALES</small><b id="s-out">0</b></div>
+            <div class="stat-box"><small>STOCK IN</small><b id="s-in">0</b></div>
+            <div class="stat-box"><small>SALES</small><b id="s-out">0</b></div>
         </div>
     </div>
-
     <div class="content">
         <div id="v-entry">
-            <small style="color:#64748b; font-weight:bold; display:block; margin-bottom:5px;">TRANSACTION DATE</small>
-            <input type="date" id="entry-date" style="width:100%; padding:12px; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:15px; font-weight:bold;">
-            <div class="card" style="margin-bottom:15px;"><input id="search" placeholder="Search product..." oninput="draw(this.value)" style="border:none; width:100%; outline:none;"></div>
+            <input type="date" id="entry-date" class="auth-input" style="margin-bottom:15px;">
+            <div class="card"><input id="search" placeholder="Search..." oninput="draw(this.value)" style="border:none; width:100%; outline:none;"></div>
             <div id="list"></div>
-            <button class="btn btn-p" onclick="saveData()">💾 Secure Save to My Cloud</button>
+            <button class="btn btn-p" onclick="saveData()">💾 Save Entries</button>
         </div>
-
         <div id="v-rpt" class="hidden">
-            <button class="btn btn-danger" onclick="resetDayData()">🗑️ Clear My Day</button>
-            <button class="btn btn-orange" onclick="exportPDF()">📄 My Private PDF Report</button>
+            <button class="btn btn-p" style="background:var(--orange); margin-bottom:10px;" onclick="exportPDF()">📄 Download PDF</button>
             <div id="rpt-list"></div>
-            <h3 style="font-size:14px; margin:30px 0 10px;">🕒 My Private Log</h3>
-            <div id="history-log" class="card" style="padding:10px;"></div>
         </div>
     </div>
-
     <div class="nav">
-        <div class="nav-btn active" onclick="tab('RECEIVED', this)"><span>📥</span>STOCK IN</div>
-        <div class="nav-btn" onclick="tab('SALES', this)"><span>📤</span>SALES</div>
-        <div class="nav-btn" onclick="tab('REPORT', this)"><span>📊</span>MY REPORT</div>
+        <div class="nav-btn active" onclick="tab('RECEIVED', this)"><span>📥</span>IN</div>
+        <div class="nav-btn" onclick="tab('SALES', this)"><span>📤</span>OUT</div>
+        <div class="nav-btn" onclick="tab('REPORT', this)"><span>📊</span>REPORT</div>
     </div>
 </div>
 
@@ -101,98 +77,81 @@
     const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
     const sb = supabase.createClient(_URL, _KEY);
-    
     let isSignUpMode = false;
     let curMode = "RECEIVED";
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('entry-date').value = today;
     document.getElementById('view-date').value = today;
 
+    // PRODUCTS IN PDF ORDER
     const items = [
-        {c:"DRC1201", n:"CAFE GINKO EN POUDRE ET GINSENG"}, {c:"DRC1202", n:"CAFÉ DE THÉ VERT AVEC GANODERMA"}, {c:"DRC1203", n:"CAFÉ KACIP FATIMA AVEC GANODERMA"}, {c:"DRC1204", n:"CAFÉ TONGKAT ET MACCA EN POUDRE"}, {c:"DRC1205", n:"CAFÉ CUPPUCCINO AVEC GANODERMA"}, {c:"DRC1802A", n:"D.I. LIQUID ALFALFA PLUS GUARANA"}, {c:"DRC1804", n:"GANODERMA CAFE (20x21g)"}, {c:"DRC1810", n:"CAPSULE DE YEE GANO 90s"}, {c:"DRC1811", n:"YEEGARLIC CAPSULE 90s"}, {c:"DRC1814", n:"GANODERMA CHOCOLAT"}, {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT 4 EN 1"}, {c:"DRC1818", n:"CAFÉ NOIR GANODERMA ET TONGKATI"}, {c:"DRC2802", n:"COMPRIMES DE LAIT DE CHEVRE 150s"}, {c:"DRC2804", n:"POUDRE INSTANTANEE GRAINES DE SOJA"}, {c:"DRC2805", n:"MARINE SOLUBLE SPIRULLINA"}, {c:"DRC2807", n:"COMPRIME DE SPIRULINA (300s)"}, {c:"DRC2812", n:"HERBA WARISAN MAHARANI"}, {c:"DRC2813", n:"MELANGE SOJA GINGEMBRE"}, {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1 POUDRE"}, {c:"DRC3804", n:"DYNA TONIC 780ml"}, {c:"DRC3809", n:"YEE YANG YEN TABLET 90s"}, {c:"DRC3810", n:"RED COFFEE WITH GINSENG"}, {c:"DRC3812", n:"GREEN TEA EXTRACT CAPSULE 60s"}, {c:"DRC3814", n:"PROLINK 20s x 20g"}, {c:"DRC4803", n:"GINSENG MIEL ET GINGEMBRE"}, {c:"DRC4805", n:"GINSENG CAPSULE 9 x 10s"}, {c:"DRC4810", n:"CAFÉ TONGKAT ALI (20x21g)"}, {c:"DRC4811", n:"GINALI CAPSULE 100s"}, {c:"DRC4815", n:"YEEGINKGO TABLET 90s"}, {c:"DRC4817", n:"MILK THISTLE TABLET 120s"}, {c:"DRC4821", n:"TONGKAT ALI CAPSULE 100s"}, {c:"DRC4824", n:"SEA CUCUMBER JELLY 500ml"}, {c:"DRC5802N", n:"NONI 500ml"}, {c:"DRC5803", n:"NONI PLUS TEA 30s x 3g"}, {c:"DRC5806", n:"DYNA 'S' TABLET 120s"}, {c:"DRC9918", n:"DYNA SERENOA TABLET 100s"}, {c:"DRC5801", n:"CHLOROPHYLL SOAP"}, {c:"DRC5802", n:"GANO SOAP"}
+        {c:"DRC1201", n:"CAFE GINKO EN POUDRE ET GINSENG"}, {c:"DRC1202", n:"CAFÉ DE THÉ VERT AVEC GANODERMA"}, {c:"DRC1203", n:"CAFÉ KACIP FATIMA AVEC GANODERMA"}, {c:"DRC1204", n:"CAFÉ TONGKAT ET MACCA EN POUDRE"}, {c:"DRC1205", n:"CAFÉ CUPPUCCINO AVEC GANODERMA"}, {c:"DRC1802A", n:"D.I. LIQUID ALFALFA PLUS GUARANA"}, {c:"DRC1804", n:"GANODERMA CAFE"}, {c:"DRC1810", n:"CAPSULE DE YEE GANO 90s"}, {c:"DRC1811", n:"YEEGARLIC CAPSULE 90s"}, {c:"DRC1814", n:"GANODERMA CHOCOLAT"}, {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT"}, {c:"DRC1818", n:"CAFÉ NOIR GANODERMA"}, {c:"DRC2802", n:"LAIT DE CHEVRE 150s"}, {c:"DRC2804", n:"POUDRE GRAINES DE SOJA"}, {c:"DRC2805", n:"MARINE SPIRULLINA"}, {c:"DRC2807", n:"SPIRULINA (300s)"}, {c:"DRC2812", n:"HERBA WARISAN MAHARANI"}, {c:"DRC2813", n:"SOJA GINGEMBRE"}, {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1"}, {c:"DRC3804", n:"DYNA TONIC 780ml"}, {c:"DRC3809", n:"YEE YANG YEN 90s"}, {c:"DRC3810", n:"RED COFFEE GINSENG"}, {c:"DRC3812", n:"GREEN TEA CAPSULE 60s"}, {c:"DRC3814", n:"PROLINK 20s"}, {c:"DRC4803", n:"GINSENG MIEL GINGEMBRE"}, {c:"DRC4805", n:"GINSENG CAPSULE 9x10s"}, {c:"DRC4810", n:"CAFÉ TONGKAT ALI"}, {c:"DRC4811", n:"GINALI CAPSULE 100s"}, {c:"DRC4815", n:"YEEGINKGO 90s"}, {c:"DRC4817", n:"MILK THISTLE 120s"}, {c:"DRC4821", n:"TONGKAT ALI 100s"}, {c:"DRC4824", n:"SEA CUCUMBER JELLY"}, {c:"DRC5802N", n:"NONI 500ml"}, {c:"DRC5803", n:"NONI PLUS TEA 30s"}, {c:"DRC5806", n:"DYNA 'S' TABLET 120s"}, {c:"DRC9918", n:"DYNA SERENOA 100s"}, {c:"DRC5801", n:"CHLOROPHYLL SOAP"}, {c:"DRC5802", n:"GANO SOAP"}
     ];
 
     function toggleAuthMode() {
         isSignUpMode = !isSignUpMode;
         document.getElementById("auth-title").innerText = isSignUpMode ? "Create Account" : "Login";
-        document.getElementById("auth-subtitle").innerText = isSignUpMode ? "Sign up for a new private session" : "Access your private inventory";
-        document.getElementById("auth-btn").innerText = isSignUpMode ? "Register Now" : "Sign In";
-        document.getElementById("toggle-text").innerText = isSignUpMode ? "Already have an account? Login" : "Don't have an account? Create one";
+        document.getElementById("auth-btn").innerText = isSignUpMode ? "Register" : "Sign In";
+        document.getElementById("toggle-text").innerText = isSignUpMode ? "Already have an account? Login" : "New here? Create Account";
     }
 
     async function handleAuth() {
-        const u = document.getElementById("user").value.trim(), p = document.getElementById("pass").value;
-        if(!u || !p) return alert("Fill all fields");
+        let u = document.getElementById("user").value.trim().toLowerCase();
+        const p = document.getElementById("pass").value;
+        if(u.length < 3 || p.length < 6) return alert("Username too short or password < 6 chars");
+        
+        // AUTO-FIX: If it's not an email, make it one
+        if(!u.includes("@")) u = u + "@dyna.pro";
 
-        let res;
-        if(isSignUpMode) {
-            res = await sb.auth.signUp({email: u, password: p});
-            if(!res.error) alert("Account created! You can now log in.");
-        } else {
-            res = await sb.auth.signInWithPassword({email: u, password: p});
-        }
+        let res = isSignUpMode ? await sb.auth.signUp({email: u, password: p}) : await sb.auth.signInWithPassword({email: u, password: p});
 
         if(res.error) alert(res.error.message);
-        else if(!isSignUpMode) {
-            document.getElementById("u-display").innerText = u;
-            document.getElementById("v-auth").classList.add("hidden");
-            document.getElementById("main-ui").classList.remove("hidden");
-            refresh();
+        else {
+            if(isSignUpMode) alert("Account Ready! Now click Sign In.");
+            else {
+                document.getElementById("u-display").innerText = u.split("@")[0].toUpperCase();
+                document.getElementById("v-auth").classList.add("hidden");
+                document.getElementById("main-ui").classList.remove("hidden");
+                refresh();
+            }
         }
     }
 
     function tab(m, el) { curMode = m; document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active")); el.classList.add("active"); document.getElementById("v-entry").classList.toggle("hidden", m === 'REPORT'); document.getElementById("v-rpt").classList.toggle("hidden", m !== 'REPORT'); if(m === 'REPORT') loadReport(); else draw(); }
     function refresh() { draw(); loadReport(); }
-    function draw(f = "") { document.getElementById("list").innerHTML = items.filter(i => i.n.includes(f.toUpperCase()) || i.c.includes(f.toUpperCase())).map(i => `<div class="card flex-card"><div><b>${i.n}</b><br><small style="color:#64748b">${i.c}</small></div><input type="number" class="qty-in" data-c="${i.c}" placeholder="0"></div>`).join(""); }
+    function draw(f = "") { document.getElementById("list").innerHTML = items.filter(i => i.n.includes(f.toUpperCase()) || i.c.includes(f.toUpperCase())).map(i => `<div class="card flex-card"><div><b>${i.n}</b><br><small>${i.c}</small></div><input type="number" class="qty-in" data-c="${i.c}" placeholder="0"></div>`).join(""); }
 
     async function saveData() {
-        const { data: { user } } = await sb.auth.getUser(); 
-        const selectedDate = document.getElementById("entry-date").value;
+        const { data: { user } } = await sb.auth.getUser();
+        const date = document.getElementById("entry-date").value;
         const rows = [...document.querySelectorAll(".qty-in")].map(x => ({ code: x.dataset.c, qty: parseInt(x.value) || 0 })).filter(x => x.qty > 0);
-        if(!rows.length) return alert("No items entered.");
-        
-        let res;
-        if(curMode === "SALES") res = await sb.from("sales").insert(rows.map(r => ({ product_code: r.code, qty_sold: r.qty, month_ref: selectedDate, user_id: user.id })));
-        else if(curMode === "RECEIVED") res = await sb.from("received_stock").insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, month_ref: selectedDate, user_id: user.id })));
-        
-        if(res.error) alert("Sync Error"); else { alert("Saved Privately for " + selectedDate); draw(); refresh(); }
+        if(!rows.length) return alert("Enter numbers!");
+        const table = curMode === "SALES" ? "sales" : "received_stock";
+        const payload = rows.map(r => ({ product_code: r.code, [curMode === "SALES" ? 'qty_sold' : 'qty_received']: r.qty, month_ref: date, user_id: user.id }));
+        const { error } = await sb.from(table).insert(payload);
+        if(error) alert("Error saving"); else { alert("Saved!"); draw(); refresh(); }
     }
 
     async function loadReport() {
         const { data: { user } } = await sb.auth.getUser();
-        if(!user) return;
         const selDate = document.getElementById("view-date").value;
-        const [{data:s}, {data:r}] = await Promise.all([
-            sb.from("sales").select("*").eq('month_ref', selDate).eq('user_id', user.id).order('created_at', {ascending: false}), 
-            sb.from("received_stock").select("*").eq('month_ref', selDate).eq('user_id', user.id).order('created_at', {ascending: false})
-        ]);
+        const [{data:s}, {data:r}] = await Promise.all([sb.from("sales").select("*").eq('month_ref', selDate).eq('user_id', user.id), sb.from("received_stock").select("*").eq('month_ref', selDate).eq('user_id', user.id)]);
         const report = items.map(i => {
-            const sold = s?.filter(x => x.product_code === i.c).reduce((a,b)=>a+b.qty_sold, 0) || 0;
-            const recv = r?.filter(x => x.product_code === i.c).reduce((a,b)=>a+b.qty_received, 0) || 0;
+            const sold = s?.filter(x => x.product_code === i.c).reduce((a,b)=>a+(b.qty_sold||0), 0) || 0;
+            const recv = r?.filter(x => x.product_code === i.c).reduce((a,b)=>a+(b.qty_received||0), 0) || 0;
             return { name: i.n, recv, sold, stock: (recv - sold) };
         }).filter(x => x.recv > 0 || x.sold > 0);
         document.getElementById("s-in").innerText = report.reduce((a,b)=>a+b.recv, 0);
         document.getElementById("s-out").innerText = report.reduce((a,b)=>a+b.sold, 0);
-        document.getElementById("rpt-list").innerHTML = report.map(d => `<div class="card flex-card"><div style="flex:1"><b>${d.name}</b><br><small style="color:#64748b">IN: ${d.recv} | OUT: ${d.sold}</small></div><div style="text-align:right"><b style="color:${d.stock < 0 ? 'var(--warn)' : '#10b981'}; font-size:18px;">${d.stock}</b></div></div>`).join("");
-        const history = [...(s||[]).map(x=>({...x, type:'SALE'})), ...(r||[]).map(x=>({...x, type:'STOCK-IN'}))].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-        document.getElementById("history-log").innerHTML = history.slice(0, 10).map(h => `<div class="history-item"><span><b>${h.qty_sold || h.qty_received}</b> ${items.find(i=>i.c===h.product_code)?.n || h.product_code}</span><span style="color:#94a3b8">${new Date(h.created_at).toLocaleTimeString()}</span></div>`).join("");
+        document.getElementById("rpt-list").innerHTML = report.map(d => `<div class="card flex-card"><div><b>${d.name}</b><br><small>IN: ${d.recv} | OUT: ${d.sold}</small></div><b>${d.stock}</b></div>`).join("");
         window.rptData = report;
     }
 
-    async function resetDayData() {
-        const selDate = document.getElementById("view-date").value;
-        if(!confirm(`Erase only YOUR data for ${selDate}?`)) return;
-        const { data: { user } } = await sb.auth.getUser();
-        await Promise.all([sb.from("received_stock").delete().eq('month_ref', selDate).eq('user_id', user.id), sb.from("sales").delete().eq('month_ref', selDate).eq('user_id', user.id)]);
-        refresh();
-    }
-
     function exportPDF() {
-        const selDate = document.getElementById("view-date").value;
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        doc.text("PRIVATE STOCK REPORT: " + selDate, 14, 20);
-        doc.autoTable({ startY: 25, head: [['PRODUCT', 'IN', 'OUT', 'BAL']], body: window.rptData.map(x => [x.name, x.recv, x.sold, x.stock]) });
-        doc.save(`My_Report_${selDate}.pdf`);
+        doc.text("Stock Report: " + document.getElementById("view-date").value, 14, 20);
+        doc.autoTable({ startY: 25, head: [['Product', 'In', 'Out', 'Bal']], body: window.rptData.map(x => [x.name, x.recv, x.sold, x.stock]) });
+        doc.save(`Report.pdf`);
     }
 </script>
 </body>
