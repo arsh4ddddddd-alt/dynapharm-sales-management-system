@@ -2,111 +2,112 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynapharm ERP v24</title>
+    <title>Dynapharm Ultimate v25</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { --p: #0f172a; --accent: #2563eb; --bg: #f1f5f9; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding-bottom: 90px; -webkit-tap-highlight-color: transparent; }
-        .app { width: 100%; max-width: 500px; margin: 0 auto; min-height: 100vh; }
+        :root { --p: #0f172a; --accent: #3b82f6; --success: #10b981; --warn: #f43f5e; --bg: #f8fafc; }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; color: #1e293b; }
         .hidden { display: none !important; }
         
-        /* Header */
-        .header { background: var(--p); color: white; padding: 20px; border-radius: 0 0 20px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .m-select { width: 100%; padding: 12px; margin-top: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 15px; background: white; color: var(--p); }
+        /* Premium Header */
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 25px 20px; border-radius: 0 0 30px 30px; position: sticky; top: 0; z-index: 100; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .stat-card { background: rgba(255,255,255,0.1); padding: 12px; border-radius: 15px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.1); }
+        .stat-card small { font-size: 10px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-card div { font-size: 18px; font-weight: 800; margin-top: 4px; }
 
-        /* Cards & UI */
-        .content { padding: 15px; }
-        .card { background: white; padding: 16px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid #e2e8f0; }
-        input { width: 100%; padding: 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.2s; }
-        input:focus { border-color: var(--accent); }
+        /* Content Area */
+        .content { padding: 20px; max-width: 500px; margin: 0 auto; }
+        .card { background: white; padding: 18px; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.06); margin-bottom: 15px; border: 1px solid #f1f5f9; }
         
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s; active { transform: scale(0.98); } }
-        .btn-p { background: var(--accent); color: white; }
-        .btn-s { background: #10b981; color: white; margin-top: 10px; }
-
-        /* Bottom Nav */
-        .nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: white; display: flex; border-top: 1px solid #e2e8f0; padding: 10px 0; z-index: 1000; }
-        .nav-btn { flex: 1; text-align: center; font-size: 11px; color: #94a3b8; cursor: pointer; }
-        .nav-btn.active { color: var(--accent); font-weight: 800; }
-        .nav-btn span { font-size: 24px; display: block; margin-bottom: 2px; }
-
-        .item-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        .pill { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-        .pill-red { background: #fee2e2; color: #dc2626; }
-        .pill-green { background: #dcfce7; color: #16a34a; }
+        /* Modern Inputs */
+        .search-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        input { width: 100%; padding: 15px; border: 2px solid #f1f5f9; border-radius: 15px; font-size: 16px; transition: 0.3s; outline: none; }
+        input:focus { border-color: var(--accent); background: white; }
         
-        #mic-btn { background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 12px; width: 55px; height: 50px; cursor: pointer; font-size: 20px; }
+        .btn { width: 100%; padding: 18px; border: none; border-radius: 15px; font-weight: 700; cursor: pointer; font-size: 15px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-p { background: var(--accent); color: white; box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39); }
+        .btn-s { background: var(--success); color: white; }
+
+        /* Navigation */
+        .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); display: flex; border-radius: 25px; padding: 12px; z-index: 1000; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); }
+        .nav-btn { flex: 1; text-align: center; color: #94a3b8; cursor: pointer; transition: 0.3s; }
+        .nav-btn.active { color: white; }
+        .nav-btn span { font-size: 22px; display: block; }
+        .nav-btn small { font-size: 10px; font-weight: 600; }
+
+        .history-tag { font-size: 11px; background: #eff6ff; color: #3b82f6; padding: 4px 10px; border-radius: 10px; margin-top: 10px; display: inline-block; }
     </style>
 </head>
 <body>
 
-<div class="app">
-    <div id="v-auth" style="padding: 80px 25px; text-align: center;">
-        <h1 style="color:var(--p); margin:0; font-size:28px;">DYNAPHARM</h1>
-        <p style="color:#64748b; margin-bottom:40px;">Smart Inventory System</p>
-        <div class="card">
-            <input type="text" id="user" placeholder="Username" style="margin-bottom:12px">
-            <input type="password" id="pass" placeholder="Password (6+ chars)">
-            <button class="btn btn-p" onclick="handleAuth()" style="margin-top:15px">Login</button>
-            <p onclick="toggleAuth()" id="t-btn" style="margin-top:20px; color:var(--accent); cursor:pointer; font-weight:600;">Create New Account</p>
+<div id="v-auth" class="content" style="padding-top: 100px; text-align: center;">
+    <h1 style="font-size: 32px; color: var(--p); margin-bottom: 8px;">DYNAPHARM</h1>
+    <p style="color: #64748b; margin-bottom: 40px;">Professional Inventory Control</p>
+    <div class="card">
+        <input type="text" id="user" placeholder="Username" style="margin-bottom: 15px;">
+        <input type="password" id="pass" placeholder="Password">
+        <button class="btn btn-p" onclick="handleAuth()">Sign In</button>
+        <p onclick="toggleAuth()" id="t-btn" style="margin-top:20px; color:var(--accent); cursor:pointer; font-weight:600; font-size: 14px;">Need an account? Register</p>
+    </div>
+</div>
+
+<div id="main-ui" class="hidden">
+    <div class="header">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div id="u-tag" style="font-size: 12px; font-weight: 700; opacity: 0.8;">USER</div>
+            <select id="m-picker" style="background:none; border:none; color:white; font-weight:800; font-size:16px; outline:none;" onchange="refreshData()">
+                <option style="color:black">March 2026</option>
+                <option style="color:black">April 2026</option>
+            </select>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card"><small>Active Items</small><div id="stat-count">0</div></div>
+            <div class="stat-card"><small>Low Stock</small><div id="stat-alert" style="color:var(--warn)">0</div></div>
         </div>
     </div>
 
-    <div id="main-ui" class="hidden">
-        <div class="header">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span id="u-tag" style="font-size:11px; font-weight:bold; background:rgba(255,255,255,0.2); padding:5px 12px; border-radius:20px;">USER</span>
-                <b id="v-title" style="letter-spacing:1px">OPENING</b>
+    <div class="content">
+        <div id="v-entry">
+            <div class="search-container">
+                <input type="text" id="search" placeholder="Search 36 Products..." oninput="draw(this.value)">
+                <button onclick="startVoice()" style="border:none; background:white; border-radius:15px; padding:0 15px; box-shadow:0 2px 5px rgba(0,0,0,0.05)">🎙️</button>
             </div>
-            <select id="m-picker" class="m-select" onchange="refreshView()">
-                <option>March 2026</option><option>April 2026</option><option>May 2026</option>
-            </select>
+            
+            <div id="list"></div>
+            
+            <div style="height: 20px;"></div>
+            <button class="btn btn-p" onclick="saveData()">💾 Sync Updates</button>
+            <button id="carry-btn" class="btn btn-s hidden" style="margin-top:10px" onclick="carryOver()">📦 Carry Over March</button>
         </div>
 
-        <div class="content">
-            <div id="v-entry">
-                <div style="display:flex; gap:8px; margin-bottom:15px;">
-                    <input type="text" id="search" placeholder="🔍 Search 36 Products..." oninput="draw(this.value)">
-                    <button id="mic-btn" onclick="startVoice()">🎙️</button>
-                </div>
-                <div id="list"></div>
-                <button class="btn btn-p" style="margin-top:20px;" onclick="saveData()">Sync to Cloud</button>
-                <button id="carry-btn" class="btn btn-s hidden" onclick="carryOver()">📦 Carry Over From March</button>
-            </div>
-
-            <div id="v-rpt" class="hidden">
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
-                    <button class="btn" style="background:#ef4444; color:white" onclick="exportPDF()">Export PDF</button>
-                    <button class="btn" style="background:#64748b; color:white" onclick="loadReport()">Refresh</button>
-                </div>
-                <div id="rpt-list"></div>
-            </div>
+        <div id="v-rpt" class="hidden">
+            <button class="btn" style="background:var(--p); color:white; margin-bottom:20px;" onclick="exportPDF()">📄 Generate PDF Report</button>
+            <div id="rpt-list"></div>
         </div>
+    </div>
 
-        <div class="nav">
-            <div class="nav-btn active" onclick="tab('OPENING', this)"><span>📦</span>Open</div>
-            <div class="nav-btn" onclick="tab('RECEIVED', this)"><span>🚚</span>Recv</div>
-            <div class="nav-btn" onclick="tab('SALES', this)"><span>💰</span>Sale</div>
-            <div class="nav-btn" onclick="tab('REPORT', this)"><span>📊</span>Report</div>
-            <div class="nav-btn" style="color:#f43f5e" onclick="location.reload()"><span>🚪</span>Exit</div>
-        </div>
+    <div class="nav">
+        <div class="nav-btn active" onclick="tab('OPENING', this)"><span>📦</span><small>OPEN</small></div>
+        <div class="nav-btn" onclick="tab('RECEIVED', this)"><span>🚚</span><small>RECV</small></div>
+        <div class="nav-btn" onclick="tab('SALES', this)"><span>💰</span><small>SALE</small></div>
+        <div class="nav-btn" onclick="tab('REPORT', this)"><span>📊</span><small>RPT</small></div>
+        <div class="nav-btn" style="color:var(--warn)" onclick="location.reload()"><span>🚪</span><small>EXIT</small></div>
     </div>
 </div>
 
 <script>
-    // CORE CONFIG
     const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
     const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dGRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
     const sb = supabase.createClient(_URL, _KEY);
 
-    let isL = true; let curMode = 'OPENING';
-    const items = [
-        {c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"}, {c:"DRC1203", n:"KACIP FATIMA GANO"}, {c:"DRC1204", n:"TONGKAT & MACCA"}, {c:"DRC1205", n:"CAPPUCCINO GANO"}, {c:"DRC1802A", n:"LIQUID ALFALFA 500ML"}, {c:"DRC1804", n:"GANODERMA COFFEE"}, {c:"DRC1810", n:"YEE GANO 90s"}, {c:"DRC1811", n:"YEEGARLIC 90s"}, {c:"DRC1814", n:"GANO CHOCO"}, {c:"DRC1817", n:"PRESIDENT COFFEE"}, {c:"DRC1818", n:"BLACK GANO"}, {c:"DRC2802", n:"GOAT MILK 150s"}, {c:"DRC2804", n:"SOYA POWDER"}, {c:"DRC2805", n:"SPIRULINA 60s"}, {c:"DRC2807", n:"SPIRULINA 300s"}, {c:"DRC2812", n:"WARISAN MAHARANI"}, {c:"DRC2813", n:"GINGER SOYA"}, {c:"DRC2814", n:"PREMIX GOAT MILK"}, {c:"DRC3804", n:"DYNA TONIC 200ML"}, {c:"DRC3804A", n:"DYNA TONIC 500ML"}, {c:"DRC3809", n:"YEE YANG YEN"}, {c:"DRC3810", n:"RED COFFEE GINSENG"}, {c:"DRC3812", n:"GREEN TEA 60s"}, {c:"DRC3814", n:"PROLINK 20s"}, {c:"DRC4803", n:"GINSENG HONEY"}, {c:"DRC4805", n:"GINSENG 9x10"}, {c:"DRC4810", n:"TONGKAT ALI COFFEE"}, {c:"DRC4811", n:"GINALI 100s"}, {c:"DRC4815", n:"YEEGINKGO 90s"}, {c:"DRC4817", n:"MILK THISTLE"}, {c:"DRC4821", n:"TONGKAT ALI 100s"}, {c:"DRC4824", n:"SEA CUCUMBER 250ML"}, {c:"DRC4824A", n:"SEA CUCUMBER 500ML"}, {c:"DRC5801", n:"CHLOROPHYLL SOAP"}, {c:"DRC5802", n:"GANO SOAP"}
-    ];
+    let isL = true; let curM = 'OPENING';
+    const items = [{c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"}, {c:"DRC1203", n:"KACIP FATIMA GANO"}, {c:"DRC1204", n:"TONGKAT & MACCA"}, {c:"DRC1205", n:"CAPPUCCINO GANO"}, {c:"DRC1802A", n:"LIQUID ALFALFA 500ML"}, {c:"DRC1804", n:"GANODERMA COFFEE"}, {c:"DRC1810", n:"YEE GANO 90s"}, {c:"DRC1811", n:"YEEGARLIC 90s"}, {c:"DRC1814", n:"GANO CHOCO"}, {c:"DRC1817", n:"PRESIDENT COFFEE"}, {c:"DRC1818", n:"BLACK GANO"}, {c:"DRC2802", n:"GOAT MILK 150s"}, {c:"DRC2804", n:"SOYA POWDER"}, {c:"DRC2805", n:"SPIRULINA 60s"}, {c:"DRC2807", n:"SPIRULINA 300s"}, {c:"DRC2812", n:"WARISAN MAHARANI"}, {c:"DRC2813", n:"GINGER SOYA"}, {c:"DRC2814", n:"PREMIX GOAT MILK"}, {c:"DRC3804", n:"DYNA TONIC 200ML"}, {c:"DRC3804A", n:"DYNA TONIC 500ML"}, {c:"DRC3809", n:"YEE YANG YEN"}, {c:"DRC3810", n:"RED COFFEE GINSENG"}, {c:"DRC3812", n:"GREEN TEA 60s"}, {c:"DRC3814", n:"PROLINK 20s"}, {c:"DRC4803", n:"GINSENG HONEY"}, {c:"DRC4805", n:"GINSENG 9x10"}, {c:"DRC4810", n:"TONGKAT ALI COFFEE"}, {c:"DRC4811", n:"GINALI 100s"}, {c:"DRC4815", n:"YEEGINKGO 90s"}, {c:"DRC4817", n:"MILK THISTLE"}, {c:"DRC4821", n:"TONGKAT ALI 100s"}, {c:"DRC4824", n:"SEA CUCUMBER 250ML"}, {c:"DRC4824A", n:"SEA CUCUMBER 500ML"}, {c:"DRC5801", n:"CHLOROPHYLL SOAP"}, {c:"DRC5802", n:"GANO SOAP"}];
 
-    function toggleAuth() { isL = !isL; document.getElementById('t-btn').innerText = isL ? "Create New Account" : "Back to Login"; }
+    function toggleAuth() { isL = !isL; document.getElementById('t-btn').innerText = isL ? "Need an account? Register" : "Back to Login"; }
 
     async function handleAuth() {
         const u = document.getElementById('user').value.trim();
@@ -117,122 +118,83 @@
             document.getElementById('v-auth').classList.add('hidden');
             document.getElementById('main-ui').classList.remove('hidden');
             document.getElementById('u-tag').innerText = u.toUpperCase();
-            draw();
+            refreshData();
         }
     }
 
     function tab(m, el) {
-        curMode = m; document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); if(el) el.classList.add('active');
-        document.getElementById('v-title').innerText = curMode;
-        document.getElementById('v-entry').classList.toggle('hidden', curMode === 'REPORT');
-        document.getElementById('v-rpt').classList.toggle('hidden', curMode !== 'REPORT');
-        document.getElementById('carry-btn').classList.toggle('hidden', curMode !== 'OPENING');
-        if (curMode === 'REPORT') loadReport(); else draw();
+        curM = m; document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); if(el) el.classList.add('active');
+        document.getElementById('v-entry').classList.toggle('hidden', m === 'REPORT');
+        document.getElementById('v-rpt').classList.toggle('hidden', m !== 'REPORT');
+        document.getElementById('carry-btn').classList.toggle('hidden', m !== 'OPENING');
+        if (m === 'REPORT') loadReport(); else draw();
     }
 
-    function refreshView() { if(curMode === 'REPORT') loadReport(); }
+    function refreshData() { draw(); loadReport(); }
 
     function draw(f = "") {
-        const list = document.getElementById('list');
-        list.innerHTML = items.filter(i => i.n.includes(f.toUpperCase()) || i.c.includes(f.toUpperCase())).map(i => `
-            <div class="card item-row">
-                <div style="font-size:13px"><b>${i.n}</b><br><small style="color:#64748b">${i.c}</small></div>
-                <input type="number" class="qty-in" data-c="${i.c}" placeholder="0" style="width:75px; text-align:center; background:#fdfdfd">
+        document.getElementById('list').innerHTML = items.filter(i => i.n.includes(f.toUpperCase()) || i.c.includes(f.toUpperCase())).map(i => `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                <div><b style="font-size:14px">${i.n}</b><br><small style="color:#64748b">${i.c}</small></div>
+                <input type="number" class="qty-in" data-c="${i.c}" placeholder="0" style="width:70px; text-align:center; padding:10px;">
             </div>`).join('');
     }
 
     async function saveData() {
         const { data: { user } } = await sb.auth.getUser();
-        if(!user) return alert("Session expired. Please login again.");
-        
         const month = document.getElementById('m-picker').value;
         const rows = Array.from(document.querySelectorAll('.qty-in')).map(i => ({ code: i.dataset.c, qty: parseInt(i.value) || 0, uid: user.id })).filter(x => x.qty > 0);
-        
-        if(rows.length === 0) return alert("Enter numbers before saving!");
+        if(!rows.length) return alert("Enter quantities!");
 
         let res;
-        if(curMode === 'OPENING') res = await sb.from('monthly_stock').upsert(rows.map(r => ({ month_year: month, product_code: r.code, opening_quantity: r.qty, user_id: r.uid })), { onConflict: 'month_year,product_code,user_id' });
-        else if(curMode === 'SALES') res = await sb.from('sales').insert(rows.map(r => ({ product_code: r.code, qty_sold: r.qty, user_id: r.uid, month_ref: month })));
-        else if(curMode === 'RECEIVED') res = await sb.from('received_stock').insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, user_id: r.uid, month_ref: month })));
+        if(curM === 'OPENING') res = await sb.from('monthly_stock').upsert(rows.map(r => ({ month_year: month, product_code: r.code, opening_quantity: r.qty, user_id: r.uid })), { onConflict: 'month_year,product_code,user_id' });
+        else if(curM === 'SALES') res = await sb.from('sales').insert(rows.map(r => ({ product_code: r.code, qty_sold: r.qty, user_id: r.uid, month_ref: month })));
+        else if(curM === 'RECEIVED') res = await sb.from('received_stock').insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, user_id: r.uid, month_ref: month })));
 
-        if(res.error) alert("Database Error: " + res.error.message); 
-        else { alert("Success! Cloud Updated."); draw(); }
+        if(res.error) alert(res.error.message); else { alert("Cloud Synced!"); draw(); loadReport(); }
     }
 
     async function loadReport() {
-        const rList = document.getElementById('rpt-list');
         const month = document.getElementById('m-picker').value;
-        rList.innerHTML = "<center style='padding:20px; color:#64748b;'>Synchronizing Cloud Data...</center>";
-        
-        const [{data:o}, {data:s}, {data:r}] = await Promise.all([
-            sb.from('monthly_stock').select('*').eq('month_year', month),
-            sb.from('sales').select('*').eq('month_ref', month),
-            sb.from('received_stock').select('*').eq('month_ref', month)
-        ]);
+        const [{data:o}, {data:s}, {data:r}] = await Promise.all([sb.from('monthly_stock').select('*').eq('month_year', month), sb.from('sales').select('*').eq('month_ref', month), sb.from('received_stock').select('*').eq('month_ref', month)]);
 
+        let alerts = 0;
         const reportData = items.map(i => {
             const open = o?.find(x => x.product_code === i.c)?.opening_quantity || 0;
             const sold = s?.filter(x => x.product_code === i.c).reduce((a, b) => a + b.qty_sold, 0) || 0;
             const recv = r?.filter(x => x.product_code === i.c).reduce((a, b) => a + b.qty_received, 0) || 0;
             const stock = (open + recv - sold);
+            if(stock > 0 && stock < 5) alerts++;
             return { name: i.n, code: i.c, open, recv, sold, stock };
         }).filter(x => x.open > 0 || x.recv > 0 || x.sold > 0);
 
-        rList.innerHTML = reportData.length === 0 ? "<div class='card' style='text-align:center; color:gray;'>No records found for " + month + "</div>" : reportData.map(d => `
-            <div class="card" style="display:block">
-                <div class="item-row"><b>${d.name}</b> <span class="pill ${d.stock < 5 ? 'pill-red' : 'pill-green'}">${d.stock}</span></div>
-                <div style="font-size:11px; color:#94a3b8; margin-top:10px; display:flex; justify-content:space-between; background:#f8fafc; padding:8px; border-radius:8px;">
-                    <span>IN: ${d.open}</span> <span>REC: ${d.recv}</span> <span>SOLD: ${d.sold}</span>
+        document.getElementById('stat-count').innerText = reportData.length;
+        document.getElementById('stat-alert').innerText = alerts;
+
+        document.getElementById('rpt-list').innerHTML = reportData.map(d => `
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <b>${d.name}</b>
+                    <span style="font-weight:900; color:${d.stock < 5 ? 'var(--warn)' : 'var(--success)'}">${d.stock}</span>
+                </div>
+                <div style="font-size:11px; color:#64748b; background:#f8fafc; padding:8px; border-radius:10px; display:flex; justify-content:space-around;">
+                    <span>IN: ${d.open}</span><span>REC: ${d.recv}</span><span>OUT: ${d.sold}</span>
                 </div>
             </div>`).join('');
-        window.curRpt = reportData;
-    }
-
-    async function carryOver() {
-        const month = document.getElementById('m-picker').value;
-        if(month === "March 2026") return alert("No history before March.");
-        
-        const { data: { user } } = await sb.auth.getUser();
-        const prev = "March 2026";
-        
-        const [{data:o}, {data:s}, {data:r}] = await Promise.all([
-            sb.from('monthly_stock').select('*').eq('month_year', prev).eq('user_id', user.id),
-            sb.from('sales').select('*').eq('month_ref', prev).eq('user_id', user.id),
-            sb.from('received_stock').select('*').eq('month_ref', prev).eq('user_id', user.id)
-        ]);
-
-        const rows = items.map(i => {
-            const open = o?.find(x => x.product_code === i.c)?.opening_quantity || 0;
-            const sold = s?.filter(x => x.product_code === i.c).reduce((a, b) => a + b.qty_sold, 0) || 0;
-            const recv = r?.filter(x => x.product_code === i.c).reduce((a, b) => a + b.qty_received, 0) || 0;
-            return { code: i.c, final: (open + recv - sold) };
-        }).filter(x => x.final > 0);
-
-        if(rows.length === 0) return alert("No data found in March to carry over.");
-        
-        const { error } = await sb.from('monthly_stock').upsert(rows.map(cr => ({
-            month_year: month, product_code: cr.code, opening_quantity: cr.final, user_id: user.id
-        })));
-        
-        if(error) alert(error.message); else alert("Successfully transferred " + rows.length + " products to April!");
+        window.rptData = reportData;
     }
 
     function startVoice() {
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.onresult = (e) => {
-            const text = e.results[0][0].transcript;
-            document.getElementById('search').value = text;
-            draw(text);
-        };
-        recognition.start();
+        const r = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        r.onresult = (e) => { const t = e.results[0][0].transcript; document.getElementById('search').value = t; draw(t); };
+        r.start();
     }
 
     function exportPDF() {
         const { jsPDF } = window.jspdf; const doc = new jsPDF();
-        const month = document.getElementById('m-picker').value;
-        doc.setFontSize(18); doc.text("DYNAPHARM INVENTORY: " + month, 14, 22);
-        doc.autoTable({ head:[['CODE', 'ITEM', 'OPEN', 'RCV', 'SLD', 'BAL']], body: window.curRpt.map(d => [d.code, d.name, d.open, d.recv, d.sold, d.stock]), startY: 30, theme:'striped', headStyles:{fillColor:[15, 23, 42]} });
-        doc.save("Dynapharm_Report_" + month + ".pdf");
+        doc.text("DYNAPHARM PERFORMANCE: " + document.getElementById('m-picker').value, 14, 20);
+        doc.autoTable({ head:[['CODE', 'ITEM', 'IN', 'REC', 'OUT', 'BAL']], body: window.rptData.map(d => [d.code, d.name, d.open, d.recv, d.sold, d.stock]), startY: 30 });
+        doc.save("Dynapharm_Inventory.pdf");
     }
 </script>
 </body>
