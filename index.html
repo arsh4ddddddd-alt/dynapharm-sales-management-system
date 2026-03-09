@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dynapharm Elite</title>
+    <title>Dynapharm Elite v29</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
@@ -15,17 +15,17 @@
             --warn: #f43f5e;
             --orange: #f97316;
             --bg: #f8fafc;
-            --glass: rgba(255, 255, 255, 0.9);
         }
 
         body {
             font-family: 'Inter', -apple-system, sans-serif;
             margin: 0;
             background: var(--bg);
-            padding-bottom: 110px;
+            padding-bottom: 120px;
             color: #1e293b;
-            overflow-x: hidden;
         }
+
+        .hidden { display: none !important; }
 
         /* --- STUNNING LOGIN --- */
         #v-auth {
@@ -46,132 +46,100 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             width: 100%;
             max-width: 350px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
         }
 
-        .auth-card h1 { color: white; margin: 0 0 10px; letter-spacing: 2px; font-size: 24px; }
-        .auth-card p { color: #94a3b8; font-size: 14px; margin-bottom: 30px; }
+        .auth-card h1 { color: white; margin: 0; letter-spacing: 2px; }
+        .auth-card p { color: #94a3b8; font-size: 14px; margin-bottom: 25px; }
 
         .auth-input {
+            width: 100%;
+            padding: 14px;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
             color: white;
             margin-bottom: 15px;
-            transition: 0.3s;
+            box-sizing: border-box;
         }
-        .auth-input:focus { border-color: var(--accent); background: rgba(255, 255, 255, 0.1); }
 
-        /* --- DASHBOARD UI --- */
+        /* --- DASHBOARD HEADER FIX --- */
         .header {
             background: var(--p);
             color: white;
-            padding: 30px 20px 50px;
-            border-radius: 0 0 40px 40px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            padding: 30px 20px 40px; /* Increased bottom padding */
+            border-radius: 0 0 35px 35px;
+            position: relative;
         }
 
-        .user-welcome { font-size: 12px; opacity: 0.7; text-transform: uppercase; letter-spacing: 1px; }
-        
         .stats-row {
             display: flex;
             gap: 12px;
-            margin-top: 20px;
+            margin-top: 25px;
+            margin-bottom: -60px; /* Pulls the content up slightly but safely */
+            position: relative;
+            z-index: 5;
         }
 
         .stat-box {
             flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 20px;
-            backdrop-filter: blur(5px);
+            background: #1e293b; /* Solid dark color to prevent overlap mess */
+            padding: 18px 15px;
+            border-radius: 22px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.05);
         }
 
-        .stat-box small { font-size: 10px; opacity: 0.6; display: block; }
-        .stat-box b { font-size: 20px; display: block; margin-top: 4px; }
+        .stat-box small { font-size: 10px; color: #94a3b8; display: block; font-weight: bold; }
+        .stat-box b { font-size: 18px; display: block; margin-top: 5px; color: white; }
 
-        .content { padding: 0 20px; margin-top: -30px; position: relative; z-index: 10; }
+        /* --- CONTENT SPACING --- */
+        .content { 
+            padding: 80px 20px 20px; /* Added 80px top padding to clear the stat boxes */
+        }
 
         .card {
             background: white;
-            padding: 20px;
-            border-radius: 24px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            padding: 18px;
+            border-radius: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
             margin-bottom: 15px;
             border: 1px solid #f1f5f9;
-            transition: transform 0.2s;
-        }
-
-        input {
-            width: 100%;
-            padding: 14px 18px;
-            border: 2px solid #f1f5f9;
-            border-radius: 16px;
-            font-size: 16px;
-            box-sizing: border-box;
-            outline: none;
-        }
-
-        .qty-input {
-            width: 80px;
-            text-align: center;
-            background: #f8fafc;
-            border-color: #e2e8f0;
         }
 
         .btn {
             width: 100%;
-            padding: 18px;
+            padding: 16px;
             border: none;
-            border-radius: 18px;
+            border-radius: 16px;
             font-weight: 700;
             cursor: pointer;
-            font-size: 16px;
-            transition: 0.3s;
+            font-size: 15px;
+            transition: 0.2s;
         }
 
-        .btn-p { background: var(--accent); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
-        .btn-p:active { transform: scale(0.98); }
+        .btn-p { background: var(--accent); color: white; }
+        .btn-orange { background: var(--orange); color: white; margin-bottom: 15px; }
 
+        /* --- NAVIGATION --- */
         .nav {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
             width: 90%;
-            max-width: 400px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(15px);
+            max-width: 420px;
+            background: #0f172a;
             display: flex;
-            border-radius: 30px;
-            padding: 10px;
+            border-radius: 25px;
+            padding: 12px;
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+            z-index: 1000;
         }
 
-        .nav-btn {
-            flex: 1;
-            text-align: center;
-            color: #64748b;
-            font-size: 10px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
+        .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; font-weight: bold; }
         .nav-btn.active { color: white; }
-        .nav-btn span { font-size: 24px; display: block; margin-bottom: 2px; }
-
-        .low-pill {
-            background: #fee2e2;
-            color: var(--warn);
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 800;
-        }
-
-        .hidden { display: none !important; }
+        .nav-btn span { font-size: 22px; display: block; margin-bottom: 4px; }
     </style>
 </head>
 <body>
@@ -179,24 +147,24 @@
 <div id="v-auth">
     <div class="auth-card">
         <h1>DYNAPHARM</h1>
-        <p>Elite Inventory Management</p>
+        <p>Elite Inventory Access</p>
         <input id="user" class="auth-input" placeholder="Username">
         <input id="pass" type="password" class="auth-input" placeholder="Password">
-        <button class="btn btn-p" onclick="handleAuth()">Enter System</button>
-        <div onclick="toggleAuth()" id="t-btn" style="margin-top:20px; color:#94a3b8; cursor:pointer; font-size:12px; text-align:center">
-            New here? <b>Create Account</b>
+        <button class="btn btn-p" onclick="handleAuth()">Sign In</button>
+        <div onclick="toggleAuth()" id="t-btn" style="margin-top:20px; color:#94a3b8; cursor:pointer; font-size:12px;">
+            Need an account? <b>Register</b>
         </div>
     </div>
 </div>
 
 <div id="main-ui" class="hidden">
     <div class="header">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
-                <div class="user-welcome">Welcome back,</div>
-                <b id="u-display" style="font-size: 20px;">User</b>
+                <small style="opacity:0.7">WELCOME,</small><br>
+                <b id="u-display" style="font-size: 18px; letter-spacing: 1px;">USER</b>
             </div>
-            <select id="m-picker" onchange="refresh()" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:8px 12px; border-radius:12px; font-weight:bold;">
+            <select id="m-picker" onchange="refresh()" style="background:rgba(255,255,255,0.15); color:white; border:none; padding:8px; border-radius:10px; font-weight:bold;">
                 <option style="color:black">March 2026</option>
                 <option style="color:black">April 2026</option>
             </select>
@@ -204,27 +172,27 @@
 
         <div class="stats-row">
             <div class="stat-box">
-                <small>ACTIVE STOCK</small>
+                <small>ACTIVE ITEMS</small>
                 <b id="s-total">0</b>
             </div>
             <div class="stat-box">
-                <small>TOP SELLER</small>
-                <b id="s-top" style="font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">---</b>
+                <small>TOP PRODUCT</small>
+                <b id="s-top" style="font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">---</b>
             </div>
         </div>
     </div>
 
     <div class="content">
         <div id="v-entry">
-            <div class="card" style="padding: 10px 15px;">
-                <input id="search" placeholder="🔍 Search product name..." oninput="draw(this.value)" style="border:none; padding:10px 0;">
+            <div class="card" style="padding: 12px;">
+                <input id="search" placeholder="🔍 Search products..." oninput="draw(this.value)" style="border:none; width:100%; outline:none;">
             </div>
             <div id="list"></div>
-            <button class="btn btn-p" onclick="saveData()">Update Cloud Records</button>
+            <button class="btn btn-p" onclick="saveData()" style="margin-top:10px;">💾 Sync Cloud Data</button>
         </div>
 
         <div id="v-rpt" class="hidden">
-            <button class="btn" style="background:var(--orange); color:white; margin-bottom:20px;" onclick="exportPDF()">📄 Download PDF Report</button>
+            <button class="btn btn-orange" onclick="exportPDF()">📄 Download PDF Report</button>
             <div id="rpt-list"></div>
         </div>
     </div>
@@ -244,7 +212,6 @@
 
     let isLogin = true;
     let curMode = "OPENING";
-
     const items = [
         {c:"DRC1201", n:"GINKO & GINSENG COFFEE"}, {c:"DRC1202", n:"GANODERMA GREEN TEA"}, 
         {c:"DRC1203", n:"KACIP FATIMA GANO"}, {c:"DRC1204", n:"TONGKAT & MACCA"}, 
@@ -255,7 +222,7 @@
 
     function toggleAuth() {
         isLogin = !isLogin;
-        document.getElementById("t-btn").innerHTML = isLogin ? "New here? <b>Create Account</b>" : "Have account? <b>Back to Login</b>";
+        document.getElementById("t-btn").innerHTML = isLogin ? "Need an account? <b>Register</b>" : "Have account? <b>Login</b>";
     }
 
     async function handleAuth() {
@@ -288,8 +255,8 @@
             .filter(i => i.n.includes(f.toUpperCase()) || i.c.includes(f.toUpperCase()))
             .map(i => `
                 <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div><b>${i.n}</b><br><small style="color:#64748b">${i.c}</small></div>
-                    <input type="number" class="qty-input" data-c="${i.c}" placeholder="0">
+                    <div><b style="font-size:13px">${i.n}</b><br><small style="color:#64748b">${i.c}</small></div>
+                    <input type="number" class="qty-in" data-c="${i.c}" placeholder="0" style="width:70px; text-align:center; padding:10px; border:1px solid #e2e8f0; border-radius:10px;">
                 </div>
             `).join("");
     }
@@ -297,18 +264,18 @@
     async function saveData() {
         const { data: { user } } = await sb.auth.getUser();
         const month = document.getElementById("m-picker").value;
-        const rows = [...document.querySelectorAll(".qty-input")]
+        const rows = [...document.querySelectorAll(".qty-in")]
             .map(x => ({ code: x.dataset.c, qty: parseInt(x.value) || 0 }))
             .filter(x => x.qty > 0);
 
-        if(!rows.length) return alert("Enter quantities first!");
+        if(!rows.length) return alert("Please enter some numbers!");
 
-        let err;
-        if(curMode === "OPENING") ({ error: err } = await sb.from("monthly_stock").upsert(rows.map(r => ({ product_code: r.code, opening_quantity: r.qty, month_year: month, user_id: user.id })), { onConflict: 'month_year,product_code,user_id' }));
-        if(curMode === "SALES") ({ error: err } = await sb.from("sales").insert(rows.map(r => ({ product_code: r.code, qty_sold: r.qty, month_ref: month, user_id: user.id }))));
-        if(curMode === "RECEIVED") ({ error: err } = await sb.from("received_stock").insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, month_ref: month, user_id: user.id }))));
+        let res;
+        if(curMode === "OPENING") res = await sb.from("monthly_stock").upsert(rows.map(r => ({ product_code: r.code, opening_quantity: r.qty, month_year: month, user_id: user.id })), { onConflict: 'month_year,product_code,user_id' });
+        else if(curMode === "SALES") res = await sb.from("sales").insert(rows.map(r => ({ product_code: r.code, qty_sold: r.qty, month_ref: month, user_id: user.id })));
+        else if(curMode === "RECEIVED") res = await sb.from("received_stock").insert(rows.map(r => ({ product_code: r.code, qty_received: r.qty, month_ref: month, user_id: user.id })));
 
-        if(err) alert(err.message); else { alert("Sync Complete!"); draw(); loadReport(); }
+        if(res.error) alert(res.error.message); else { alert("Data Synced Successfully!"); draw(); loadReport(); }
     }
 
     async function loadReport() {
@@ -321,8 +288,7 @@
             const open = o?.find(x => x.product_code === i.c)?.opening_quantity || 0;
             const sold = s?.filter(x => x.product_code === i.c).reduce((a, b) => a + b.qty_sold, 0) || 0;
             const recv = r?.filter(x => x.product_code === i.c).reduce((a, b) => a + b.qty_received, 0) || 0;
-            const stock = open + recv - sold;
-            return { name: i.n, open, recv, sold, stock };
+            return { name: i.n, open, recv, sold, stock: (open + recv - sold) };
         }).filter(x => x.open || x.recv || x.sold);
 
         document.getElementById("s-total").innerText = report.length;
@@ -331,12 +297,12 @@
 
         document.getElementById("rpt-list").innerHTML = report.map(d => `
             <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <b>${d.name}</b>
-                    <span class="${d.stock < 5 ? 'low-pill' : ''}" style="font-weight:900;">${d.stock}</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <b style="font-size:14px;">${d.name}</b>
+                    <span style="font-weight:900; color:${d.stock < 5 ? 'var(--warn)' : 'var(--success)'}">${d.stock}</span>
                 </div>
-                <div style="margin-top:12px; font-size:11px; color:#64748b; display:flex; justify-content:space-between; border-top:1px solid #f1f5f9; padding-top:10px;">
-                    <span>OPEN: ${d.open}</span><span>RECV: ${d.recv}</span><span>SOLD: ${d.sold}</span>
+                <div style="font-size:11px; color:#64748b; display:flex; justify-content:space-between; background:#f8fafc; padding:8px; border-radius:10px;">
+                    <span>IN: ${d.open}</span><span>REC: ${d.recv}</span><span>OUT: ${d.sold}</span>
                 </div>
             </div>
         `).join("");
@@ -347,19 +313,12 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const month = document.getElementById("m-picker").value;
-        
-        doc.setFillColor(244, 63, 94); // Red Header
-        doc.rect(0, 0, 210, 40, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(22);
-        doc.text("DYNAPHARM OFFICIAL REPORT", 14, 25);
-        
+        doc.setFillColor(225, 29, 72); doc.rect(0, 0, 210, 40, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("DYNAPHARM ERP REPORT", 14, 25);
         doc.autoTable({
-            startY: 45,
-            head: [['PRODUCT', 'OPEN', 'RECV', 'SOLD', 'BALANCE']],
+            startY: 45, head: [['PRODUCT', 'OPEN', 'RECV', 'SOLD', 'BAL']],
             body: window.rptData.map(x => [x.name, x.open, x.recv, x.sold, x.stock]),
-            headStyles: { fillColor: [249, 115, 22] }, // Orange Table Head
-            theme: 'grid'
+            headStyles: { fillColor: [249, 115, 22] }
         });
         doc.save(`Dynapharm_${month}.pdf`);
     }
