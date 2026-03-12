@@ -1,281 +1,116 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DYNAPHARM Pro v55.0 | Cloud & ERP</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Depot Inventory Reporter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        :root { 
-            --p: #0f172a; --accent: #6366f1; --orange: #f97316; --bg: #f8fafc; 
-            --warn: #f43f5e; --success: #10b981; --border: #e2e8f0; --glass: rgba(255,255,255,0.1);
-        }
-        
-        body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding-bottom: 140px; background: var(--bg); color: #1e293b; overflow-x: hidden; }
-        .hidden { display: none !important; }
-
-        /* --- AUTH GLASS DESIGN --- */
-        #v-auth { background: var(--p); height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .auth-card { background: white; padding: 40px 30px; border-radius: 30px; width: 100%; max-width: 340px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
-        .auth-card h2 { margin: 0 0 10px; font-size: 26px; color: var(--p); text-align: center; font-weight: 800; }
-        .input-group { position: relative; margin-bottom: 15px; }
-        .auth-input { width: 100%; padding: 16px; border-radius: 14px; border: 1.5px solid var(--border); font-size: 16px; outline: none; box-sizing: border-box; }
-        .eye-btn { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 20px; color: #94a3b8; }
-
-        /* --- HEADER & STATS --- */
-        .header { background: var(--p); color: white; padding: 30px 20px 60px; border-radius: 0 0 40px 40px; position: sticky; top: 0; z-index: 100; }
-        .top-row { display: flex; justify-content: space-between; align-items: center; }
-        #view-date { background: var(--glass); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 12px; font-weight: bold; outline: none; }
-
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: -40px 20px 0; position: relative; z-index: 110; }
-        .stat-card { background: white; padding: 15px 10px; border-radius: 20px; box-shadow: 0 10px 15px rgba(0,0,0,0.05); text-align: center; border: 1px solid #f1f5f9; }
-        .stat-card small { font-size: 9px; color: #64748b; font-weight: 800; text-transform: uppercase; }
-        .stat-card b { display: block; font-size: 14px; color: var(--p); margin-top: 4px; }
-
-        /* --- CONTENT --- */
-        .content { padding: 50px 20px 20px; }
-        .card { background: white; padding: 20px; border-radius: 24px; margin-bottom: 15px; border: 1px solid #f1f5f9; }
-        
-        .mode-toggle { display: flex; background: #e2e8f0; padding: 5px; border-radius: 16px; margin-bottom: 20px; }
-        .mode-btn { flex: 1; padding: 12px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; background: transparent; color: #64748b; }
-        .mode-btn.active { background: white; color: var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f8fafc; }
-        .qty-box { width: 65px; padding: 10px; border-radius: 10px; border: 1.5px solid var(--border); text-align: center; font-weight: bold; }
-
-        .shop-box { margin-bottom: 30px; border-left: 5px solid var(--accent); padding-left: 15px; }
-        .entry-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; background: #f1f5f9; padding: 10px; border-radius: 12px; margin-bottom: 6px; align-items: center; }
-        .entry-row input { width: 100%; padding: 8px 0; border-radius: 8px; border: 1px solid var(--border); text-align: center; font-weight: 800; }
-
-        /* --- NAVIGATION --- */
-        .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 450px; background: var(--p); display: flex; border-radius: 30px; padding: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); z-index: 1000; }
-        .nav-btn { flex: 1; text-align: center; color: #64748b; font-size: 10px; font-weight: 700; cursor: pointer; }
-        .nav-btn.active { color: white; }
-        .nav-btn span { font-size: 24px; display: block; margin-bottom: 5px; }
-
-        .btn { width: 100%; padding: 18px; border-radius: 18px; border: none; font-weight: 800; font-size: 15px; cursor: pointer; transition: 0.2s; }
-        .btn-p { background: var(--accent); color: white; margin-bottom: 10px; }
-        .btn-s { background: #e2e8f0; color: var(--p); width: auto; padding: 8px 15px; font-size: 11px; border-radius: 10px; }
-        
-        .rpt-line { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; }
-        .val-in { color: var(--success); }
-        .val-out { color: var(--warn); }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #eef2f3; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 10px; }
+        .upload-area { border: 2px dashed #3498db; padding: 30px; text-align: center; border-radius: 10px; background: #f9fbff; cursor: pointer; margin: 20px 0; }
+        .btn { background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; display: none; }
+        .btn:hover { background: #219150; }
+        #status { text-align: center; color: #7f8c8d; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; font-size: 14px; }
+        th { background: #34495e; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:nth-child(even) { background: #f8f9fa; }
     </style>
 </head>
 <body>
 
-<div id="v-auth">
-    <div class="auth-card">
-        <h2>DYNAPHARM</h2>
-        <input id="user" class="auth-input" placeholder="Utilisateur">
-        <div class="input-group">
-            <input id="pass" class="auth-input" type="password" placeholder="Mot de passe">
-            <span class="eye-btn" onclick="togglePass()">👁️</span>
-        </div>
-        <button class="btn btn-p" onclick="handleAuth()">Se Connecter</button>
-    </div>
-</div>
+<div class="container">
+    <h1>📦 Depot Inventory Hub</h1>
+    <p style="text-align: center;">Combine shop reports (UPN, Masina, Botour) into one master PDF.</p>
 
-<div id="main-ui" class="hidden">
-    <div class="header">
-        <div class="top-row">
-            <div><small>ERP AGENT</small><br><b id="u-display" style="color:var(--accent)">---</b></div>
-            <input type="date" id="view-date" onchange="loadAllFromCloud()">
-        </div>
+    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <strong>Click to select all your Shop PDFs</strong>
+        <input type="file" id="fileInput" multiple accept="application/pdf" style="display:none">
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-card"><small>Boutiques</small><b id="st-total-shops">$0.00</b></div>
-        <div class="stat-card"><small>Perso IN</small><b id="st-perso-in" class="val-in">0</b></div>
-        <div class="stat-card"><small>Perso OUT</small><b id="st-perso-out" class="val-out">0</b></div>
-    </div>
+    <div id="status">No files loaded</div>
+    
+    <button id="downloadBtn" class="btn">Generate & Download Master Report (PDF)</button>
 
-    <div class="content">
-        <div id="v-personal">
-            <div class="mode-toggle">
-                <button id="m-in" class="mode-btn active" onclick="setPersoMode('IN')">📥 STOCK IN</button>
-                <button id="m-out" class="mode-btn" onclick="setPersoMode('OUT')">📤 STOCK OUT</button>
-            </div>
-            <div class="card" id="personal-list"></div>
-            <button class="btn btn-p" onclick="savePersoMovement()">💾 Sauvegarder Mouvement Perso</button>
-        </div>
-
-        <div id="v-global" class="hidden">
-            <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <button class="btn btn-s" onclick="addShop()">+ Boutique</button>
-                <button class="btn btn-p" style="flex:1" onclick="syncShopsToCloud()">☁️ Sync Toutes Boutiques</button>
-            </div>
-            <div id="shops-container"></div>
-        </div>
-
-        <div id="v-rpt" class="hidden">
-            <div class="card">
-                <h3 style="margin:0 0 15px">Sommaire des Ventes</h3>
-                <div id="rpt-summary"></div>
-            </div>
-            <div class="card">
-                <h3 style="margin:0 0 15px">Détails des Stocks Perso</h3>
-                <div id="rpt-stock-details"></div>
-            </div>
-            <button class="btn" style="background:var(--orange); color:white" onclick="exportFullPDF()">📄 Télécharger Rapport PDF</button>
-        </div>
-    </div>
-
-    <div class="nav">
-        <div class="nav-btn active" onclick="switchTab('PERSONAL', this)"><span>📦</span>Stock</div>
-        <div class="nav-btn" onclick="switchTab('GLOBAL', this)"><span>🌍</span>Boutiques</div>
-        <div class="nav-btn" onclick="switchTab('REPORT', this)"><span>📊</span>Rapport</div>
-    </div>
+    <table id="previewTable">
+        <thead>
+            <tr>
+                <th>Shop Name</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Amount</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
 </div>
 
 <script>
-    const _URL = "https://ywmlvtdrwijnhqdypteu.supabase.co";
-    const _KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3bWx2dDRyd2lqbmhxZHlwdGV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5MDM2NjIsImV4cCI6MjA4ODQ3OTY2Mn0.8-CE8qchVD8NcBX-_FDgegsjTxNMwd9IN7oNe5qeTpg";
-    const sb = supabase.createClient(_URL, _KEY);
+    const { jsPDF } = window.jspdf;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-    const items = [
-        {c:"DRC1201", n:"CAFE GINKO & GINSENG", p: 13}, {c:"DRC1202", n:"CAFÉ THÉ VERT GANODERMA", p: 14}, 
-        {c:"DRC1203", n:"CAFÉ KACIP FATIMA", p: 14}, {c:"DRC1204", n:"CAFÉ TONGKAT & MACCA", p: 14}, 
-        {c:"DRC1205", n:"CAFÉ CUPPUCCINO", p: 15}, {c:"DRC1802A", n:"D.I. LIQUID ALFALFA PLUS", p: 20}, 
-        {c:"DRC1804", n:"GANODERMA CAFE", p: 11}, {c:"DRC1810", n:"CAPSULE DE YEE GANO 90s", p: 23}, 
-        {c:"DRC1811", n:"YEEGARLIC CAPSULE 90s", p: 23}, {c:"DRC1814", n:"GANODERMA CHOCOLAT", p: 19}, 
-        {c:"DRC1817", n:"CAFÉ CHOIX DU PRESIDENT", p: 15}, {c:"DRC1818", n:"CAFÉ NOIR GANODERMA", p: 14}, 
-        {c:"DRC2802", n:"LAIT DE CHEVRE 150s", p: 16}, {c:"DRC2804", n:"POUDRE GRAINES DE SOJA", p: 17}, 
-        {c:"DRC2805", n:"MARINE SPIRULLINA", p: 17}, {c:"DRC2807", n:"SPIRULINA (300s)", p: 22}, 
-        {c:"DRC2812", n:"HERBA WARISAN MAHARANI", p: 36}, {c:"DRC2813", n:"SOJA GINGEMBRE", p: 14}, 
-        {c:"DRC2814", n:"LAIT DE CHEVRE 3 EN 1", p: 15}, {c:"DRC3804", n:"DYNA TONIC 780ml", p: 33}, 
-        {c:"DRC3809", n:"YEE YANG YEN 90s", p: 23}, {c:"DRC3810", n:"RED COFFEE GINSENG", p: 13}, 
-        {c:"DRC3812", n:"GREEN TEA CAPSULE 60s", p: 23}, {c:"DRC3814", n:"PROLINK 20s", p: 36}, 
-        {c:"DRC4803", n:"GINSENG MIEL GINGEMBRE", p: 17}, {c:"DRC4805", n:"GINSENG CAPSULE 9x10s", p: 31}, 
-        {c:"DRC4810", n:"CAFÉ TONGKAT ALI", p: 11}, {c:"DRC4811", n:"GINALI CAPSULE 100s", p: 27}, 
-        {c:"DRC4815", n:"YEEGINKGO 90s", p: 23}, {c:"DRC4817", n:"MILK THISTLE 120s", p: 36}, 
-        {c:"DRC4821", n:"TONGKAT ALI 100s", p: 21}, {c:"DRC4824", n:"SEA CUCUMBER JELLY", p: 31}, 
-        {c:"DRC5802N", n:"NONI 500ml", p: 26}, {c:"DRC5803", n:"NONI PLUS TEA 30s", p: 19}, 
-        {c:"DRC5806", n:"DYNA 'S' TABLET 120s", p: 21}, {c:"DRC9918", n:"DYNA SERENOA 100s", p: 32}, 
-        {c:"DRC5801", n:"CHLOROPHYLL SOAP", p: 5}, {c:"DRC5802", n:"GANO SOAP", p: 5}
-    ];
+    let allData = [];
 
-    let currentPersoMode = 'IN';
-    let shops = [];
-    let personalMovement = [];
-
-    function togglePass() { const p = document.getElementById('pass'); p.type = p.type === 'password' ? 'text' : 'password'; }
-
-    async function handleAuth() {
-        let u = document.getElementById('user').value.trim();
-        if(!u.includes('@')) u += "@dyna.pro";
-        let { data, error } = await sb.auth.signInWithPassword({ email: u, password: document.getElementById('pass').value });
-        if(error) alert(error.message); else {
-            document.getElementById('u-display').innerText = u.split('@')[0].toUpperCase();
-            document.getElementById('v-auth').classList.add('hidden');
-            document.getElementById('main-ui').classList.remove('hidden');
-            document.getElementById('view-date').value = new Date().toISOString().split('T')[0];
-            loadAllFromCloud();
-        }
-    }
-
-    function switchTab(t, btn) {
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('v-personal').classList.toggle('hidden', t !== 'PERSONAL');
-        document.getElementById('v-global').classList.toggle('hidden', t !== 'GLOBAL');
-        document.getElementById('v-rpt').classList.toggle('hidden', t !== 'REPORT');
-        if(t === 'REPORT') updateRapportUI();
-    }
-
-    function setPersoMode(m) { currentPersoMode = m; document.getElementById('m-in').classList.toggle('active', m==='IN'); document.getElementById('m-out').classList.toggle('active', m==='OUT'); renderPersonal(); }
-
-    function renderPersonal() {
-        document.getElementById('personal-list').innerHTML = items.map(i => `
-            <div class="item-row">
-                <b>${i.n}</b>
-                <input type="number" class="qty-box perso-qty" data-code="${i.c}" placeholder="0">
-            </div>
-        `).join('');
-    }
-
-    async function savePersoMovement() {
-        const date = document.getElementById('view-date').value;
-        let moveData = [];
-        document.querySelectorAll('.perso-qty').forEach(inp => {
-            if(inp.value > 0) moveData.push({ code: inp.dataset.code, qty: parseInt(inp.value), type: currentPersoMode });
-        });
-        if(moveData.length === 0) return;
-        await sb.from('personal_stock').upsert({ movement_date: date, movement_data: moveData, agent_name: document.getElementById('u-display').innerText }, { onConflict: 'movement_date' });
-        alert("Stock synchronisé !"); loadAllFromCloud();
-    }
-
-    function addShop() {
-        const n = prompt("Nom de la boutique:");
-        if(n) { shops.push({ name: n, data: items.map(i => ({ ...i, sold: 0, bal: 0 })) }); renderShops(); }
-    }
-
-    function updateShopVal(sIdx, c, field, val) {
-        const row = shops[sIdx].data.find(d => d.c === c);
-        if(row) row[field] = parseInt(val) || 0;
-    }
-
-    function renderShops() {
-        document.getElementById('shops-container').innerHTML = shops.map((s, idx) => `
-            <div class="shop-box">
-                <h3>${s.name}</h3>
-                ${s.data.map(d => `
-                    <div class="entry-row">
-                        <span>${d.c}</span>
-                        <input type="number" placeholder="Vendu" value="${d.sold || ''}" oninput="updateShopVal(${idx},'${d.c}','sold',this.value)">
-                        <input type="number" placeholder="Reste" value="${d.bal || ''}" oninput="updateShopVal(${idx},'${d.c}','bal',this.value)">
-                    </div>
-                `).join('')}
-            </div>
-        `).join('');
-    }
-
-    async function syncShopsToCloud() {
-        const date = document.getElementById('view-date').value;
-        for (const s of shops) {
-            await sb.from('daily_reports').upsert({
-                report_date: date, shop_name: s.name, report_data: s.data,
-                total_sales: s.data.reduce((sum, d) => sum + (d.sold * d.p), 0)
-            }, { onConflict: 'report_date, shop_name' });
-        }
-        alert("Ventes boutiques synchronisées !"); loadAllFromCloud();
-    }
-
-    async function loadAllFromCloud() {
-        const date = document.getElementById('view-date').value;
-        const { data: sData } = await sb.from('daily_reports').select('*').eq('report_date', date);
-        const { data: pData } = await sb.from('personal_stock').select('*').eq('movement_date', date);
-        shops = sData ? sData.map(r => ({ name: r.shop_name, data: r.report_data })) : [];
-        personalMovement = pData && pData[0] ? pData[0].movement_data : [];
-        renderShops(); renderPersonal(); updateRapportUI();
-    }
-
-    function updateRapportUI() {
-        let rev = 0; 
-        let html = shops.map(s => {
-            let t = s.data.reduce((sum, d) => sum + (d.sold * d.p), 0);
-            rev += t;
-            return `<div class="rpt-line"><span>${s.name}</span><b>$${t.toFixed(2)}</b></div>`;
-        }).join('');
-        document.getElementById('rpt-summary').innerHTML = html + `<div class="rpt-line" style="border-top:2px solid var(--p);font-weight:bold"><span>TOTAL</span><b>$${rev.toFixed(2)}</b></div>`;
-        document.getElementById('st-total-shops').innerText = `$${rev.toFixed(2)}`;
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+        const files = e.target.files;
+        if (files.length === 0) return;
         
-        document.getElementById('st-perso-in').innerText = personalMovement.filter(m=>m.type==='IN').reduce((a,b)=>a+b.qty,0);
-        document.getElementById('st-perso-out').innerText = personalMovement.filter(m=>m.type==='OUT').reduce((a,b)=>a+b.qty,0);
-        document.getElementById('rpt-stock-details').innerHTML = personalMovement.map(m=>`<div class="rpt-line"><span>${m.code}</span><b class="${m.type==='IN'?'val-in':'val-out'}">${m.type}: ${m.qty}</b></div>`).join('');
-    }
-    
-    function exportFullPDF() {
-        const { jsPDF } = window.jspdf;
+        allData = [];
+        document.getElementById('tableBody').innerHTML = '';
+        document.getElementById('status').innerText = "Processing files...";
+
+        for (const file of files) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+            const page = await pdf.getPage(1);
+            const textContent = await page.getTextContent();
+            
+            const strings = textContent.items.map(item => item.str);
+            const shopName = strings[0] || file.name;
+
+            // Look for patterns like: Description, Qty, Rate, Amount
+            for (let i = 0; i < strings.length; i++) {
+                if (strings[i].includes('$') && i > 1) {
+                    const qty = parseInt(strings[i-1]) || 0;
+                    const amountStr = strings[i].replace(/[$,]/g, '');
+                    const amount = parseFloat(amountStr) || 0;
+                    const desc = strings[i-2] ? strings[i-2].trim() : "Unknown";
+
+                    if (qty > 0) {
+                        allData.push([shopName, desc, qty, `$${amount.toFixed(2)}`]);
+                        const row = `<tr><td>${shopName}</td><td>${desc}</td><td>${qty}</td><td>$${amount.toFixed(2)}</td></tr>`;
+                        document.getElementById('tableBody').innerHTML += row;
+                    }
+                }
+            }
+        }
+        
+        document.getElementById('status').innerText = `Loaded ${allData.length} items from ${files.length} reports.`;
+        document.getElementById('downloadBtn').style.display = 'block';
+    });
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
         const doc = new jsPDF();
-        doc.text("RAPPORT DYNAPHARM GLOBAL - " + document.getElementById('view-date').value, 14, 15);
-        doc.autoTable({ startY: 25, head: [['Boutique', 'Ventes']], body: shops.map(s => [s.name, `$${s.data.reduce((a,b)=>a+(b.sold*b.p),0).toFixed(2)}`]) });
-        doc.save(`DYNAPHARM_${document.getElementById('view-date').value}.pdf`);
-    }
+        doc.setFontSize(18);
+        doc.text("Global Depot Inventory Report", 14, 20);
+        doc.setFontSize(11);
+        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+
+        doc.autoTable({
+            startY: 40,
+            head: [['Shop Name', 'Product Description', 'Qty Out', 'Total Value']],
+            body: allData,
+            theme: 'grid',
+            headStyles: { fillColor: [44, 62, 80] }
+        });
+
+        doc.save(`GLOBAL_DEPOT_REPORT_${new Date().getTime()}.pdf`);
+    });
 </script>
+
 </body>
 </html>
