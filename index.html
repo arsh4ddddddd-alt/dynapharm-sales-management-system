@@ -3,185 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Depot Master Stock Ledger</title>
+    <title>Depot Smart Ledger Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background: #f4f7f9; color: #333; }
-        .container { max-width: 1200px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
-        h1 { color: #1a237e; text-align: center; margin-bottom: 5px; }
-        .info { text-align: center; color: #666; margin-bottom: 25px; font-size: 14px; }
-        #drop-zone { border: 3px dashed #3949ab; padding: 50px; text-align: center; border-radius: 10px; background: #f5f6ff; cursor: pointer; transition: 0.2s; }
-        #drop-zone:hover { background: #e8eaf6; border-color: #1a237e; }
-        .btn-generate { background: #1b5e20; color: white; border: none; padding: 20px; width: 100%; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; display: none; margin-top: 25px; transition: 0.3s; }
-        .btn-generate:hover { background: #2e7d32; }
-        #status { margin: 15px 0; padding: 10px; border-radius: 4px; display: none; text-align: center; font-weight: bold; }
-        .preview-table { width: 100%; border-collapse: collapse; margin-top: 30px; font-size: 12px; }
-        .preview-table th, .preview-table td { border: 1px solid #e0e0e0; padding: 12px; text-align: left; }
-        .preview-table th { background: #1a237e; color: white; }
-        .preview-table tr:nth-child(even) { background: #f9f9f9; }
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; }
+        .container { max-width: 1100px; margin: auto; background: #1e293b; padding: 30px; border-radius: 20px; border: 1px solid #334155; }
+        h1 { text-align: center; color: #38bdf8; font-size: 28px; text-transform: uppercase; letter-spacing: 2px; }
+        #drop-zone { border: 2px dashed #38bdf8; padding: 60px; text-align: center; border-radius: 15px; background: rgba(56, 189, 248, 0.05); cursor: pointer; transition: 0.3s; }
+        #drop-zone:hover { background: rgba(56, 189, 248, 0.1); border-color: #7dd3fc; }
+        .btn-generate { background: #0ea5e9; color: white; border: none; padding: 20px; width: 100%; border-radius: 10px; font-size: 20px; font-weight: 800; cursor: pointer; display: none; margin-top: 30px; box-shadow: 0 4px 14px 0 rgba(14, 165, 233, 0.39); }
+        .status { margin: 20px 0; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; background: #334155; }
+        .preview-box { margin-top: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; background: #0f172a; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { background: #38bdf8; color: #0f172a; text-transform: uppercase; font-size: 12px; }
+        .shop-title { color: #fbbf24; font-size: 20px; margin-bottom: 10px; border-left: 5px solid #fbbf24; padding-left: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📦 Depot Master Inventory Ledger</h1>
-    <p class="info">Complete history of every item: When it moved, Where it went, and How much.</p>
-
+    <h1>🚀 Smart Depot Distribution Ledger</h1>
     <div id="drop-zone" onclick="document.getElementById('fileInput').click()">
-        <strong>Click to Upload ALL PDF Files</strong>
-        <p>The system will automatically extract dates and destinations from every page.</p>
+        <strong>DRAG & DROP ALL SHOP PDFs HERE</strong>
+        <p style="color: #94a3b8;">Scanning for: DEPOT TO [SHOP] [DATE] logic</p>
         <input type="file" id="fileInput" multiple accept="application/pdf" style="display:none">
     </div>
 
-    <div id="status"></div>
-
-    <button id="generateBtn" class="btn-generate">GENERATE FINAL LOGICAL REPORT (PDF)</button>
-
-    <div id="previewArea"></div>
+    <div id="status" class="status">System Standby: Waiting for files...</div>
+    <button id="genBtn" class="btn-generate">GENERATE MASTER REPORT</button>
+    <div id="previewArea" class="preview-box"></div>
 </div>
 
 <script>
     const { jsPDF } = window.jspdf;
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-    let masterRecord = [];
+    let shopData = {}; // Format: { "UPN": { "OCTOBER 7 2025": [...] } }
 
     document.getElementById('fileInput').addEventListener('change', async (e) => {
         const files = e.target.files;
         if (!files.length) return;
 
-        masterRecord = [];
-        const status = document.getElementById('status');
-        status.style.display = 'block';
-        status.style.background = '#fff3e0';
-        status.innerText = "Analyzing all files... please wait.";
+        shopData = {};
+        document.getElementById('status').innerText = "POWER SCANNING DOCUMENTS...";
 
         for (const file of files) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
 
-            // Scan every single page of the document
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                const textContent = await page.getTextContent();
-                
-                // Clean and extract strings
-                const items = textContent.items.map(item => 
-                    item.str.replace(/[\\"\r\n]/g, '').trim()
-                ).filter(s => s !== "");
+                const text = await page.getTextContent();
+                const lines = text.items.map(item => item.str.replace(/[\\"\r\n]/g, '').trim()).filter(s => s !== "");
 
-                // Logic to identify Date and Shop for THIS specific page
-                let pageShop = "Unknown Shop";
-                let pageDate = "Unknown Date";
+                // --- SMART HEADER PARSING ---
+                let headerLine = lines[0] || "";
+                let shopName = "GENERAL DEPOT";
+                let movementDate = "NO DATE";
 
-                // Check first 15 strings for header info
-                for (let j = 0; j < Math.min(15, items.length); j++) {
-                    if (items[j].toUpperCase().includes("DEPOT TO")) {
-                        pageShop = items[j];
-                    }
-                    // Simple Regex for Date detection (e.g., October 7 2025)
-                    if (/(JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER)\s+\d{1,2}\s+\d{4}/i.test(items[j])) {
-                        pageDate = items[j];
-                    }
+                if (headerLine.toUpperCase().includes("DEPOT TO")) {
+                    const parts = headerLine.toUpperCase().split("DEPOT TO")[1].trim().split(" ");
+                    shopName = parts[0]; // Gets UPN, MASINA, etc.
+                    movementDate = parts.slice(1).join(" "); // Gets the rest as the Date
                 }
 
-                // Scan for Product Lines
-                for (let k = 0; k < items.length; k++) {
-                    // We look for the Price/Amount ($) as the anchor for a valid row
-                    if (items[k].includes('$') && k > 1) {
-                        const amount = parseFloat(items[k].replace(/[$,]/g, '')) || 0;
-                        const qty = parseInt(items[k-1]) || 0;
-                        const product = items[k-2] || "Unknown Product";
+                if (!shopData[shopName]) shopData[shopName] = {};
+                if (!shopData[shopName][movementDate]) shopData[shopName][movementDate] = [];
 
-                        // Logic: Only record if stock actually moved (Qty > 0)
+                // --- DATA EXTRACTION ---
+                for (let k = 0; k < lines.length; k++) {
+                    if (lines[k].includes('$') && k > 1) {
+                        const amount = lines[k];
+                        const qty = parseInt(lines[k-1]) || 0;
+                        const product = lines[k-2] || "Unknown";
+
                         if (qty > 0) {
-                            masterRecord.push({
-                                date: pageDate,
-                                shop: pageShop,
-                                description: product,
-                                qtyIn: qty,
-                                qtyOut: qty,
-                                value: amount
-                            });
+                            shopData[shopName][movementDate].push({ product, qty, amount });
                         }
                     }
                 }
             }
         }
-
         renderPreview();
     });
 
     function renderPreview() {
-        const status = document.getElementById('status');
-        const generateBtn = document.getElementById('generateBtn');
-        
-        if (masterRecord.length === 0) {
-            status.style.background = '#ffebee';
-            status.innerText = "Error: No stock movements found. Please check your PDF format.";
-            return;
+        let html = "";
+        for (const shop in shopData) {
+            html += `<div class="shop-title">DESTINATION: ${shop}</div>`;
+            for (const date in shopData[shop]) {
+                html += `<table><thead><tr><th colspan="3">Date: ${date}</th></tr><tr><th>Product</th><th>Qty Sent</th><th>Total Value</th></tr></thead><tbody>`;
+                shopData[shop][date].forEach(item => {
+                    html += `<tr><td>${item.product}</td><td>${item.qty}</td><td>${item.amount}</td></tr>`;
+                });
+                html += `</tbody></table>`;
+            }
         }
-
-        // Logical Sort: Sort by Date first, then by Shop
-        masterRecord.sort((a, b) => new Date(a.date) - new Date(b.date) || a.shop.localeCompare(b.shop));
-
-        status.style.background = '#e8f5e9';
-        status.innerText = `Found ${masterRecord.length} stock movements across all dates.`;
-        generateBtn.style.display = 'block';
-
-        let html = `<table class="preview-table"><thead><tr><th>Movement Date</th><th>Destination (Shop)</th><th>Item</th><th>Qty</th><th>Total Value</th></tr></thead><tbody>`;
-        
-        masterRecord.forEach(row => {
-            html += `<tr>
-                <td>${row.date}</td>
-                <td style="font-weight:bold; color:#1a237e;">${row.shop}</td>
-                <td>${row.description}</td>
-                <td>${row.qtyOut}</td>
-                <td>$${row.value.toFixed(2)}</td>
-            </tr>`;
-        });
-        
-        html += `</tbody></table>`;
         document.getElementById('previewArea').innerHTML = html;
+        document.getElementById('status').innerText = "SCAN COMPLETE. SYSTEM READY.";
+        document.getElementById('genBtn').style.display = 'block';
     }
 
-    document.getElementById('generateBtn').addEventListener('click', () => {
-        const doc = new jsPDF('l', 'mm', 'a4');
-        
-        doc.setFontSize(20);
-        doc.setTextColor(26, 35, 126);
-        doc.text("DEPOT MASTER STOCK MOVEMENT LEDGER", 14, 15);
-        
-        doc.setFontSize(10);
-        doc.setTextColor(100);
-        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+    document.getElementById('genBtn').addEventListener('click', () => {
+        const doc = new jsPDF('p', 'mm', 'a4');
+        let y = 15;
 
-        const tableData = masterRecord.map(r => [
-            r.date,
-            r.shop,
-            r.description,
-            r.qtyIn,
-            r.qtyOut,
-            `$${r.value.toFixed(2)}`
-        ]);
+        doc.setFontSize(22);
+        doc.setTextColor(56, 189, 248);
+        doc.text("DEPOT MASTER MOVEMENT REPORT", 14, y);
+        y += 15;
 
-        doc.autoTable({
-            startY: 30,
-            head: [['Date', 'To (Destination Shop)', 'Product Description', 'Stock In', 'Stock Out', 'Total Value']],
-            body: tableData,
-            theme: 'grid',
-            headStyles: { fillColor: [26, 35, 126], fontSize: 10 },
-            styles: { fontSize: 8, cellPadding: 3 },
-            columnStyles: {
-                0: { cellWidth: 35 },
-                1: { cellWidth: 50, fontStyle: 'bold' },
-                2: { cellWidth: 'auto' }
+        for (const shop in shopData) {
+            for (const date in shopData[shop]) {
+                doc.setFontSize(14);
+                doc.setTextColor(251, 191, 36);
+                doc.text(`DESTINATION: ${shop} | DATE: ${date}`, 14, y);
+                
+                const tableBody = shopData[shop][date].map(i => [i.product, i.qty, i.amount]);
+                
+                doc.autoTable({
+                    startY: y + 5,
+                    head: [['Product Description', 'Stock Sent Out', 'Final Value']],
+                    body: tableBody,
+                    theme: 'grid',
+                    headStyles: { fillColor: [56, 189, 248] },
+                    styles: { fontSize: 8 }
+                });
+                y = doc.lastAutoTable.finalY + 15;
+                if (y > 270) { doc.addPage(); y = 20; }
             }
-        });
-
-        doc.save(`Depot_Full_Ledger_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+        doc.save("MASTER_DEPOT_REPORT.pdf");
     });
 </script>
 
