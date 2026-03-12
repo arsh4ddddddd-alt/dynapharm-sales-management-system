@@ -3,37 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Depot Smart Ledger Pro</title>
+    <title>Depot Inventory & Distribution System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #f8fafc; padding: 20px; }
         .container { max-width: 1100px; margin: auto; background: #1e293b; padding: 30px; border-radius: 15px; border: 1px solid #334155; }
-        h1 { text-align: center; color: #38bdf8; margin-bottom: 20px; }
+        h1 { text-align: center; color: #38bdf8; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 25px; font-size: 14px; }
         #drop-zone { border: 2px dashed #38bdf8; padding: 40px; text-align: center; border-radius: 12px; background: rgba(56, 189, 248, 0.05); cursor: pointer; }
-        .btn-action { background: #10b981; color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; display: none; margin-top: 20px; }
-        .status { text-align: center; margin: 15px 0; color: #94a3b8; font-family: monospace; }
-        .preview-group { margin-top: 25px; border: 1px solid #334155; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
-        .group-header { background: #334155; padding: 12px; color: #fbbf24; font-weight: bold; display: flex; justify-content: space-between; }
-        table { width: 100%; border-collapse: collapse; background: #1e293b; color: white; }
+        .btn-main { background: #10b981; color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; display: none; margin-top: 20px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px 0; display: none; }
+        .stat-card { background: #0f172a; padding: 15px; border-radius: 8px; border-top: 4px solid #38bdf8; text-align: center; }
+        .stat-val { font-size: 24px; font-weight: bold; color: #38bdf8; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #1e293b; color: white; font-size: 12px; }
         th, td { border: 1px solid #334155; padding: 10px; text-align: left; }
-        th { background: #0f172a; color: #38bdf8; font-size: 11px; text-transform: uppercase; }
-        .total-row { background: #0f172a; font-weight: bold; color: #10b981; }
+        th { background: #0f172a; color: #38bdf8; }
+        .dest-tag { color: #fbbf24; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📦 Depot Global Ledger (Grouped)</h1>
+    <h1>📦 Depot Inventory Master</h1>
+    <p class="subtitle">Calculates Total Stock In, Out, and Tracking Destinations</p>
+
     <div id="drop-zone" onclick="document.getElementById('fileInput').click()">
-        <strong>DRAG & DROP ALL SHOP PDFs</strong>
-        <p>The system will group products by Date and Destination automatically.</p>
+        <strong>UPLOAD ALL SHOP FILES (PDF)</strong>
+        <p>The system will scan all pages for movement data</p>
         <input type="file" id="fileInput" multiple accept="application/pdf" style="display:none">
     </div>
 
-    <div id="status" class="status">System Ready</div>
-    <button id="exportBtn" class="btn-action">DOWNLOAD GROUPED MASTER PDF</button>
+    <div id="stats" class="stats-grid">
+        <div class="stat-card"><div>Total Items Processed</div><div id="statTotalQty" class="stat-val">0</div></div>
+        <div class="stat-card"><div>Total Stock Value</div><div id="statTotalVal" class="stat-val">$0.00</div></div>
+        <div class="stat-card"><div>Active Destinations</div><div id="statShops" class="stat-val">0</div></div>
+    </div>
+
+    <button id="exportBtn" class="btn-main">GENERATE FULL INVENTORY REPORT</button>
     
     <div id="previewArea"></div>
 </div>
@@ -42,15 +50,13 @@
     const { jsPDF } = window.jspdf;
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-    let groupedLedger = {}; // Structure: { "Date|Shop": [items] }
+    let inventoryLedger = [];
 
     document.getElementById('fileInput').addEventListener('change', async (e) => {
         const files = e.target.files;
         if (!files.length) return;
 
-        groupedLedger = {};
-        document.getElementById('status').innerText = "CLEANING AND GROUPING DATA...";
-
+        inventoryLedger = [];
         for (const file of files) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
@@ -58,100 +64,83 @@
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const text = await page.getTextContent();
-                const rawStrings = text.items.map(item => item.str.replace(/[\\"\r\n]/g, '').trim()).filter(s => s !== "");
+                const lines = text.items.map(item => item.str.replace(/[\\"\r\n]/g, '').trim()).filter(s => s !== "");
 
-                let header = rawStrings[0] || "";
-                let shopName = "DEPOT";
-                let reportDate = "UNKNOWN DATE";
-
-                if (header.toUpperCase().includes("DEPOT TO")) {
-                    const cleanHeader = header.toUpperCase().split("DEPOT TO")[1].trim();
-                    const words = cleanHeader.split(" ");
-                    shopName = words[0]; 
-                    reportDate = words.slice(1).join(" ");
+                // Smart Logic: Identify Shop and Date
+                let shopName = "DEPOT STORAGE";
+                let movementDate = "NO DATE";
+                
+                for (let j = 0; j < Math.min(10, lines.length); j++) {
+                    if (lines[j].toUpperCase().includes("DEPOT TO")) {
+                        const parts = lines[j].toUpperCase().split("DEPOT TO")[1].trim().split(" ");
+                        shopName = parts[0]; 
+                        movementDate = parts.slice(1).join(" ");
+                    }
                 }
 
-                const groupKey = `${reportDate} | ${shopName}`;
-                if (!groupedLedger[groupKey]) groupedLedger[groupKey] = [];
-
-                for (let k = 0; k < rawStrings.length; k++) {
-                    if (rawStrings[k].includes('$') && k > 1) {
-                        const amount = parseFloat(rawStrings[k].replace(/[$,]/g, '')) || 0;
-                        const qty = parseInt(rawStrings[k-1]) || 0;
-                        const product = rawStrings[k-2] || "Item";
+                // Scan for Product Lines
+                for (let k = 0; k < lines.length; k++) {
+                    if (lines[k].includes('$') && k > 1) {
+                        const val = parseFloat(lines[k].replace(/[$,]/g, '')) || 0;
+                        const qty = parseInt(lines[k-1]) || 0;
+                        const product = lines[k-2] || "Unknown";
 
                         if (qty > 0) {
-                            groupedLedger[groupKey].push({ product, qty, amount });
+                            inventoryLedger.push({ date: movementDate, shop: shopName, item: product, qty: qty, value: val });
                         }
                     }
                 }
             }
         }
-        
-        renderPreview();
+        renderDashboard();
     });
 
-    function renderPreview() {
-        const area = document.getElementById('previewArea');
-        area.innerHTML = "";
-        
-        for (const key in groupedLedger) {
-            let totalQty = 0;
-            let totalVal = 0;
-            
-            let html = `<div class="preview-group">
-                <div class="group-header"><span>📅 ${key}</span></div>
-                <table><thead><tr><th>Product Description</th><th>Qty Out</th><th>Total Amount</th></tr></thead><tbody>`;
-            
-            groupedLedger[key].forEach(item => {
-                totalQty += item.qty;
-                totalVal += item.amount;
-                html += `<tr><td>${item.product}</td><td>${item.qty}</td><td>$${item.amount.toFixed(2)}</td></tr>`;
-            });
+    function renderDashboard() {
+        let totalQty = 0;
+        let totalVal = 0;
+        let shops = new Set();
 
-            html += `<tr class="total-row"><td>TOTAL FOR THIS MOVEMENT</td><td>${totalQty}</td><td>$${totalVal.toFixed(2)}</td></tr>`;
-            html += `</tbody></table></div>`;
-            area.innerHTML += html;
-        }
+        let html = "<table><thead><tr><th>Date</th><th>Product</th><th>Destination</th><th>Stock In (Depot)</th><th>Stock Out (Shop)</th><th>Value</th></tr></thead><tbody>";
         
-        document.getElementById('status').innerText = "Grouping Complete.";
+        inventoryLedger.forEach(r => {
+            totalQty += r.qty;
+            totalVal += r.value;
+            shops.add(r.shop);
+            html += `<tr><td>${r.date}</td><td>${r.item}</td><td class="dest-tag">${r.shop}</td><td>${r.qty}</td><td>${r.qty}</td><td>$${r.value.toFixed(2)}</td></tr>`;
+        });
+
+        html += "</tbody></table>";
+        document.getElementById('previewArea').innerHTML = html;
+        document.getElementById('statTotalQty').innerText = totalQty;
+        document.getElementById('statTotalVal').innerText = `$${totalVal.toFixed(2)}`;
+        document.getElementById('statShops').innerText = shops.size;
+        
+        document.getElementById('stats').style.display = 'grid';
         document.getElementById('exportBtn').style.display = 'block';
     }
 
     document.getElementById('exportBtn').addEventListener('click', () => {
-        const doc = new jsPDF('p', 'mm', 'a4');
-        let y = 15;
+        const doc = new jsPDF('l', 'mm', 'a4');
+        doc.setFontSize(18);
+        doc.setTextColor(56, 189, 248);
+        doc.text("GLOBAL DEPOT STOCK MOVEMENT REPORT", 14, 15);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Total Stock Distributed: ${document.getElementById('statTotalQty').innerText} Units`, 14, 22);
 
-        doc.setFontSize(16);
-        doc.text("GLOBAL DEPOT DISTRIBUTION LEDGER", 14, y);
-        y += 10;
+        const rows = inventoryLedger.map(r => [r.date, r.item, r.shop, r.qty, r.qty, `$${r.value.toFixed(2)}`]);
 
-        for (const key in groupedLedger) {
-            if (y > 250) { doc.addPage(); y = 20; }
-            
-            doc.setFontSize(11);
-            doc.setTextColor(251, 191, 36); // Yellow/Gold for headers
-            doc.text(`MOVEMENT: ${key}`, 14, y);
-            
-            const rows = groupedLedger[key].map(r => [r.product, r.qty, `$${r.amount.toFixed(2)}`]);
-            const groupTotalQty = groupedLedger[key].reduce((sum, i) => sum + i.qty, 0);
-            const groupTotalVal = groupedLedger[key].reduce((sum, i) => sum + i.amount, 0);
-            
-            rows.push([{ content: 'GROUP TOTAL', styles: { fontStyle: 'bold' } }, groupTotalQty, `$${groupTotalVal.toFixed(2)}`]);
+        doc.autoTable({
+            startY: 28,
+            head: [['Date', 'Product Name', 'Sent To (Destination)', 'Stock In', 'Stock Out', 'Total Value']],
+            body: rows,
+            theme: 'grid',
+            headStyles: { fillColor: [15, 23, 42] },
+            columnStyles: { 2: { fontStyle: 'bold' } }
+        });
 
-            doc.autoTable({
-                startY: y + 2,
-                head: [['Product Description', 'Qty Sent', 'Value']],
-                body: rows,
-                theme: 'grid',
-                headStyles: { fillColor: [56, 189, 248] },
-                styles: { fontSize: 8 }
-            });
-            
-            y = doc.lastAutoTable.finalY + 12;
-        }
-
-        doc.save("Grouped_Depot_Report.pdf");
+        doc.save("Depot_Full_Inventory_Report.pdf");
     });
 </script>
 
