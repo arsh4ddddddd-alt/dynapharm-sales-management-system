@@ -3,42 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Depot Master Reporter</title>
+    <title>Depot Master Inventory Hub</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-        .box { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        h1 { color: #1a73e8; text-align: center; }
-        #drop-zone { border: 3px dashed #1a73e8; padding: 40px; text-align: center; border-radius: 10px; cursor: pointer; background: #f8fbff; margin-bottom: 20px; }
-        .btn { background: #28a745; color: white; border: none; padding: 15px; width: 100%; border-radius: 5px; font-size: 18px; cursor: pointer; display: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #f1f3f4; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f9; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h1 { color: #1e3a8a; text-align: center; margin-bottom: 5px; }
+        p.subtitle { text-align: center; color: #64748b; margin-bottom: 30px; }
+        #drop-area { border: 3px dashed #3b82f6; background: #eff6ff; padding: 40px; text-align: center; border-radius: 15px; cursor: pointer; transition: 0.3s; }
+        #drop-area:hover { background: #dbeafe; }
+        .btn-container { margin: 20px 0; display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        #downloadBtn { background: #10b981; color: white; display: none; }
+        #downloadBtn:hover { background: #059669; }
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+        th { background: #1e3a8a; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #e2e8f0; color: #334155; }
+        tr:nth-child(even) { background: #f8fafc; }
+        .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .stat-card { background: #1e293b; color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .stat-val { font-size: 24px; font-weight: bold; color: #38bdf8; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h1>📦 Depot Inventory Hub</h1>
-    <div id="drop-zone" onclick="document.getElementById('files').click()">
-        <strong>Click to select all your Shop PDFs (Masina, UPN, etc.)</strong>
-        <input type="file" id="files" multiple accept="application/pdf" style="display:none">
+<div class="container">
+    <h1>📦 Depot Master Hub</h1>
+    <p class="subtitle">Combine Masina, UPN, and Botour PDFs into one final report</p>
+
+    <div id="drop-area" onclick="document.getElementById('fileInput').click()">
+        <strong>Drag & Drop or Click to Upload Shop PDFs</strong>
+        <input type="file" id="fileInput" multiple accept="application/pdf" style="display:none">
     </div>
 
-    <button id="btnExport" class="btn">Generate Master PDF Report</button>
+    <div class="summary" id="summaryBox" style="display:none;">
+        <div class="stat-card">Total Items Sent: <div id="totalQty" class="stat-val">0</div></div>
+        <div class="stat-card">Total Value: <div id="totalCash" class="stat-val">$0.00</div></div>
+    </div>
 
-    <table id="preview">
+    <div class="btn-container">
+        <button id="downloadBtn" class="btn">⬇️ DOWNLOAD MASTER PDF REPORT</button>
+    </div>
+
+    <table id="previewTable">
         <thead>
             <tr>
                 <th>Shop</th>
-                <th>Product</th>
-                <th>Qty Out</th>
+                <th>Product Description</th>
+                <th>Qty</th>
                 <th>Amount</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="tableBody"></tbody>
     </table>
 </div>
 
@@ -46,59 +64,89 @@
     const { jsPDF } = window.jspdf;
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-    let masterData = [];
+    let finalData = [];
+    let grandTotalMoney = 0;
+    let grandTotalQty = 0;
 
-    document.getElementById('files').addEventListener('change', async (e) => {
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
         const files = e.target.files;
-        masterData = [];
-        document.querySelector('tbody').innerHTML = '';
+        if (!files.length) return;
+
+        finalData = [];
+        grandTotalMoney = 0;
+        grandTotalQty = 0;
+        document.getElementById('tableBody').innerHTML = '';
 
         for (const file of files) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-            const page = await pdf.getPage(1);
-            const text = await page.getTextContent();
             
-            // Step 1: Clean the text (remove quotes and extra lines)
-            const rawItems = text.items.map(i => i.str.replace(/"/g, '').trim());
-            const shopName = rawItems[0] || file.name;
+            // Analyze the first page
+            const page = await pdf.getPage(1);
+            const textContent = await page.getTextContent();
+            
+            // Clean the messy "CSV-style" text from your specific PDFs
+            const rawStrings = textContent.items.map(item => 
+                item.str.replace(/[\\"\n\r]/g, '').trim()
+            ).filter(s => s !== "" && s !== ",");
 
-            // Step 2: Loop through data to find products with a Quantity and Amount
-            for (let i = 0; i < rawItems.length; i++) {
-                // If we find a $ sign, we look back for the Qty and Description
-                if (rawItems[i].includes('$') && i > 1) {
-                    const amount = rawItems[i];
-                    const qty = parseInt(rawItems[i-1]);
-                    const desc = rawItems[i-2];
+            // Extract Shop Name from top of PDF
+            const shopName = rawStrings[0] || file.name;
+
+            // Parser: Find the pattern: [Product Name], [Quantity], [Rate], [Total Amount]
+            for (let i = 0; i < rawStrings.length; i++) {
+                if (rawStrings[i].includes('$') && i > 1) {
+                    const amountStr = rawStrings[i].replace(/[$,]/g, '');
+                    const amount = parseFloat(amountStr);
+                    const qty = parseInt(rawStrings[i-1]);
+                    const desc = rawStrings[i-2];
 
                     if (!isNaN(qty) && qty > 0) {
-                        masterData.push([shopName, desc, qty, amount]);
-                        const row = `<tr><td>${shopName}</td><td>${desc}</td><td>${qty}</td><td>${amount}</td></tr>`;
-                        document.querySelector('tbody').innerHTML += row;
+                        finalData.push([shopName, desc, qty, `$${amount.toFixed(2)}`]);
+                        grandTotalMoney += amount;
+                        grandTotalQty += qty;
+
+                        const row = `<tr>
+                            <td>${shopName}</td>
+                            <td>${desc}</td>
+                            <td>${qty}</td>
+                            <td>$${amount.toFixed(2)}</td>
+                        </tr>`;
+                        document.getElementById('tableBody').innerHTML += row;
                     }
                 }
             }
         }
-        if (masterData.length > 0) document.getElementById('btnExport').style.display = 'block';
+
+        // Update UI
+        document.getElementById('summaryBox').style.display = 'grid';
+        document.getElementById('downloadBtn').style.display = 'block';
+        document.getElementById('totalQty').innerText = grandTotalQty;
+        document.getElementById('totalCash').innerText = `$${grandTotalMoney.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
     });
 
-    document.getElementById('btnExport').addEventListener('click', () => {
+    document.getElementById('downloadBtn').addEventListener('click', () => {
         const doc = new jsPDF();
-        doc.setFontSize(18);
-        doc.text("Master Depot Distribution Report", 14, 20);
+        doc.setFontSize(20);
+        doc.setTextColor(30, 58, 138);
+        doc.text("GLOBAL DEPOT INVENTORY REPORT", 14, 20);
+        
         doc.setFontSize(10);
-        doc.text(`Created on: ${new Date().toLocaleString()}`, 14, 28);
+        doc.setTextColor(100);
+        doc.text(`Report Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 14, 28);
+        doc.text(`Combined Items: ${grandTotalQty} | Combined Value: $${grandTotalMoney.toFixed(2)}`, 14, 34);
 
         doc.autoTable({
-            startY: 35,
-            head: [['Shop Name', 'Description', 'Qty Out', 'Total Value']],
-            body: masterData,
+            startY: 40,
+            head: [['Shop', 'Product Description', 'Qty Out', 'Total Value']],
+            body: finalData,
             theme: 'grid',
+            headStyles: { fillColor: [30, 58, 138], fontSize: 10 },
             styles: { fontSize: 8 },
-            headStyles: { fillColor: [26, 115, 232] }
+            alternateRowStyles: { fillColor: [245, 247, 250] }
         });
 
-        doc.save("GLOBAL_REPORT.pdf");
+        doc.save(`Depot_Master_Report_${new Date().getTime()}.pdf`);
     });
 </script>
 
