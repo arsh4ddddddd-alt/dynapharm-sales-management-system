@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Depot Master Ledger - Multi-Month Edition</title>
+    <title>Depot Master Ledger - All Products Restored</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
@@ -21,51 +21,52 @@
         .btn-pdf { background: var(--success); }
         .btn-clear { background: var(--danger); }
         .summary-boxes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0; }
-        .box { padding: 20px; border-radius: 8px; text-align: center; color: white; }
+        .box { padding: 20px; border-radius: 8px; text-align: center; color: white; font-weight: bold; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
         th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
         th { background: #f1f5f9; position: sticky; top: 0; }
-        .delete-btn { color: var(--danger); cursor: pointer; font-weight: bold; }
-        .filter-section { margin: 10px 0; display: flex; align-items: center; gap: 10px; font-weight: bold; }
+        .delete-btn { color: var(--danger); cursor: pointer; font-weight: bold; text-align: center; }
+        .filter-section { margin: 10px 0; background: #eef2ff; padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>📦 Depot Global Ledger</h1>
-    <p style="text-align: center; color: #64748b;">Manage monthly records and multiple shop reports in one place.</p>
+    <p style="text-align: center; color: #64748b;">Multi-Shop & Multi-Month Inventory Tracking</p>
 
     <div class="controls">
-        <button class="btn btn-save" onclick="saveToLocalStorage()">💾 SAVE DATA</button>
+        <button class="btn btn-save" onclick="saveData()">💾 SAVE PROGRESS</button>
         <button class="btn btn-pdf" onclick="generatePDF()">📄 DOWNLOAD PDF REPORT</button>
-        <button class="btn btn-clear" onclick="clearData()">⚠️ RESET ALL</button>
+        <button class="btn btn-clear" onclick="resetAll()">⚠️ RESET SYSTEM</button>
     </div>
     
     <div class="input-section">
         <div class="grid-inputs">
             <div><label>Date</label><input type="date" id="moveDate"></div>
-            <div><label>Shop</label><input type="text" id="shopName" placeholder="e.g. UPN, MASINA"></div>
-            <div><label>Product Code</label><input list="codes" id="prodCode" placeholder="DRC..." oninput="autoFill()"></div>
+            <div><label>Shop (Destination)</label><input type="text" id="shopName" placeholder="e.g. UPN, MASINA, KOLWEZI"></div>
+            <div><label>Product Code</label><input list="codes" id="prodCode" placeholder="Type DRC..." oninput="autoFill()"></div>
             <div><label>Désignation</label><input type="text" id="prodName" readonly style="background:#eef2ff"></div>
         </div>
         <div class="grid-inputs">
-            <div><label>Opening Stock</label><input type="number" id="openingStock"></div>
-            <div><label>Qty Sent Out</label><input type="number" id="qtySent"></div>
-            <div><label>Unit Price ($)</label><input type="number" id="price"></div>
-            <div style="display: flex; align-items: flex-end;"><button class="btn btn-add" onclick="addRow()">ADD ENTRY</button></div>
+            <div><label>Opening Stock (In Depot)</label><input type="number" id="openingStock" placeholder="Qty in Book"></div>
+            <div><label>Qty Sent Out</label><input type="number" id="qtySent" placeholder="Out to Shop"></div>
+            <div><label>Unit Price ($)</label><input type="number" id="price" placeholder="0.00"></div>
+            <div style="display: flex; align-items: flex-end;"><button class="btn btn-add" onclick="addRow()">ADD TO LIST</button></div>
         </div>
     </div>
 
     <div class="filter-section">
-        🔍 Filter by Shop: 
-        <select id="shopFilter" onchange="updateUI()" style="width: 200px;">
-            <option value="ALL">Show All Shops</option>
+        <strong>🔍 VIEW BY SHOP:</strong> 
+        <select id="shopFilter" onchange="updateUI()" style="width: 250px;">
+            <option value="ALL">All Reports Combined</option>
         </select>
+        <span style="font-size: 12px; color: #64748b;">(Select a shop to see its specific report)</span>
     </div>
 
     <div class="summary-boxes">
-        <div class="box" style="background: var(--primary)">Opening In Total<br><span id="sumIn">0</span></div>
-        <div class="box" style="background: var(--danger)">Total Sent Out<br><span id="sumOut">0</span></div>
+        <div class="box" style="background: var(--primary)">Total Opening (In)<br><span id="sumIn">0</span></div>
+        <div class="box" style="background: var(--danger)">Total Sent (Out)<br><span id="sumOut">0</span></div>
         <div class="box" style="background: var(--success)">Warehouse Balance<br><span id="sumBal">0</span></div>
     </div>
 
@@ -89,7 +90,7 @@
 <datalist id="codes"></datalist>
 
 <script>
-    [span_0](start_span)[span_1](start_span)[span_2](start_span)[span_3](start_span)[span_4](start_span)// Product List from your PDF[span_0](end_span)[span_1](end_span)[span_2](end_span)[span_3](end_span)[span_4](end_span)
+    [span_0](start_span)[span_1](start_span)[span_2](start_span)// FULL RESTORED PRODUCT LIST[span_0](end_span)[span_1](end_span)[span_2](end_span)
     const products = {
         "DRC1201": "CAFE GINKO EN POUDRE ET GINSENG EN POUDR",
         "DRC1202": "CAFÉ DE THE VERT AVEC POUDRE GANODERMA",
@@ -129,30 +130,40 @@
         "DRC9918": "DYNA SERENOA TABLET 100's"
     };
 
-    let ledger = JSON.parse(localStorage.getItem('depotLedger')) || [];
+    let ledger = JSON.parse(localStorage.getItem('depotGlobalLedger')) || [];
 
-    const dl = document.getElementById('codes');
-    for (let c in products) { let o = document.createElement('option'); o.value = c; dl.appendChild(o); }
+    // Setup the search dropdown
+    const datalist = document.getElementById('codes');
+    for (let code in products) {
+        let opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = products[code];
+        datalist.appendChild(opt);
+    }
 
     function autoFill() {
-        const c = document.getElementById('prodCode').value;
-        document.getElementById('prodName').value = products[c] || "";
+        const inputCode = document.getElementById('prodCode').value.toUpperCase();
+        document.getElementById('prodName').value = products[inputCode] || "";
     }
 
     function addRow() {
-        const entry = {
-            date: document.getElementById('moveDate').value,
-            shop: document.getElementById('shopName').value.toUpperCase(),
-            code: document.getElementById('prodCode').value,
-            name: document.getElementById('prodName').value,
-            opening: parseInt(document.getElementById('openingStock').value) || 0,
-            sent: parseInt(document.getElementById('qtySent').value) || 0,
-            price: parseFloat(document.getElementById('price').value) || 0
-        };
-        if(!entry.date || !entry.shop || !entry.code) return alert("Fill all fields!");
-        ledger.push(entry);
+        const date = document.getElementById('moveDate').value;
+        const shop = document.getElementById('shopName').value.toUpperCase().trim();
+        const code = document.getElementById('prodCode').value.toUpperCase().trim();
+        const name = document.getElementById('prodName').value;
+        const opening = parseInt(document.getElementById('openingStock').value) || 0;
+        const sent = parseInt(document.getElementById('qtySent').value) || 0;
+
+        if(!date || !shop || !code) { alert("Please enter Date, Shop Name, and Product Code"); return; }
+
+        ledger.push({ date, shop, code, name, opening, sent });
         updateUI();
-        saveToLocalStorage();
+        saveData();
+        
+        // Clear product inputs for next entry
+        document.getElementById('prodCode').value = "";
+        document.getElementById('prodName').value = "";
+        document.getElementById('qtySent').value = "";
     }
 
     function updateUI() {
@@ -165,52 +176,62 @@
         ledger.forEach((item, index) => {
             shops.add(item.shop);
             if (filter === "ALL" || item.shop === filter) {
-                sIn += item.opening; sOut += item.sent;
+                const bal = item.opening - item.sent;
+                sIn += item.opening;
+                sOut += item.sent;
+                
                 tbody.innerHTML += `<tr>
                     <td>${item.date}</td>
                     <td>${item.shop}</td>
                     <td>${item.code}</td>
                     <td>${item.name}</td>
                     <td>${item.opening}</td>
-                    <td style="color:red">-${item.sent}</td>
-                    <td>${item.opening - item.sent}</td>
-                    <td class="delete-btn" onclick="deleteItem(${index})">✖</td>
+                    <td style="color:red; font-weight:bold;">-${item.sent}</td>
+                    <td style="font-weight:bold;">${bal}</td>
+                    <td class="delete-btn" onclick="removeItem(${index})">✖</td>
                 </tr>`;
             }
         });
 
+        // Refresh Shop Filter List
         const filterSelect = document.getElementById('shopFilter');
-        const currentVal = filterSelect.value;
-        filterSelect.innerHTML = '<option value="ALL">Show All Shops</option>';
-        shops.forEach(s => { filterSelect.innerHTML += `<option value="${s}">${s}</option>`; });
-        filterSelect.value = currentVal;
+        const activeFilter = filterSelect.value;
+        filterSelect.innerHTML = '<option value="ALL">All Reports Combined</option>';
+        Array.from(shops).sort().forEach(s => {
+            filterSelect.innerHTML += `<option value="${s}">${s}</option>`;
+        });
+        filterSelect.value = activeFilter;
 
         document.getElementById('sumIn').innerText = sIn;
         document.getElementById('sumOut').innerText = sOut;
-        document.getElementById('sumBal').innerText = sIn - sOut;
+        document.getElementById('sumBal').innerText = (sIn - sOut);
     }
 
-    function saveToLocalStorage() { localStorage.setItem('depotLedger', JSON.stringify(ledger)); }
-    function deleteItem(i) { if(confirm("Delete this?")) { ledger.splice(i, 1); updateUI(); saveToLocalStorage(); } }
-    function clearData() { if(confirm("Clear EVERYTHING?")) { ledger = []; localStorage.clear(); updateUI(); } }
+    function saveData() { localStorage.setItem('depotGlobalLedger', JSON.stringify(ledger)); }
+    function removeItem(i) { if(confirm("Remove this entry?")) { ledger.splice(i, 1); updateUI(); saveData(); } }
+    function resetAll() { if(confirm("WARNING: This will delete ALL data for ALL months. Continue?")) { ledger = []; localStorage.clear(); updateUI(); } }
 
     function generatePDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4');
         const filter = document.getElementById('shopFilter').value;
-        doc.text(`DEPOT AUDIT REPORT - SHOP: ${filter}`, 14, 15);
+        
+        doc.setFontSize(18);
+        doc.text(`DEPOT INVENTORY AUDIT - ${filter}`, 14, 15);
         
         const rows = ledger.filter(i => filter === "ALL" || i.shop === filter)
                            .map(i => [i.date, i.shop, i.code, i.name, i.opening, i.sent, i.opening - i.sent]);
 
         doc.autoTable({
-            startY: 20,
-            head: [['Date', 'Shop', 'Code', 'Product', 'Opening', 'Sent Out', 'Balance']],
+            startY: 22,
+            head: [['Date', 'Shop', 'Code', 'Product Description', 'Opening', 'Qty Sent', 'Balance']],
             body: rows,
             theme: 'grid',
-            headStyles: { fillColor: [30, 58, 138] }
+            headStyles: { fillColor: [30, 58, 138] },
+            styles: { fontSize: 8 }
         });
-        doc.save(`Depot_Report_${filter}.pdf`);
+
+        doc.save(`Depot_Report_${filter}_${new Date().toLocaleDateString()}.pdf`);
     }
 
     window.onload = updateUI;
