@@ -3,49 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Depot Inventory Reporter</title>
+    <title>Depot Master Reporter</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #eef2f3; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        h1 { color: #2c3e50; text-align: center; margin-bottom: 10px; }
-        .upload-area { border: 2px dashed #3498db; padding: 30px; text-align: center; border-radius: 10px; background: #f9fbff; cursor: pointer; margin: 20px 0; }
-        .btn { background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; display: none; }
-        .btn:hover { background: #219150; }
-        #status { text-align: center; color: #7f8c8d; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 25px; font-size: 14px; }
-        th { background: #34495e; color: white; padding: 12px; text-align: left; }
-        td { padding: 10px; border-bottom: 1px solid #ddd; }
-        tr:nth-child(even) { background: #f8f9fa; }
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        .box { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { color: #1a73e8; text-align: center; }
+        #drop-zone { border: 3px dashed #1a73e8; padding: 40px; text-align: center; border-radius: 10px; cursor: pointer; background: #f8fbff; margin-bottom: 20px; }
+        .btn { background: #28a745; color: white; border: none; padding: 15px; width: 100%; border-radius: 5px; font-size: 18px; cursor: pointer; display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f1f3f4; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="box">
     <h1>📦 Depot Inventory Hub</h1>
-    <p style="text-align: center;">Combine shop reports (UPN, Masina, Botour) into one master PDF.</p>
-
-    <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-        <strong>Click to select all your Shop PDFs</strong>
-        <input type="file" id="fileInput" multiple accept="application/pdf" style="display:none">
+    <div id="drop-zone" onclick="document.getElementById('files').click()">
+        <strong>Click to select all your Shop PDFs (Masina, UPN, etc.)</strong>
+        <input type="file" id="files" multiple accept="application/pdf" style="display:none">
     </div>
 
-    <div id="status">No files loaded</div>
-    
-    <button id="downloadBtn" class="btn">Generate & Download Master Report (PDF)</button>
+    <button id="btnExport" class="btn">Generate Master PDF Report</button>
 
-    <table id="previewTable">
+    <table id="preview">
         <thead>
             <tr>
-                <th>Shop Name</th>
+                <th>Shop</th>
                 <th>Product</th>
-                <th>Qty</th>
+                <th>Qty Out</th>
                 <th>Amount</th>
             </tr>
         </thead>
-        <tbody id="tableBody"></tbody>
+        <tbody></tbody>
     </table>
 </div>
 
@@ -53,62 +46,59 @@
     const { jsPDF } = window.jspdf;
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-    let allData = [];
+    let masterData = [];
 
-    document.getElementById('fileInput').addEventListener('change', async (e) => {
+    document.getElementById('files').addEventListener('change', async (e) => {
         const files = e.target.files;
-        if (files.length === 0) return;
-        
-        allData = [];
-        document.getElementById('tableBody').innerHTML = '';
-        document.getElementById('status').innerText = "Processing files...";
+        masterData = [];
+        document.querySelector('tbody').innerHTML = '';
 
         for (const file of files) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
             const page = await pdf.getPage(1);
-            const textContent = await page.getTextContent();
+            const text = await page.getTextContent();
             
-            const strings = textContent.items.map(item => item.str);
-            const shopName = strings[0] || file.name;
+            // Step 1: Clean the text (remove quotes and extra lines)
+            const rawItems = text.items.map(i => i.str.replace(/"/g, '').trim());
+            const shopName = rawItems[0] || file.name;
 
-            // Look for patterns like: Description, Qty, Rate, Amount
-            for (let i = 0; i < strings.length; i++) {
-                if (strings[i].includes('$') && i > 1) {
-                    const qty = parseInt(strings[i-1]) || 0;
-                    const amountStr = strings[i].replace(/[$,]/g, '');
-                    const amount = parseFloat(amountStr) || 0;
-                    const desc = strings[i-2] ? strings[i-2].trim() : "Unknown";
+            // Step 2: Loop through data to find products with a Quantity and Amount
+            for (let i = 0; i < rawItems.length; i++) {
+                // If we find a $ sign, we look back for the Qty and Description
+                if (rawItems[i].includes('$') && i > 1) {
+                    const amount = rawItems[i];
+                    const qty = parseInt(rawItems[i-1]);
+                    const desc = rawItems[i-2];
 
-                    if (qty > 0) {
-                        allData.push([shopName, desc, qty, `$${amount.toFixed(2)}`]);
-                        const row = `<tr><td>${shopName}</td><td>${desc}</td><td>${qty}</td><td>$${amount.toFixed(2)}</td></tr>`;
-                        document.getElementById('tableBody').innerHTML += row;
+                    if (!isNaN(qty) && qty > 0) {
+                        masterData.push([shopName, desc, qty, amount]);
+                        const row = `<tr><td>${shopName}</td><td>${desc}</td><td>${qty}</td><td>${amount}</td></tr>`;
+                        document.querySelector('tbody').innerHTML += row;
                     }
                 }
             }
         }
-        
-        document.getElementById('status').innerText = `Loaded ${allData.length} items from ${files.length} reports.`;
-        document.getElementById('downloadBtn').style.display = 'block';
+        if (masterData.length > 0) document.getElementById('btnExport').style.display = 'block';
     });
 
-    document.getElementById('downloadBtn').addEventListener('click', () => {
+    document.getElementById('btnExport').addEventListener('click', () => {
         const doc = new jsPDF();
         doc.setFontSize(18);
-        doc.text("Global Depot Inventory Report", 14, 20);
-        doc.setFontSize(11);
-        doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+        doc.text("Master Depot Distribution Report", 14, 20);
+        doc.setFontSize(10);
+        doc.text(`Created on: ${new Date().toLocaleString()}`, 14, 28);
 
         doc.autoTable({
-            startY: 40,
-            head: [['Shop Name', 'Product Description', 'Qty Out', 'Total Value']],
-            body: allData,
+            startY: 35,
+            head: [['Shop Name', 'Description', 'Qty Out', 'Total Value']],
+            body: masterData,
             theme: 'grid',
-            headStyles: { fillColor: [44, 62, 80] }
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [26, 115, 232] }
         });
 
-        doc.save(`GLOBAL_DEPOT_REPORT_${new Date().getTime()}.pdf`);
+        doc.save("GLOBAL_REPORT.pdf");
     });
 </script>
 
