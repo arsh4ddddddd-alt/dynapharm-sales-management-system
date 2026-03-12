@@ -3,156 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Depot Master Inventory System</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <title>Depot Manual Ledger & Inventory</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; padding: 20px; color: #333; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h1 { color: #1e3a8a; text-align: center; margin-bottom: 5px; }
-        .status-msg { text-align: center; color: #64748b; margin-bottom: 25px; font-weight: 500; }
-        #drop-zone { border: 3px dashed #3b82f6; padding: 50px; text-align: center; border-radius: 12px; background: #eff6ff; cursor: pointer; transition: 0.3s; }
-        #drop-zone:hover { background: #dbeafe; }
-        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 25px 0; display: none; }
-        .card { background: #1e3a8a; color: white; padding: 20px; border-radius: 10px; text-align: center; }
-        .card span { block: block; font-size: 24px; font-weight: bold; }
-        .btn-report { background: #10b981; color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; display: none; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { color: #1e3a8a; text-align: center; }
+        .input-section { background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+        .grid-inputs { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        input, select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; }
+        .btn-add { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn-add:hover { background: #2563eb; }
+        .summary-boxes { display: flex; gap: 20px; margin: 20px 0; }
+        .box { flex: 1; padding: 15px; border-radius: 8px; text-align: center; color: white; font-weight: bold; }
+        .box-blue { background: #1e3a8a; }
+        .box-red { background: #dc2626; }
+        .box-green { background: #16a34a; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
-        th { background: #f8fafc; color: #1e3a8a; font-weight: bold; }
-        .dest-label { font-weight: bold; color: #2563eb; }
+        th { background: #f1f5f9; color: #1e3a8a; }
+        .btn-download { background: #059669; color: white; border: none; padding: 15px; width: 100%; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>📦 Depot Inventory Master</h1>
-    <p class="status-msg">Upload shop PDFs to calculate Stock In, Out, and Destinations.</p>
-
-    <div id="drop-zone" onclick="document.getElementById('fileInput').click()">
-        <strong>DRAG & DROP OR CLICK TO UPLOAD ALL PDFS</strong>
-        <p>The system scans names like "UPN", "MASINA", and "BOTOUR" automatically.</p>
-        <input type="file" id="fileInput" multiple accept="application/pdf" style="display:none">
+    <h1>📦 Depot Master Ledger</h1>
+    
+    <div class="input-section">
+        <h3 style="margin-top:0">1. Enter Book Entry (Stock Movement)</h3>
+        <div class="grid-inputs">
+            <input type="date" id="moveDate">
+            <input type="text" id="shopName" placeholder="Shop Name (e.g. UPN)">
+            <input type="text" id="prodCode" placeholder="Code (DRC1201)">
+            <input type="text" id="prodName" placeholder="Product Name">
+            <input type="number" id="qtySent" placeholder="Qty Sent">
+        </div>
+        <div class="grid-inputs">
+            <input type="number" id="price" placeholder="Price ($)">
+            <input type="number" id="openingStock" placeholder="Opening Stock in Depot">
+            <button class="btn-add" onclick="addRow()">ADD TO REPORT</button>
+        </div>
     </div>
 
-    <div id="dash" class="dashboard">
-        <div class="card">Total Stock In (Depot)<br><span id="totalStockIn">0</span></div>
-        <div class="card" style="background:#059669">Total Stock Out (Sent)<br><span id="totalStockOut">0</span></div>
-        <div class="card" style="background:#7c3aed">Total Shops Served<br><span id="totalShops">0</span></div>
+    <div class="summary-boxes">
+        <div class="box box-blue">Total Opening Stock<br><span id="sumIn">0</span></div>
+        <div class="box box-red">Total Stock Out<br><span id="sumOut">0</span></div>
+        <div class="box box-green">Remaining in Depot<br><span id="sumBal">0</span></div>
     </div>
 
-    <button id="downloadBtn" class="btn-report">DOWNLOAD FINAL AUDIT REPORT</button>
-    <div id="preview"></div>
+    <table id="ledgerTable">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Shop</th>
+                <th>Code</th>
+                <th>Product</th>
+                <th>Opening</th>
+                <th>Sent Out</th>
+                <th>Balance</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <button class="btn-download" onclick="generatePDF()">DOWNLOAD FULL AUDIT REPORT</button>
 </div>
 
 <script>
-    const { jsPDF } = window.jspdf;
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    let ledger = [];
 
-    let masterAuditLog = [];
-
-    document.getElementById('fileInput').addEventListener('change', async (e) => {
-        const files = e.target.files;
-        if (!files.length) return;
-
-        masterAuditLog = [];
-        let uniqueShops = new Set();
-
-        for (const file of files) {
-            const arrayBuffer = await file.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const text = await page.getTextContent();
-                const items = text.items.map(it => it.str.replace(/[\\"\r\n]/g, '').trim()).filter(s => s !== "");
-
-                // SMART HEADER EXTRACTION
-                let shopName = "DEPOT STOCK";
-                let moveDate = "NO DATE";
-                
-                // Scan first few lines for the header "DEPOT TO [NAME] [DATE]"
-                for (let j = 0; j < Math.min(10, items.length); j++) {
-                    if (items[j].toUpperCase().includes("DEPOT TO")) {
-                        const parts = items[j].toUpperCase().split("DEPOT TO")[1].trim().split(" ");
-                        shopName = parts[0]; 
-                        moveDate = parts.slice(1).join(" ");
-                        uniqueShops.add(shopName);
-                        break;
-                    }
-                }
-
-                // PRODUCT EXTRACTION
-                for (let k = 0; k < items.length; k++) {
-                    if (items[k].includes('$') && k > 1) {
-                        const qty = parseInt(items[k-1]) || 0;
-                        const product = items[k-2];
-
-                        if (qty > 0) {
-                            masterAuditLog.push({
-                                date: moveDate,
-                                destination: shopName,
-                                product: product,
-                                qtyIn: qty,  // Logic: It was in depot
-                                qtyOut: qty  // Logic: It went to shop
-                            });
-                        }
-                    }
-                }
-            }
-        }
-        showDashboard(uniqueShops.size);
-    });
-
-    function showDashboard(shopCount) {
-        const total = masterAuditLog.reduce((sum, item) => sum + item.qtyIn, 0);
-        document.getElementById('totalStockIn').innerText = total;
-        document.getElementById('totalStockOut').innerText = total;
-        document.getElementById('totalShops').innerText = shopCount;
+    function addRow() {
+        const date = document.getElementById('moveDate').value;
+        const shop = document.getElementById('shopName').value;
+        const code = document.getElementById('prodCode').value;
+        const name = document.getElementById('prodName').value;
+        const qty = parseInt(document.getElementById('qtySent').value) || 0;
+        const opening = parseInt(document.getElementById('openingStock').value) || 0;
         
-        document.getElementById('dash').style.display = 'grid';
-        document.getElementById('downloadBtn').style.display = 'block';
+        if(!date || !shop || !name) { alert("Please fill at least Date, Shop, and Product"); return; }
 
-        let html = "<table><thead><tr><th>Movement Date</th><th>Product Description</th><th>Where it Went (Destination)</th><th>Stock In</th><th>Stock Out</th></tr></thead><tbody>";
-        masterAuditLog.forEach(row => {
-            html += `<tr>
-                <td>${row.date}</td>
-                <td>${row.product}</td>
-                <td class="dest-label">DEPOT TO ${row.destination}</td>
-                <td>${row.qtyIn}</td>
-                <td>${row.qtyOut}</td>
-            </tr>`;
-        });
-        html += "</tbody></table>";
-        document.getElementById('preview').innerHTML = html;
+        const balance = opening - qty;
+        
+        ledger.push({ date, shop, code, name, opening, qty, balance });
+        updateUI();
+        
+        // Clear inputs for next item
+        document.getElementById('prodCode').value = "";
+        document.getElementById('prodName').value = "";
+        document.getElementById('qtySent').value = "";
     }
 
-    document.getElementById('downloadBtn').addEventListener('click', () => {
-        const doc = new jsPDF('l', 'mm', 'a4');
-        doc.setFontSize(20);
-        doc.setTextColor(30, 58, 138);
-        doc.text("DEPOT FINAL INVENTORY & DISTRIBUTION REPORT", 14, 15);
+    function updateUI() {
+        const tbody = document.querySelector('#ledgerTable tbody');
+        tbody.innerHTML = "";
         
-        const tableData = masterAuditLog.map(r => [
-            r.date, 
-            r.product, 
-            `SENT TO: ${r.destination}`, 
-            r.qtyIn, 
-            r.qtyOut
-        ]);
+        let totalIn = 0;
+        let totalOut = 0;
+
+        ledger.forEach(item => {
+            totalIn += item.opening;
+            totalOut += item.qty;
+            
+            const row = `<tr>
+                <td>${item.date}</td>
+                <td>${item.shop}</td>
+                <td>${item.code}</td>
+                <td>${item.name}</td>
+                <td>${item.opening}</td>
+                <td style="color:red; font-weight:bold;">-${item.qty}</td>
+                <td style="font-weight:bold;">${item.balance}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        document.getElementById('sumIn').innerText = totalIn;
+        document.getElementById('sumOut').innerText = totalOut;
+        document.getElementById('sumBal').innerText = (totalIn - totalOut);
+    }
+
+    function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+        
+        doc.setFontSize(18);
+        doc.text("DEPOT INVENTORY & DISTRIBUTION AUDIT", 14, 15);
+
+        const data = ledger.map(i => [i.date, i.shop, i.code, i.name, i.opening, i.qty, i.balance]);
 
         doc.autoTable({
             startY: 25,
-            head: [['Date', 'Product Description', 'Destination Detail', 'Stock In (Depot)', 'Stock Out (Shop)']],
-            body: tableData,
+            head: [['Date', 'Destination', 'Code', 'Product', 'Opening Stock', 'Qty Sent', 'Final Balance']],
+            body: data,
             theme: 'grid',
-            headStyles: { fillColor: [30, 58, 138] },
-            columnStyles: { 2: { fontStyle: 'bold' } }
+            headStyles: { fillColor: [30, 58, 138] }
         });
 
-        doc.save("Depot_Stock_Audit.pdf");
-    });
+        doc.save("Depot_Manual_Audit.pdf");
+    }
 </script>
 
 </body>
