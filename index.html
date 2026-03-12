@@ -3,60 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Depot Smart Inventory Ledger</title>
+    <title>Depot Master Inventory System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; color: #1c1e21; padding: 20px; }
-        .main-card { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h1 { color: #1877f2; text-align: center; margin-bottom: 5px; }
-        .desc { text-align: center; color: #65676b; margin-bottom: 25px; }
-        #drop-zone { border: 3px dashed #1877f2; padding: 50px; text-align: center; border-radius: 10px; background: #f0f7ff; cursor: pointer; margin-bottom: 20px; }
-        .summary-stats { display: flex; gap: 20px; margin-bottom: 20px; display: none; }
-        .stat-item { flex: 1; background: #e7f3ff; padding: 15px; border-radius: 8px; text-align: center; border-left: 5px solid #1877f2; }
-        .stat-item b { font-size: 20px; display: block; color: #1877f2; }
-        .btn-download { background: #42b72a; color: white; border: none; padding: 18px; width: 100%; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; display: none; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; font-size: 13px; }
-        th { background: #f8f9fa; color: #4b4f56; }
-        .dest-cell { font-weight: bold; color: #1877f2; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; padding: 20px; color: #333; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h1 { color: #1e3a8a; text-align: center; margin-bottom: 5px; }
+        .status-msg { text-align: center; color: #64748b; margin-bottom: 25px; font-weight: 500; }
+        #drop-zone { border: 3px dashed #3b82f6; padding: 50px; text-align: center; border-radius: 12px; background: #eff6ff; cursor: pointer; transition: 0.3s; }
+        #drop-zone:hover { background: #dbeafe; }
+        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 25px 0; display: none; }
+        .card { background: #1e3a8a; color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .card span { block: block; font-size: 24px; font-weight: bold; }
+        .btn-report { background: #10b981; color: white; border: none; padding: 18px; width: 100%; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; display: none; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+        th { background: #f8fafc; color: #1e3a8a; font-weight: bold; }
+        .dest-label { font-weight: bold; color: #2563eb; }
     </style>
 </head>
 <body>
 
-<div class="main-card">
-    <h1>📦 Depot Stock Movement System</h1>
-    <p class="desc">Track Stock In, Stock Out, and Destinations for every single product.</p>
+<div class="container">
+    <h1>📦 Depot Inventory Master</h1>
+    <p class="status-msg">Upload shop PDFs to calculate Stock In, Out, and Destinations.</p>
 
     <div id="drop-zone" onclick="document.getElementById('fileInput').click()">
-        <strong>Click to upload ALL your shop PDF files</strong>
-        <p style="font-size: 12px; color: #65676b;">The system scans all pages, dates, and different products automatically.</p>
+        <strong>DRAG & DROP OR CLICK TO UPLOAD ALL PDFS</strong>
+        <p>The system scans names like "UPN", "MASINA", and "BOTOUR" automatically.</p>
         <input type="file" id="fileInput" multiple accept="application/pdf" style="display:none">
     </div>
 
-    <div id="statsArea" class="summary-stats">
-        <div class="stat-item">Total Stock In (Depot)<b id="totalIn">0</b></div>
-        <div class="stat-item">Total Stock Out (Shops)<b id="totalOut">0</b></div>
+    <div id="dash" class="dashboard">
+        <div class="card">Total Stock In (Depot)<br><span id="totalStockIn">0</span></div>
+        <div class="card" style="background:#059669">Total Stock Out (Sent)<br><span id="totalStockOut">0</span></div>
+        <div class="card" style="background:#7c3aed">Total Shops Served<br><span id="totalShops">0</span></div>
     </div>
 
-    <button id="downloadBtn" class="btn-download">DOWNLOAD FULL LEDGER REPORT</button>
-
-    <div id="previewArea"></div>
+    <button id="downloadBtn" class="btn-report">DOWNLOAD FINAL AUDIT REPORT</button>
+    <div id="preview"></div>
 </div>
 
 <script>
     const { jsPDF } = window.jspdf;
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 
-    let masterLedger = [];
+    let masterAuditLog = [];
 
     document.getElementById('fileInput').addEventListener('change', async (e) => {
         const files = e.target.files;
         if (!files.length) return;
 
-        masterLedger = [];
-        
+        masterAuditLog = [];
+        let uniqueShops = new Set();
+
         for (const file of files) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
@@ -64,83 +66,92 @@
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
                 const text = await page.getTextContent();
-                const lines = text.items.map(item => item.str.replace(/[\\"\r\n]/g, '').trim()).filter(s => s !== "");
+                const items = text.items.map(it => it.str.replace(/[\\"\r\n]/g, '').trim()).filter(s => s !== "");
 
-                // Logic to find Destination and Date for this specific page
-                let currentShop = "General";
-                let currentDate = "N/A";
-
-                for (let line of lines) {
-                    if (line.toUpperCase().includes("DEPOT TO")) {
-                        const parts = line.toUpperCase().split("DEPOT TO")[1].trim().split(" ");
-                        currentShop = parts[0]; 
-                        currentDate = parts.slice(1).join(" ");
+                // SMART HEADER EXTRACTION
+                let shopName = "DEPOT STOCK";
+                let moveDate = "NO DATE";
+                
+                // Scan first few lines for the header "DEPOT TO [NAME] [DATE]"
+                for (let j = 0; j < Math.min(10, items.length); j++) {
+                    if (items[j].toUpperCase().includes("DEPOT TO")) {
+                        const parts = items[j].toUpperCase().split("DEPOT TO")[1].trim().split(" ");
+                        shopName = parts[0]; 
+                        moveDate = parts.slice(1).join(" ");
+                        uniqueShops.add(shopName);
                         break;
                     }
                 }
 
-                // Scan for Products
-                for (let k = 0; k < lines.length; k++) {
-                    if (lines[k].includes('$') && k > 1) {
-                        const qty = parseInt(lines[k-1]) || 0;
-                        const product = lines[k-2];
+                // PRODUCT EXTRACTION
+                for (let k = 0; k < items.length; k++) {
+                    if (items[k].includes('$') && k > 1) {
+                        const qty = parseInt(items[k-1]) || 0;
+                        const product = items[k-2];
 
                         if (qty > 0) {
-                            masterLedger.push({
-                                date: currentDate,
-                                destination: currentShop,
+                            masterAuditLog.push({
+                                date: moveDate,
+                                destination: shopName,
                                 product: product,
-                                stockIn: qty,
-                                stockOut: qty
+                                qtyIn: qty,  // Logic: It was in depot
+                                qtyOut: qty  // Logic: It went to shop
                             });
                         }
                     }
                 }
             }
         }
-        updateDisplay();
+        showDashboard(uniqueShops.size);
     });
 
-    function updateDisplay() {
-        const total = masterLedger.reduce((sum, item) => sum + item.stockIn, 0);
-        document.getElementById('totalIn').innerText = total;
-        document.getElementById('totalOut').innerText = total;
-        document.getElementById('statsArea').style.display = 'flex';
+    function showDashboard(shopCount) {
+        const total = masterAuditLog.reduce((sum, item) => sum + item.qtyIn, 0);
+        document.getElementById('totalStockIn').innerText = total;
+        document.getElementById('totalStockOut').innerText = total;
+        document.getElementById('totalShops').innerText = shopCount;
+        
+        document.getElementById('dash').style.display = 'grid';
         document.getElementById('downloadBtn').style.display = 'block';
 
-        let html = "<table><thead><tr><th>Movement Date</th><th>Product</th><th>Sent To</th><th>Stock In (Depot)</th><th>Stock Out (Shop)</th></tr></thead><tbody>";
-        
-        masterLedger.forEach(item => {
+        let html = "<table><thead><tr><th>Movement Date</th><th>Product Description</th><th>Where it Went (Destination)</th><th>Stock In</th><th>Stock Out</th></tr></thead><tbody>";
+        masterAuditLog.forEach(row => {
             html += `<tr>
-                <td>${item.date}</td>
-                <td>${item.product}</td>
-                <td class="dest-cell">${item.destination}</td>
-                <td>${item.stockIn}</td>
-                <td>${item.stockOut}</td>
+                <td>${row.date}</td>
+                <td>${row.product}</td>
+                <td class="dest-label">DEPOT TO ${row.destination}</td>
+                <td>${row.qtyIn}</td>
+                <td>${row.qtyOut}</td>
             </tr>`;
         });
-        
         html += "</tbody></table>";
-        document.getElementById('previewArea').innerHTML = html;
+        document.getElementById('preview').innerHTML = html;
     }
 
     document.getElementById('downloadBtn').addEventListener('click', () => {
         const doc = new jsPDF('l', 'mm', 'a4');
-        doc.setFontSize(18);
-        doc.text("Master Depot Inventory & Distribution Ledger", 14, 15);
+        doc.setFontSize(20);
+        doc.setTextColor(30, 58, 138);
+        doc.text("DEPOT FINAL INVENTORY & DISTRIBUTION REPORT", 14, 15);
         
-        const rows = masterLedger.map(i => [i.date, i.product, `DEPOT -> ${i.destination}`, i.stockIn, i.stockOut]);
+        const tableData = masterAuditLog.map(r => [
+            r.date, 
+            r.product, 
+            `SENT TO: ${r.destination}`, 
+            r.qtyIn, 
+            r.qtyOut
+        ]);
 
         doc.autoTable({
             startY: 25,
-            head: [['Date', 'Product Description', 'Movement Detail', 'Stock In', 'Stock Out']],
-            body: rows,
+            head: [['Date', 'Product Description', 'Destination Detail', 'Stock In (Depot)', 'Stock Out (Shop)']],
+            body: tableData,
             theme: 'grid',
-            headStyles: { fillColor: [24, 119, 242] },
-            styles: { fontSize: 8 }
+            headStyles: { fillColor: [30, 58, 138] },
+            columnStyles: { 2: { fontStyle: 'bold' } }
         });
 
-        doc.save(`Depot_Full_Report_${new Date().toLocaleDateString()}.pdf`);
+        doc.save("Depot_Stock_Audit.pdf");
     });
 </script>
 
