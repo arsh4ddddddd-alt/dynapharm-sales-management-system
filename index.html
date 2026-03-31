@@ -3,76 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstaCheck iOS</title>
+    <title>InstaCheck ZIP</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.min.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 15px; }
-        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: auto; }
-        h2 { text-align: center; color: #d62976; }
-        .step { margin-bottom: 20px; border-bottom: 1px solid #eee; pb: 10px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
-        input[type="file"] { width: 100%; margin-bottom: 10px; }
-        button { width: 100%; padding: 15px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
-        #results { margin-top: 20px; display: none; }
-        .user-link { display: block; padding: 10px; background: #f8f8f8; margin-bottom: 5px; border-radius: 5px; text-decoration: none; color: #0095f6; font-weight: 500; }
+        body { font-family: -apple-system, sans-serif; background: #fafafa; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; border: 1px solid #dbdbdb; border-radius: 12px; padding: 25px; width: 100%; max-width: 400px; text-align: center; }
+        .upload-area { border: 2px dashed #0095f6; padding: 30px; border-radius: 10px; margin-bottom: 20px; background: #f0f9ff; }
+        button { width: 100%; padding: 14px; background: #0095f6; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; }
+        #results { margin-top: 25px; text-align: left; display: none; }
+        .user-row { padding: 12px; border-bottom: 1px solid #efefef; }
+        .user-row a { text-decoration: none; color: #00376b; font-weight: 600; }
+        .status { font-size: 12px; color: #8e8e8e; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>Unfollower Finder</h2>
+    <p class="status">Upload the <b>.zip</b> file Instagram sent you</p>
     
-    <div class="step">
-        <label>1. Upload 'following.json'</label>
-        <input type="file" id="followingFile" accept=".json">
+    <div class="upload-area">
+        <input type="file" id="zipFile" accept=".zip">
     </div>
 
-    <div class="step">
-        <label>2. Upload 'followers.json'</label>
-        <input type="file" id="followersFile" accept=".json">
-    </div>
-
-    <button onclick="analyzeData()">Analyze My Friends</button>
+    <button onclick="processZip()">Analyze ZIP File</button>
 
     <div id="results">
-        <h3 id="countText"></h3>
-        <div id="list"></div>
+        <h3 id="countHeader" style="font-size: 16px;">Results:</h3>
+        <div id="resultList"></div>
     </div>
 </div>
 
 <script>
-    async function analyzeData() {
-        const followingFile = document.getElementById('followingFile').files[0];
-        const followersFile = document.getElementById('followersFile').files[0];
+    async function processZip() {
+        const fileInput = document.getElementById('zipFile');
+        if (!fileInput.files.length) return alert("Please select your Instagram .zip file!");
 
-        if (!followingFile || !followersFile) {
-            alert("Please upload both JSON files first!");
+        const file = fileInput.files[0];
+        const zip = await JSZip.loadAsync(file);
+        
+        let followers = new Set();
+        let following = new Set();
+
+        // 1. Find and read followers.json
+        const followersFile = zip.file(/followers_1\.json|followers\.json/)[0];
+        // 2. Find and read following.json
+        const followingFile = zip.file(/following\.json/)[0];
+
+        if (!followersFile || !followingFile) {
+            alert("Could not find the correct files inside the ZIP. Make sure you downloaded 'Followers and Following' data.");
             return;
         }
 
-        const followingData = JSON.parse(await followingFile.text());
-        const followersData = JSON.parse(await followersFile.text());
+        const followersData = JSON.parse(await followersFile.async("string"));
+        const followingData = JSON.parse(await followingFile.async("string"));
 
-        // Extract usernames based on Instagram's JSON structure
-        const following = new Set(followingData.relationships_following.map(i => i.string_list_data[0].value));
-        const followers = new Set(followersData.map(i => i.string_list_data[0].value));
+        // Extracting usernames from Instagram's specific JSON structure
+        followingData.relationships_following.forEach(item => {
+            following.add(item.string_list_data[0].value);
+        });
 
-        const listDiv = document.getElementById('list');
+        followersData.forEach(item => {
+            followers.add(item.string_list_data[0].value);
+        });
+
+        const listDiv = document.getElementById('resultList');
         listDiv.innerHTML = '';
         let count = 0;
 
         following.forEach(user => {
             if (!followers.has(user)) {
-                const a = document.createElement('a');
-                a.className = 'user-link';
-                a.href = `https://instagram.com/${user}`;
-                a.target = "_blank";
-                a.textContent = `@${user}`;
-                listDiv.appendChild(a);
+                const div = document.createElement('div');
+                div.className = 'user-row';
+                div.innerHTML = `<a href="https://instagram.com/${user}" target="_blank">@${user}</a>`;
+                listDiv.appendChild(div);
                 count++;
             }
         });
 
-        document.getElementById('countText').textContent = `${count} people don't follow you back:`;
+        document.getElementById('countHeader').textContent = `${count} people not following back:`;
         document.getElementById('results').style.display = 'block';
     }
 </script>
