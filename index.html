@@ -3,126 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstaAudit Pro</title>
+    <title>InstaCheck Universal</title>
     <style>
-        :root { --ig-blue: #0095f6; --bg: #f4f4f7; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1c1e21; }
-        .app-container { max-width: 420px; margin: 0 auto; background: white; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); overflow: hidden; }
-        .header { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); padding: 30px 20px; text-align: center; color: white; }
-        .header h1 { margin: 0; font-size: 22px; letter-spacing: -0.5px; }
-        .content { padding: 25px; }
-        .file-card { background: #f9f9fb; border: 1.5px dashed #d1d1d6; border-radius: 16px; padding: 15px; margin-bottom: 15px; position: relative; }
-        .file-card label { display: block; font-size: 12px; font-weight: 700; color: #8e8e93; text-transform: uppercase; margin-bottom: 8px; }
-        input[type="file"] { font-size: 14px; width: 100%; color: #48484a; }
-        .analyze-btn { width: 100%; padding: 16px; background: var(--ig-blue); color: white; border: none; border-radius: 14px; font-weight: 600; font-size: 16px; transition: transform 0.2s; cursor: pointer; }
-        .analyze-btn:active { transform: scale(0.98); background: #0077c7; }
-        #results { margin-top: 25px; display: none; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-item { background: #f0f9ff; padding: 12px; border-radius: 12px; text-align: center; border: 1px solid #c0e0ff; }
-        .stat-num { display: block; font-size: 18px; font-weight: 800; color: var(--ig-blue); }
-        .stat-label { font-size: 11px; color: #5e5e5e; }
-        .user-list { background: #fff; border-radius: 16px; border: 1px solid #e5e5ea; }
-        .user-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid #f2f2f7; }
-        .user-row:last-child { border-bottom: none; }
-        .user-row a { text-decoration: none; color: #00376b; font-weight: 600; font-size: 15px; }
-        .unfollow-tag { font-size: 11px; color: #ff3b30; font-weight: 700; border: 1px solid #ff3b30; padding: 2px 8px; border-radius: 6px; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 20px; }
+        .card { background: white; border-radius: 15px; padding: 25px; max-width: 400px; margin: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+        .file-input { margin: 15px 0; text-align: left; background: #fafafa; padding: 10px; border-radius: 8px; border: 1px solid #ddd; }
+        label { font-size: 12px; font-weight: bold; color: #555; display: block; margin-bottom: 5px; }
+        button { width: 100%; padding: 15px; background: #0095f6; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        #results { margin-top: 25px; text-align: left; display: none; }
+        .stat-box { background: #e7f3ff; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; color: #0056b3; }
+        .user-row { padding: 10px; border-bottom: 1px solid #eee; }
+        .user-row a { text-decoration: none; color: #00376b; font-weight: 600; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div class="header">
-        <h1>InstaAudit Pro</h1>
-        <p style="font-size: 13px; opacity: 0.9; margin-top: 5px;">Secure Offline Analysis</p>
+<div class="card">
+    <h2>Unfollower Finder</h2>
+    <p style="font-size: 13px; color: #666;">Upload your JSON files below</p>
+    
+    <div class="file-input">
+        <label>1. Upload following.json</label>
+        <input type="file" id="fileFollowing" accept=".json">
     </div>
 
-    <div class="content">
-        <div class="file-card">
-            <label>Step 1: Following Data</label>
-            <input type="file" id="followingFile" accept=".json">
-        </div>
+    <div class="file-input">
+        <label>2. Upload followers_1.json</label>
+        <input type="file" id="fileFollowers" accept=".json">
+    </div>
 
-        <div class="file-card">
-            <label>Step 2: Followers Data</label>
-            <input type="file" id="followersFile" accept=".json">
-        </div>
+    <button onclick="startAnalysis()">Find Non-Followers</button>
 
-        <button class="analyze-btn" onclick="runAudit()">Run Audit</button>
-
-        <div id="results">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <span class="stat-num" id="followingCount">0</span>
-                    <span class="stat-label">FOLLOWING</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-num" id="followersCount">0</span>
-                    <span class="stat-label">FOLLOWERS</span>
-                </div>
-            </div>
-
-            <h3 style="font-size: 16px; margin-bottom: 12px; padding-left: 5px;">Not Following Back:</h3>
-            <div class="user-list" id="userList"></div>
-        </div>
+    <div id="results">
+        <div id="debugInfo" class="stat-box"></div>
+        <h3 style="font-size: 16px;">People not following back:</h3>
+        <div id="list"></div>
     </div>
 </div>
 
 <script>
-    function deepExtract(obj, set) {
-        if (!obj) return;
-        if (typeof obj === 'object') {
-            // Instagram JSONs use 'value' for usernames
-            if (obj.value && typeof obj.value === 'string') set.add(obj.value);
-            for (let key in obj) deepExtract(obj[key], set);
-        }
-    }
-
-    async function runAudit() {
-        const f1 = document.getElementById('followingFile').files[0];
-        const f2 = document.getElementById('followersFile').files[0];
-
-        if (!f1 || !f2) {
-            alert("Please select both your Following and Followers files.");
-            return;
-        }
-
-        try {
-            const followingJSON = JSON.parse(await f1.text());
-            const followersJSON = JSON.parse(await f2.text());
-
-            const followingSet = new Set();
-            const followersSet = new Set();
-
-            deepExtract(followingJSON, followingSet);
-            deepExtract(followersJSON, followersSet);
-
-            document.getElementById('followingCount').innerText = followingSet.size;
-            document.getElementById('followersCount').innerText = followersSet.size;
-
-            const listDiv = document.getElementById('userList');
-            listDiv.innerHTML = '';
-            let count = 0;
-
-            followingSet.forEach(user => {
-                if (!followersSet.has(user)) {
-                    const row = document.createElement('div');
-                    row.className = 'user-row';
-                    row.innerHTML = `
-                        <a href="https://instagram.com/${user}" target="_blank">@${user}</a>
-                        <span class="unfollow-tag">NOT BACK</span>
-                    `;
-                    listDiv.appendChild(row);
-                    count++;
+    // This function pulls EVERY username found in the file text
+    function grabAllUsernames(text) {
+        const usernames = new Set();
+        // Regex looks for "value": "username"
+        const matches = text.match(/"value":\s*"([^"]+)"/g);
+        if (matches) {
+            matches.forEach(m => {
+                const name = m.split('"')[3];
+                // Ignore dates and non-usernames
+                if (name && name.length > 1 && !name.includes(':') && !name.includes('-')) {
+                    usernames.add(name);
                 }
             });
-
-            document.getElementById('results').style.display = 'block';
-            if (count === 0) {
-                listDiv.innerHTML = '<div class="user-row">Perfect! Everyone follows you back.</div>';
-            }
-        } catch (err) {
-            alert("Error: Make sure you uploaded the correct .json files.");
         }
+        return usernames;
+    }
+
+    async function startAnalysis() {
+        const f1 = document.getElementById('fileFollowing').files[0];
+        const f2 = document.getElementById('fileFollowers').files[0];
+
+        if (!f1 || !f2) return alert("Please select both files!");
+
+        const textFollowing = await f1.text();
+        const textFollowers = await f2.text();
+
+        const following = grabAllUsernames(textFollowing);
+        const followers = grabAllUsernames(textFollowers);
+
+        const listDiv = document.getElementById('list');
+        listDiv.innerHTML = '';
+        let count = 0;
+
+        following.forEach(user => {
+            if (!followers.has(user)) {
+                const div = document.createElement('div');
+                div.className = 'user-row';
+                div.innerHTML = `<a href="https://instagram.com/${user}" target="_blank">@${user}</a>`;
+                listDiv.appendChild(div);
+                count++;
+            }
+        });
+
+        document.getElementById('debugInfo').innerHTML = 
+            `Found <b>${following.size}</b> following and <b>${followers.size}</b> followers.`;
+        document.getElementById('results').style.display = 'block';
     }
 </script>
 
