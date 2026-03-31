@@ -3,70 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstaCheck Max</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <title>InstaCheck Dual-File</title>
     <style>
         body { font-family: -apple-system, sans-serif; background: #fafafa; padding: 20px; display: flex; justify-content: center; }
         .card { background: white; border: 1px solid #dbdbdb; border-radius: 12px; padding: 25px; width: 100%; max-width: 400px; text-align: center; }
-        .upload-area { border: 2px dashed #0095f6; padding: 30px; border-radius: 10px; margin-bottom: 20px; background: #f0f9ff; }
-        button { width: 100%; padding: 14px; background: #0095f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .upload-section { text-align: left; margin-bottom: 15px; }
+        label { font-size: 12px; font-weight: bold; color: #8e8e8e; display: block; margin-bottom: 5px; }
+        input[type="file"] { width: 100%; margin-bottom: 10px; font-size: 13px; }
+        button { width: 100%; padding: 14px; background: #0095f6; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         #results { margin-top: 25px; text-align: left; display: none; }
-        .user-row { padding: 12px; border-bottom: 1px solid #efefef; }
+        .user-row { padding: 10px; border-bottom: 1px solid #efefef; font-size: 14px; }
         .user-row a { text-decoration: none; color: #00376b; font-weight: 600; }
-        .status { font-size: 13px; color: #8e8e8e; margin-bottom: 10px; }
+        .stats { font-size: 12px; background: #f0f9ff; padding: 10px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #c0e0ff; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>Unfollower Finder</h2>
-    <p id="status" class="status">Upload your Instagram .zip file</p>
     
-    <div class="upload-area">
-        <input type="file" id="zipFile" accept=".zip">
+    <div class="upload-section">
+        <label>Upload following.json</label>
+        <input type="file" id="followingFile" accept=".json">
+        
+        <label>Upload followers_1.json</label>
+        <input type="file" id="followersFile" accept=".json">
     </div>
 
-    <button onclick="processZip()">Analyze Everything</button>
+    <button onclick="processFiles()">Compare Lists</button>
 
     <div id="results">
-        <h3 id="countHeader">Results:</h3>
+        <div id="statBox" class="stats"></div>
+        <h3 id="countHeader">Not Following Back:</h3>
         <div id="resultList"></div>
     </div>
 </div>
 
 <script>
-    function extractNames(obj, set) {
-        if (!obj) return;
-        if (typeof obj === 'object') {
-            if (obj.value && typeof obj.value === 'string') set.add(obj.value);
-            for (let key in obj) extractNames(obj[key], set);
+    // This function finds every "value" (username) regardless of JSON structure
+    function findUsernames(data) {
+        let names = new Set();
+        function search(obj) {
+            if (!obj) return;
+            if (typeof obj === 'object') {
+                if (obj.value && typeof obj.value === 'string') {
+                    names.add(obj.value);
+                }
+                for (let key in obj) search(obj[key]);
+            }
         }
+        search(data);
+        return names;
     }
 
-    async function processZip() {
-        const fileInput = document.getElementById('zipFile');
-        const status = document.getElementById('status');
-        if (!fileInput.files.length) return alert("Select a file!");
+    async function processFiles() {
+        const file1 = document.getElementById('followingFile').files[0];
+        const file2 = document.getElementById('followersFile').files[0];
+
+        if (!file1 || !file2) return alert("Please upload BOTH files!");
 
         try {
-            status.innerText = "Scanning all files inside ZIP...";
-            const zip = await JSZip.loadAsync(fileInput.files[0]);
-            
-            let followers = new Set();
-            let following = new Set();
+            const followingData = JSON.parse(await file1.text());
+            const followersData = JSON.parse(await file2.text());
 
-            // Loop through EVERY file in the ZIP
-            for (let filename in zip.files) {
-                if (filename.endsWith('.json')) {
-                    const content = JSON.parse(await zip.file(filename).async("string"));
-                    
-                    if (filename.includes("following.json")) {
-                        extractNames(content, following);
-                    } else if (filename.includes("followers")) {
-                        extractNames(content, followers);
-                    }
-                }
-            }
+            const following = findUsernames(followingData);
+            const followers = findUsernames(followersData);
 
             const listDiv = document.getElementById('resultList');
             listDiv.innerHTML = '';
@@ -82,13 +83,15 @@
                 }
             });
 
-            document.getElementById('countHeader').innerText = `${count} non-followers found:`;
+            document.getElementById('statBox').innerHTML = `
+                <b>Following:</b> ${following.size} <br>
+                <b>Followers:</b> ${followers.size}
+            `;
+            document.getElementById('countHeader').innerText = `${count} People Found:`;
             document.getElementById('results').style.display = 'block';
-            status.innerText = `Scan complete. Found ${following.size} Following and ${followers.size} Followers.`;
 
-        } catch (err) {
-            alert("Error: " + err.message);
-            status.innerText = "Failed.";
+        } catch (e) {
+            alert("Error reading files. Make sure they are the JSON files from Instagram.");
         }
     }
 </script>
