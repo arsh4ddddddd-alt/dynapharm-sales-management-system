@@ -3,24 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstaCheck ZIP</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.min.js"></script>
+    <title>InstaCheck Debug Mode</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body { font-family: -apple-system, sans-serif; background: #fafafa; padding: 20px; display: flex; justify-content: center; }
         .card { background: white; border: 1px solid #dbdbdb; border-radius: 12px; padding: 25px; width: 100%; max-width: 400px; text-align: center; }
         .upload-area { border: 2px dashed #0095f6; padding: 30px; border-radius: 10px; margin-bottom: 20px; background: #f0f9ff; }
-        button { width: 100%; padding: 14px; background: #0095f6; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; }
+        button { width: 100%; padding: 14px; background: #0095f6; color: white; border: none; border-radius: 8px; font-weight: bold; }
         #results { margin-top: 25px; text-align: left; display: none; }
         .user-row { padding: 12px; border-bottom: 1px solid #efefef; }
         .user-row a { text-decoration: none; color: #00376b; font-weight: 600; }
-        .status { font-size: 12px; color: #8e8e8e; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <h2>Unfollower Finder</h2>
-    <p class="status">Upload the <b>.zip</b> file Instagram sent you</p>
+    <p id="status">Select your Instagram .zip file</p>
     
     <div class="upload-area">
         <input type="file" id="zipFile" accept=".zip">
@@ -29,7 +28,7 @@
     <button onclick="processZip()">Analyze ZIP File</button>
 
     <div id="results">
-        <h3 id="countHeader" style="font-size: 16px;">Results:</h3>
+        <h3 id="countHeader">Results:</h3>
         <div id="resultList"></div>
     </div>
 </div>
@@ -37,52 +36,68 @@
 <script>
     async function processZip() {
         const fileInput = document.getElementById('zipFile');
-        if (!fileInput.files.length) return alert("Please select your Instagram .zip file!");
-
-        const file = fileInput.files[0];
-        const zip = await JSZip.loadAsync(file);
+        const status = document.getElementById('status');
         
-        let followers = new Set();
-        let following = new Set();
-
-        // 1. Find and read followers.json
-        const followersFile = zip.file(/followers_1\.json|followers\.json/)[0];
-        // 2. Find and read following.json
-        const followingFile = zip.file(/following\.json/)[0];
-
-        if (!followersFile || !followingFile) {
-            alert("Could not find the correct files inside the ZIP. Make sure you downloaded 'Followers and Following' data.");
+        if (!fileInput.files.length) {
+            alert("Please select a file first!");
             return;
         }
 
-        const followersData = JSON.parse(await followersFile.async("string"));
-        const followingData = JSON.parse(await followingFile.async("string"));
+        try {
+            status.innerText = "Reading ZIP... please wait...";
+            const file = fileInput.files[0];
+            const zip = await JSZip.loadAsync(file);
+            
+            // Search for any file that looks like followers or following
+            const followersEntry = Object.keys(zip.files).find(name => name.includes("followers_1.json") || name.includes("followers.json"));
+            const followingEntry = Object.keys(zip.files).find(name => name.includes("following.json"));
 
-        // Extracting usernames from Instagram's specific JSON structure
-        followingData.relationships_following.forEach(item => {
-            following.add(item.string_list_data[0].value);
-        });
-
-        followersData.forEach(item => {
-            followers.add(item.string_list_data[0].value);
-        });
-
-        const listDiv = document.getElementById('resultList');
-        listDiv.innerHTML = '';
-        let count = 0;
-
-        following.forEach(user => {
-            if (!followers.has(user)) {
-                const div = document.createElement('div');
-                div.className = 'user-row';
-                div.innerHTML = `<a href="https://instagram.com/${user}" target="_blank">@${user}</a>`;
-                listDiv.appendChild(div);
-                count++;
+            if (!followersEntry || !followingEntry) {
+                alert("Error: Could not find followers or following files inside this ZIP. Are you sure you selected 'Followers and Following' when downloading from Instagram?");
+                status.innerText = "Error: Files missing.";
+                return;
             }
-        });
 
-        document.getElementById('countHeader').textContent = `${count} people not following back:`;
-        document.getElementById('results').style.display = 'block';
+            const followersData = JSON.parse(await zip.file(followersEntry).async("string"));
+            const followingData = JSON.parse(await zip.file(followingEntry).async("string"));
+
+            const followers = new Set();
+            const following = new Set();
+
+            // Extract logic
+            followingData.relationships_following.forEach(item => {
+                following.add(item.string_list_data[0].value);
+            });
+
+            // Followers is usually a top-level array in the JSON
+            const followerArray = Array.isArray(followersData) ? followersData : followersData.relationships_followers;
+            followerArray.forEach(item => {
+                followers.add(item.string_list_data[0].value);
+            });
+
+            const listDiv = document.getElementById('resultList');
+            listDiv.innerHTML = '';
+            let count = 0;
+
+            following.forEach(user => {
+                if (!followers.has(user)) {
+                    const div = document.createElement('div');
+                    div.className = 'user-row';
+                    div.innerHTML = `<a href="https://instagram.com/${user}" target="_blank">@${user}</a>`;
+                    listDiv.appendChild(div);
+                    count++;
+                }
+            });
+
+            document.getElementById('countHeader').textContent = `${count} non-followers found:`;
+            document.getElementById('results').style.display = 'block';
+            status.innerText = "Analysis Complete!";
+
+        } catch (err) {
+            console.error(err);
+            alert("Something went wrong: " + err.message);
+            status.innerText = "Error processing file.";
+        }
     }
 </script>
 
